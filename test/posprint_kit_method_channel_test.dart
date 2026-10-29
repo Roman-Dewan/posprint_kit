@@ -5,7 +5,8 @@ import 'package:posprint_kit/posprint_kit_method_channel.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelPosprintKit platform = MethodChannelPosprintKit();
+  // OLD: MethodChannelPosprintKit platform = MethodChannelPosprintKit();
+  final MethodChannelPosprintKit platform = MethodChannelPosprintKit();
   const MethodChannel channel = MethodChannel('posprint_kit');
 
   setUp(() {

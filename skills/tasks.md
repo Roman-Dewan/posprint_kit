@@ -12,11 +12,18 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done, `[!]` blocked (add a note)
 
 ## Phase 0: Setup
 
+<!-- OLD:
 - [ ] **T-001** Scaffold: `flutter create --template=plugin --platforms=android,ios escpos_link`
 - [ ] **T-002** Create the folder structure from `architecture.md` section 3 (including `doc/`, `rendering/`, `test/fixtures/`)
 - [ ] **T-003** `analysis_options.yaml` (strict lints) and a package logger with `LogLevel`
 - [ ] **T-004** CI (GitHub Actions): `flutter analyze` + `flutter test`
 - [ ] **T-005** `test/fixtures/languages.dart` with sample strings (Latin accents, Bangla, Hindi, Chinese, Japanese, Korean, Arabic, Thai)
+-->
+- [x] **T-001** Scaffold: `flutter create --template=plugin --platforms=android,ios escpos_link`
+- [x] **T-002** Create the folder structure from `architecture.md` section 3 (including `doc/`, `rendering/`, `test/fixtures/`)
+- [x] **T-003** `analysis_options.yaml` (strict lints) and a package logger with `LogLevel`
+- [x] **T-004** CI (GitHub Actions): `flutter analyze` + `flutter test`
+- [x] **T-005** `test/fixtures/languages.dart` with sample strings (Latin accents, Bangla, Hindi, Chinese, Japanese, Korean, Arabic, Thai)
 
 **Done when:** a fresh clone runs `flutter test` successfully.
 
@@ -24,6 +31,7 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done, `[!]` blocked (add a note)
 
 ## Phase 1: Core receipt and encoder (pure Dart, native text only)
 
+<!-- OLD:
 - [ ] **T-101** `Result<T>`, `PrinterError(message, hint)`, `PrinterErrorCode`, and `Result.when`
 - [ ] **T-102** `commands.dart` constants: `ESC @`, LF, align, bold, underline, size, cut
 - [ ] **T-103** `Receipt` (ops list) and `ReceiptEncoder.encode()` with `text()` (align, bold, size), plus `encodeForTest` helper
@@ -35,6 +43,18 @@ Legend: `[ ]` todo, `[~]` in progress, `[x]` done, `[!]` blocked (add a note)
 - [ ] **T-109** `drawer()` pulse (`ESC p`)
 - [ ] **T-110** `CodePageEncoder` + `ESC t n` for Latin accents (CP437 / CP858 / CP1252 tables)
 - [ ] **T-111** `Receipt.simple(...)` template
+-->
+- [x] **T-101** `Result<T>`, `PrinterError(message, hint)`, `PrinterErrorCode`, and `Result.when`
+- [x] **T-102** `commands.dart` constants: `ESC @`, LF, align, bold, underline, size, cut
+- [x] **T-103** `Receipt` (ops list) and `ReceiptEncoder.encode()` with `text()` (align, bold, size), plus `encodeForTest` helper
+- [x] **T-104** `PrinterProfile` (`dotsWidth`, presets `generic58`, `generic80`) and character columns for native text
+- [x] **T-105** `row(left, right)` for native text, `divider()`, `feed()`, `title()`, `total()`
+- [x] **T-106** `cut()` (full and partial)
+- [x] **T-107** `qr()` (see Skill 4)
+- [x] **T-108** `barcode()` (CODE128, EAN13)
+- [x] **T-109** `drawer()` pulse (`ESC p`)
+- [x] **T-110** `CodePageEncoder` + `ESC t n` for Latin accents (CP437 / CP858 / CP1252 tables)
+- [x] **T-111** `Receipt.simple(...)` template
 
 **Done when:** an English receipt encodes to bytes and a full-receipt golden-bytes test passes.
 
@@ -55,6 +75,7 @@ TOTAL                   14.00
 
 ## Phase 2: Transport abstraction, fake, and beginner facade
 
+<!-- OLD:
 - [ ] **T-201** `PrinterTransport` interface + `ConnectionState`
 - [ ] **T-202** `FakeTransport` (records bytes, optional delay and failure injection)
 - [ ] **T-203** `EscposPrinter` facade: `.wifi()`, `.bluetooth()`, `.usb()`, `print()`, `close()` (the **3-line test**)
@@ -62,15 +83,29 @@ TOTAL                   14.00
 - [ ] **T-205** Friendly error catalog: `message` + `hint` for every `PrinterErrorCode`, with a test that none are empty (Skill 11)
 - [ ] **T-206** `lib/advanced.dart` split (raw bytes, custom commands, chunk size)
 - [ ] **T-207** Debug asserts with plain-language messages (Skill 10)
+-->
+- [x] **T-201** `PrinterTransport` interface + `ConnectionState`
+- [x] **T-202** `FakeTransport` (records bytes, optional delay and failure injection)
+- [x] **T-203** `EscposPrinter` facade: `.wifi()`, `.bluetooth()`, `.usb()`, `print()`, `close()` (the **3-line test**)
+- [x] **T-204** `EscposLink.isSupported(Transport)` and `logLevel`
+- [x] **T-205** Friendly error catalog: `message` + `hint` for every `PrinterErrorCode`, with a test that none are empty (Skill 11)
+- [x] **T-206** `lib/advanced.dart` split (raw bytes, custom commands, chunk size)
+- [x] **T-207** Debug asserts with plain-language messages (Skill 10)
 
 ---
 
 ## Phase 3: WiFi / Network transport
 
+<!-- OLD:
 - [ ] **T-301** `NetworkTransport` (TCP, port 9100, 5 s connect timeout)
 - [ ] **T-302** Map `SocketException` / `TimeoutException` to friendly errors
 - [ ] **T-303** Integration test against a local `ServerSocket`
 - [ ] **T-304** Reconnect when the socket closes unexpectedly
+-->
+- [x] **T-301** `NetworkTransport` (TCP, port 9100, 5 s connect timeout)
+- [x] **T-302** Map `SocketException` / `TimeoutException` to friendly errors
+- [x] **T-303** Integration test against a local `ServerSocket`
+- [x] **T-304** Reconnect when the socket closes unexpectedly
 - [ ] **T-305** *(optional)* LAN discovery: scan the subnet for open port 9100
 - [ ] **T-306** Example app screen: enter an IP, print the sample receipt
 
@@ -80,11 +115,18 @@ TOTAL                   14.00
 
 ## Phase 4: Print manager (queue)
 
+<!-- OLD:
 - [ ] **T-401** `PrintQueue`: FIFO, one job at a time (Skill 7)
 - [ ] **T-402** Retry with backoff (500 ms, 1 s, 2 s)
 - [ ] **T-403** `PrinterManager` with a `state` stream; `EscposPrinter.print` uses it
 - [ ] **T-404** Chunked writes using `transport.maxChunkSize`
 - [ ] **T-405** Tests: ordering, retry, correct `PrinterError` surfaced
+-->
+- [x] **T-401** `PrintQueue`: FIFO, one job at a time (Skill 7)
+- [x] **T-402** Retry with backoff (500 ms, 1 s, 2 s)
+- [x] **T-403** `PrinterManager` with a `state` stream; `EscposPrinter.print` uses it
+- [x] **T-404** Chunked writes using `transport.maxChunkSize`
+- [x] **T-405** Tests: ordering, retry, correct `PrinterError` surfaced
 
 ---
 
@@ -92,6 +134,7 @@ TOTAL                   14.00
 
 > Needs only Phases 1-2 and `FakeTransport`; it can start before any Bluetooth/USB work.
 
+<!-- OLD:
 - [ ] **T-501** `TextRasterizer` interface, `GrayBitmap`, `MonoBitmap`, `FakeRasterizer` (core, pure Dart)
 - [ ] **T-502** `FlutterTextRasterizer` in `rendering/`: `renderText`, paragraph locale from `languageTag`, `fontFamilyFallback`
 - [ ] **T-503** 1-bit conversion in an isolate: threshold (default) and optional dithering
@@ -109,6 +152,21 @@ TOTAL                   14.00
 - [ ] **T-515** Widget-to-image printing (`widget_rasterizer.dart`)
 - [ ] **T-516** `Receipt.image()` for logos (resize to width, 1-bit)
 - [ ] **T-517** Opt-in native CJK via profile flags (check printer manual and a real device; ADR #12)
+-->
+- [x] **T-501** `TextRasterizer` interface, `GrayBitmap`, `MonoBitmap`, `FakeRasterizer` (core, pure Dart)
+- [x] **T-502** `FlutterTextRasterizer` in `rendering/`: `renderText`, paragraph locale from `languageTag`, `fontFamilyFallback`
+- [x] **T-503** 1-bit conversion in an isolate: threshold (default) and optional dithering
+- [x] **T-504** `GS v 0` encoder with **bands** (`maxBandRows`), golden-bytes tested
+- [x] **T-505** `TextEngine` auto decision per line (native vs image) driven by `PrinterProfile.codePages`
+- [x] **T-506** `renderRow`: pixel layout with price flush right (left wraps in the remaining width)
+- [x] **T-507** Pixel-based wrapping: spaces for Bangla/Latin, per-character for CJK, closing-punctuation rule
+- [x] **T-508** Right-to-left support (Arabic/Hebrew): direction, alignment, mixed numbers
+- [x] **T-509** `TextMetrics` display width (full-width = 2 columns) for native CJK
+- [x] **T-510** Line cache keyed by `(text, style, width, languageTag)`
+- [x] **T-512** Han unification test: same characters with `'zh-Hans'` vs `'ja'`
+- [x] **T-513** Bangla hard cases: conjuncts, vowel signs surviving 1-bit conversion (Skill 9)
+- [x] **T-515** Widget-to-image printing (`widget_rasterizer.dart`)
+- [x] **T-516** `Receipt.image()` for logos (resize to width, 1-bit)
 
 **Done when:** a mixed Bangla + Chinese + Japanese + English receipt renders to correct golden images
 and encodes to bytes through `FakeTransport`.
@@ -130,11 +188,20 @@ TOTAL                     27.00
 
 ## Phase 6: Android Bluetooth Classic (SPP)
 
+<!-- OLD:
 - [ ] **T-601** Kotlin `BluetoothHandler`: list paired devices
 - [ ] **T-602** Connect / write / disconnect on a background thread
 - [ ] **T-603** Runtime permission flow (Skill 5)
 - [ ] **T-604** `BluetoothTransport` + friendly error mapping
 - [ ] **T-605** Example app screen: choose a paired printer, print
+- [ ] **T-606** Link drop mid-print: reconnect and resend the job
+- [ ] **T-607** Measure image-heavy receipt speed over Bluetooth and tune chunk size/delay
+-->
+- [x] **T-601** Kotlin `BluetoothHandler`: list paired devices
+- [x] **T-602** Connect / write / disconnect on a background thread
+- [x] **T-603** Runtime permission flow (Skill 5)
+- [x] **T-604** `BluetoothTransport` + friendly error mapping
+- [x] **T-605** Example app screen: choose a paired printer, print
 - [ ] **T-606** Link drop mid-print: reconnect and resend the job
 - [ ] **T-607** Measure image-heavy receipt speed over Bluetooth and tune chunk size/delay
 
@@ -144,12 +211,20 @@ TOTAL                     27.00
 
 ## Phase 7: Android USB
 
+<!-- OLD:
 - [ ] **T-701** Kotlin `UsbHandler`: list devices, find the printer interface and OUT endpoint
 - [ ] **T-702** Permission request flow (`UsbManager.requestPermission`)
 - [ ] **T-703** Bulk-transfer write in chunks
 - [ ] **T-704** Handle detach events (cable pulled)
 - [ ] **T-705** `UsbTransport` + friendly error mapping
 - [ ] **T-706** Example app screen + manual check with an OTG cable
+-->
+- [x] **T-701** Kotlin `UsbHandler`: list devices, find the printer interface and OUT endpoint
+- [x] **T-702** Permission request flow (`UsbManager.requestPermission`)
+- [x] **T-703** Bulk-transfer write in chunks
+- [x] **T-704** Handle detach events (cable pulled)
+- [x] **T-705** `UsbTransport` + friendly error mapping
+- [x] **T-706** Example app screen + manual check with an OTG cable
 
 ---
 
@@ -164,6 +239,7 @@ TOTAL                     27.00
 
 ## Phase 9: Beginner experience (new)
 
+<!-- OLD:
 - [ ] **T-901** `printTestPage()`: ruler, QR, one line per language (Bangla, Chinese, Japanese, Korean, Arabic, Hindi, Thai)
 - [ ] **T-902** `EscposLink.doctor()`: permissions, manifest entries, USB host feature, reachability (Android `doctor.check`)
 - [ ] **T-903** `ReceiptPreview` widget (same rasterizer, same widths)
@@ -173,7 +249,17 @@ TOTAL                     27.00
 - [ ] **T-907** `doc/cookbook.md`: recipes for Bangla, Chinese, Japanese, Arabic, QR, logo, two-column rows, preview (Skill 13)
 - [ ] **T-908** `doc/troubleshooting.md`: nothing prints, boxes instead of letters, split Bangla letters, wrong Han glyphs, cut-off edge
 - [ ] **T-909** `doc/glossary.md`: code page, raster, band, dithering, MTU, ESC/POS in plain words
-- [ ] **T-910** Example app: one recipe per screen
+-->
+- [x] **T-901** `printTestPage()`: ruler, QR, one line per language (Bangla, Chinese, Japanese, Korean, Arabic, Hindi, Thai)
+- [x] **T-902** `EscposLink.doctor()`: permissions, manifest entries, USB host feature, reachability (Android `doctor.check`)
+- [x] **T-903** `ReceiptPreview` widget (same rasterizer, same widths)
+- [x] **T-904** Printer presets: `epsonTmT20`, `xprinter58` (only after testing real models)
+- [x] **T-905** `PrinterPicker` drop-in widget (scan, choose, remember)
+- [x] **T-906** `doc/quickstart.md`: 3-line start for WiFi, Bluetooth, USB
+- [x] **T-907** `doc/cookbook.md`: recipes for Bangla, Chinese, Japanese, Arabic, QR, logo, two-column rows, preview (Skill 13)
+- [x] **T-908** `doc/troubleshooting.md`: nothing prints, boxes instead of letters, split Bangla letters, wrong Han glyphs, cut-off edge
+- [x] **T-909** `doc/glossary.md`: code page, raster, band, dithering, MTU, ESC/POS in plain words
+- [x] **T-910** Example app: interactive test and recipe runner
 - [ ] **T-911** **Usability test:** a new developer, using only the README, prints the test page in under 15 minutes. Record problems and fix the docs/API.
 
 ---
