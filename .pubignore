@@ -1,0 +1,10 @@
+# Build and cache artifacts
+.dart_tool/
+build/
+*.iml
+.idea/
+.vscode/
+
+# Internal skills and CI
+skills/
+.github/

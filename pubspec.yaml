@@ -1,7 +1,11 @@
 name: posprint_kit
-description: "A new Flutter plugin project."
+# OLD:
+# description: "A new Flutter plugin project."
+# homepage:
+description: "Beginner-friendly ESC/POS thermal printer kit for Flutter supporting WiFi, Bluetooth, and USB OTG in Bangla, Arabic, CJK, and any language."
 version: 0.0.1
-homepage:
+repository: https://github.com/roman-dewan/posprint_kit
+issue_tracker: https://github.com/roman-dewan/posprint_kit/issues
 
 environment:
   sdk: ^3.13.0
