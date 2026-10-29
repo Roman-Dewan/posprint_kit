@@ -4,6 +4,8 @@ build/
 *.iml
 .idea/
 .vscode/
+example/**/build/
+example/.dart_tool/
 
 # Internal skills and CI
 skills/
