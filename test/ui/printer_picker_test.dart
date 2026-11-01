@@ -4,7 +4,8 @@ import 'package:posprint_kit/posprint_kit.dart';
 
 void main() {
   group('PrinterPicker Widget Tests (DX-9)', () {
-    testWidgets('renders transport selectors and triggers callback on save', (tester) async {
+    testWidgets('renders transport selectors and triggers callback on save',
+        (tester) async {
       EscposPrinter? selectedPrinter;
 
       await tester.pumpWidget(
@@ -33,7 +34,8 @@ void main() {
       expect(selectedPrinter?.profile, PrinterProfile.generic80);
     });
 
-    testWidgets('switching to Bluetooth shows Bluetooth address input', (tester) async {
+    testWidgets('switching to Bluetooth shows Bluetooth address input',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -52,4 +54,3 @@ void main() {
     });
   });
 }
-

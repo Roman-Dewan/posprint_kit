@@ -39,7 +39,8 @@ class BluetoothTransport implements PrinterTransport {
   BluetoothTransport(
     this.address, {
     this.maxChunkSize = 512,
-  }) : assert(address.trim().isNotEmpty, 'Bluetooth MAC address cannot be empty.');
+  }) : assert(address.trim().isNotEmpty,
+            'Bluetooth MAC address cannot be empty.');
 
   /// The MAC address of the target Bluetooth printer.
   final String address;
@@ -49,7 +50,8 @@ class BluetoothTransport implements PrinterTransport {
 
   static const MethodChannel _channel = MethodChannel('posprint_kit');
 
-  final _stateController = StreamController<PosConnectionState>.broadcast(sync: true);
+  final _stateController =
+      StreamController<PosConnectionState>.broadcast(sync: true);
   PosConnectionState _currentState = PosConnectionState.disconnected;
 
   @override
@@ -125,7 +127,8 @@ class BluetoothTransport implements PrinterTransport {
           PrinterError(
             PrinterErrorCode.connectionFailed,
             message: 'Could not connect to Bluetooth device $address.',
-            hint: 'Ensure the printer is powered on, paired in Android Bluetooth settings, '
+            hint:
+                'Ensure the printer is powered on, paired in Android Bluetooth settings, '
                 'and within 10 meters of this device.',
           ),
         );
@@ -206,7 +209,8 @@ class BluetoothTransport implements PrinterTransport {
         return const PrinterError(
           PrinterErrorCode.connectionFailed,
           message: 'Bluetooth is turned off on this device.',
-          hint: 'Enable Bluetooth in device settings and make sure the printer is paired.',
+          hint:
+              'Enable Bluetooth in device settings and make sure the printer is paired.',
         );
       case 'BLUETOOTH_UNAVAILABLE':
         return const PrinterError(
@@ -228,4 +232,3 @@ class BluetoothTransport implements PrinterTransport {
     }
   }
 }
-

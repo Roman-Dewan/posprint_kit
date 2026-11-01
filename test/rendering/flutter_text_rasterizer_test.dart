@@ -12,7 +12,9 @@ void main() {
       rasterizer = FlutterTextRasterizer(enableCache: true);
     });
 
-    test('renders Bangla text with conjuncts (ক্ষ, স্ত্র) into valid GrayBitmap', () async {
+    test(
+        'renders Bangla text with conjuncts (ক্ষ, স্ত্র) into valid GrayBitmap',
+        () async {
       final gray = await rasterizer.renderText(
         TestLanguages.bangla.complex,
         widthDots: 576,
@@ -67,7 +69,8 @@ void main() {
       expect(gray.pixels.any((p) => p < 128), isTrue);
     });
 
-    test('renderRow lays out left text and flushes price to right margin', () async {
+    test('renderRow lays out left text and flushes price to right margin',
+        () async {
       // 80 mm (576 dots)
       final row80 = await rasterizer.renderRow(
         'বার্গার x2',
@@ -150,7 +153,9 @@ void main() {
       expect(mono.data.length, 48 * gray.height);
     });
 
-    test('Mixed language receipt encodes through FakeTransport with FlutterTextRasterizer', () async {
+    test(
+        'Mixed language receipt encodes through FakeTransport with FlutterTextRasterizer',
+        () async {
       final fake = FakeTransport();
       final printer = EscposPrinter.custom(
         fake,
@@ -195,7 +200,9 @@ void main() {
       await printer.close();
     });
 
-    test('renderColumns: 3-column, 4-column, and 5-column layouts at 384 & 576 dots', () async {
+    test(
+        'renderColumns: 3-column, 4-column, and 5-column layouts at 384 & 576 dots',
+        () async {
       // 3-column layout: [Item, Qty, Total]
       final cols3 = [
         const PosColumn(text: 'Burger', width: 4),
@@ -265,7 +272,9 @@ void main() {
       expect(gray5_58.height, greaterThan(20));
     });
 
-    test('renderColumns: renders 5-column table across all 14 guaranteed languages', () async {
+    test(
+        'renderColumns: renders 5-column table across all 14 guaranteed languages',
+        () async {
       // 14 core languages: en, bn, de, es, fr, hi, ja, pt, ru, ta, te, th, tr, zh-Hans
       final languagesToTest = [
         TestLanguages.english,
@@ -286,7 +295,10 @@ void main() {
       var itemIndex = 1;
       for (final lang in languagesToTest) {
         final cols = [
-          PosColumn(text: '$itemIndex'.padLeft(2, '0'), width: 1, align: PosAlign.center),
+          PosColumn(
+              text: '$itemIndex'.padLeft(2, '0'),
+              width: 1,
+              align: PosAlign.center),
           PosColumn(text: lang.simple, width: 5),
           const PosColumn(text: '1', width: 1, align: PosAlign.center),
           const PosColumn(text: '10.00', width: 2, align: PosAlign.right),
@@ -321,7 +333,9 @@ void main() {
       }
     });
 
-    test('renderColumns: long wrapped item title does not clip remaining columns', () async {
+    test(
+        'renderColumns: long wrapped item title does not clip remaining columns',
+        () async {
       final cols = [
         const PosColumn(text: '01', width: 1, align: PosAlign.center),
         PosColumn(text: TestLanguages.chineseSimplified.longLine, width: 5),
@@ -355,4 +369,3 @@ void main() {
     });
   });
 }
-

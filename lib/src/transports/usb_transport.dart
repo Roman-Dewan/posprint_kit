@@ -65,7 +65,8 @@ class UsbTransport implements PrinterTransport {
 
   static const MethodChannel _channel = MethodChannel('posprint_kit');
 
-  final _stateController = StreamController<PosConnectionState>.broadcast(sync: true);
+  final _stateController =
+      StreamController<PosConnectionState>.broadcast(sync: true);
   PosConnectionState _currentState = PosConnectionState.disconnected;
 
   @override
@@ -141,7 +142,8 @@ class UsbTransport implements PrinterTransport {
     _updateState(PosConnectionState.connecting);
 
     try {
-      PosLogger.info('Opening USB connection to VID:$vendorId, PID:$productId...');
+      PosLogger.info(
+          'Opening USB connection to VID:$vendorId, PID:$productId...');
       final bool? success = await _channel.invokeMethod<bool>(
         'usb.connect',
         {'vendorId': vendorId, 'productId': productId},
@@ -156,8 +158,10 @@ class UsbTransport implements PrinterTransport {
         return Result.error(
           PrinterError(
             PrinterErrorCode.connectionFailed,
-            message: 'Could not connect to USB printer (VID: $vendorId, PID: $productId).',
-            hint: 'Ensure the printer is plugged into your device with an OTG cable and powered on.',
+            message:
+                'Could not connect to USB printer (VID: $vendorId, PID: $productId).',
+            hint:
+                'Ensure the printer is plugged into your device with an OTG cable and powered on.',
           ),
         );
       }
@@ -235,19 +239,22 @@ class UsbTransport implements PrinterTransport {
         return const PrinterError(
           PrinterErrorCode.permissionDenied,
           message: 'USB permission was denied for this printer.',
-          hint: 'Accept the USB device permission dialog when prompted on your Android screen.',
+          hint:
+              'Accept the USB device permission dialog when prompted on your Android screen.',
         );
       case 'DEVICE_NOT_FOUND':
         return const PrinterError(
           PrinterErrorCode.connectionFailed,
           message: 'USB printer device not found.',
-          hint: 'Check that the USB cable is securely connected and that the printer is turned on.',
+          hint:
+              'Check that the USB cable is securely connected and that the printer is turned on.',
         );
       case 'NO_ENDPOINT':
         return const PrinterError(
           PrinterErrorCode.connectionFailed,
           message: 'No bulk-transfer print endpoint found on this USB device.',
-          hint: 'Verify that the USB cable connects directly to the printer interface.',
+          hint:
+              'Verify that the USB cable connects directly to the printer interface.',
         );
       case 'CONNECTION_LOST':
       case 'WRITE_FAILED':
@@ -256,11 +263,11 @@ class UsbTransport implements PrinterTransport {
         return PrinterError(
           PrinterErrorCode.connectionFailed,
           message: e.message ?? 'Failed to open USB connection.',
-          hint: 'Check that the USB OTG adapter is compatible and securely attached.',
+          hint:
+              'Check that the USB OTG adapter is compatible and securely attached.',
         );
       default:
         return PrinterError.unknown(detail: e.message);
     }
   }
 }
-

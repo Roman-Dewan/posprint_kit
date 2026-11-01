@@ -40,7 +40,8 @@ void main() {
       expect(find.byIcon(Icons.content_cut), findsOneWidget);
     });
 
-    testWidgets('renders multi-column receipt (ColumnsOp) on screen', (tester) async {
+    testWidgets('renders multi-column receipt (ColumnsOp) on screen',
+        (tester) async {
       final receipt = Receipt()
         ..title('MULTI-COLUMN POS')
         ..divider()
@@ -78,9 +79,9 @@ void main() {
 
       expect(find.text('MULTI-COLUMN POS'), findsOneWidget);
       expect(find.text('Special Burger'), findsOneWidget);
-      expect(find.text('13.00'), findsNWidgets(2)); // line item total and summary total
+      expect(find.text('13.00'),
+          findsNWidgets(2)); // line item total and summary total
       expect(find.text('Price'), findsOneWidget);
     });
   });
 }
-

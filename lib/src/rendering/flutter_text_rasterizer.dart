@@ -156,7 +156,8 @@ class FlutterTextRasterizer implements TextRasterizer {
 
     final rightWidth = (rightParagraph.maxIntrinsicWidth.ceil()).toDouble();
     const gap = 16.0; // minimum space between left and right columns
-    final leftWidthAvailable = (widthDots - rightWidth - gap).clamp(20.0, widthDots.toDouble());
+    final leftWidthAvailable =
+        (widthDots - rightWidth - gap).clamp(20.0, widthDots.toDouble());
 
     // 2. Measure and wrap left text inside remaining box
     final isLeftRtl = _isRtl(languageTag);

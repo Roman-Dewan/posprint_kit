@@ -21,14 +21,18 @@ void main() {
       expect(TestLanguages.bangla.complex, contains('স্ত্রীর'));
     });
 
-    test('Guaranteed Indian scripts (Tamil & Telugu) contain expected ligatures', () {
+    test(
+        'Guaranteed Indian scripts (Tamil & Telugu) contain expected ligatures',
+        () {
       expect(TestLanguages.tamil.simple, 'நன்றி');
       expect(TestLanguages.tamil.complex, contains('தோசை'));
       expect(TestLanguages.telugu.simple, 'ధన్యవాదాలు');
       expect(TestLanguages.telugu.complex, contains('దోస'));
     });
 
-    test('European guaranteed scripts (German, Portuguese, Turkish) contain accents', () {
+    test(
+        'European guaranteed scripts (German, Portuguese, Turkish) contain accents',
+        () {
       expect(TestLanguages.german.simple, contains('Dankeschön'));
       expect(TestLanguages.portuguese.complex, contains('Pão de queijo'));
       expect(TestLanguages.turkish.complex, contains('İskender'));
@@ -39,4 +43,3 @@ void main() {
     });
   });
 }
-

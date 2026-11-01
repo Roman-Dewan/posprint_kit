@@ -87,4 +87,3 @@ class PrinterProfile {
   String toString() =>
       'PrinterProfile(dots: $dotsWidth, cols: $columnsNormal, maxBandRows: $maxBandRows)';
 }
-

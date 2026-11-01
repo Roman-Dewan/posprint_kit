@@ -1,3 +1,21 @@
+## 1.0.0 (stable)
+
+* **Multi-Column Printing (`Receipt.columns`)**:
+  - Support for 3, 4, 5+ columns (e.g., `[SL, Item Name, Qty, Price, Total]`).
+  - Configurable flex ratios (`width: 1`, `width: 5`), per-column alignment, clean whitespace, and multi-line wrapping.
+  - Monospace text engine formatter for pure Latin/ASCII rows and pixel-perfect isolate-backed rasterization for 58 mm (384 dots) and 80 mm (576 dots).
+* **Guaranteed 14-Language Engine**:
+  - Full support for Latin, German, Portuguese, Turkish, Bangla, Hindi, Tamil, Telugu, Arabic (RTL), Hebrew, Chinese, Japanese, Korean, and Thai.
+  - Automatic font fallback resolution including `Noto Sans Tamil` and `Noto Sans Telugu`.
+* **Unified Transports**:
+  - WiFi / LAN (port 9100) with automatic reconnection on disconnect.
+  - Android Bluetooth Classic (SPP / RFCOMM) with paired device discovery and Android 12+ runtime permission flows.
+  - Android USB OTG / Direct bulk OUT transfers with auto-permission request.
+* **Developer Experience**:
+  - Simplified, beginner-friendly example application with clear 3-step printing flow.
+  - Drop-in `ReceiptPreview` widget and `PrinterPicker` dialog.
+  - Diagnostics tool (`EscposLink.doctor()`) and hardware calibration test (`printTestPage()`).
+
 ## 0.0.1
 
 * Phase 0 Setup:

@@ -103,4 +103,3 @@ class PrinterManager {
     await transport.disconnect();
   }
 }
-

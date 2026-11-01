@@ -35,9 +35,8 @@ class ReceiptEncoder {
       buffer.add(Commands.init);
     }
 
-    CodePage currentCodePage = profile.codePages.isNotEmpty
-        ? profile.codePages.first
-        : CodePage.cp437;
+    CodePage currentCodePage =
+        profile.codePages.isNotEmpty ? profile.codePages.first : CodePage.cp437;
     buffer.add(Commands.selectCodePage(currentCodePage.commandNumber));
 
     PosAlign currentAlign = PosAlign.left;
@@ -292,7 +291,13 @@ class ReceiptEncoder {
           buffer.add(Commands.alignLeft);
           currentAlign = PosAlign.left;
 
-        case BarcodeOp(:final data, :final type, :final height, :final width, :final hri):
+        case BarcodeOp(
+            :final data,
+            :final type,
+            :final height,
+            :final width,
+            :final hri
+          ):
           if (currentAlign != PosAlign.center) {
             buffer.add(Commands.alignCenter);
             currentAlign = PosAlign.center;

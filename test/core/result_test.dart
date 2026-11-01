@@ -48,7 +48,8 @@ void main() {
       ];
 
       for (final err in errors) {
-        expect(err.message, isNotEmpty, reason: 'Message empty for ${err.code}');
+        expect(err.message, isNotEmpty,
+            reason: 'Message empty for ${err.code}');
         expect(err.hint, isNotEmpty, reason: 'Hint empty for ${err.code}');
       }
     });
@@ -64,4 +65,3 @@ void main() {
     });
   });
 }
-

@@ -93,14 +93,16 @@ class PosLogger {
     String message, {
     Object? error,
     StackTrace? stackTrace,
-  }) => log(LogLevel.warning, message, error: error, stackTrace: stackTrace);
+  }) =>
+      log(LogLevel.warning, message, error: error, stackTrace: stackTrace);
 
   /// Logs a [message] at [LogLevel.error].
   static void error(
     String message, {
     Object? error,
     StackTrace? stackTrace,
-  }) => log(LogLevel.error, message, error: error, stackTrace: stackTrace);
+  }) =>
+      log(LogLevel.error, message, error: error, stackTrace: stackTrace);
 
   static int _toDeveloperLogLevel(LogLevel level) {
     switch (level) {
@@ -119,4 +121,3 @@ class PosLogger {
     }
   }
 }
-

@@ -71,15 +71,20 @@ void main() {
       expect(attempts, 3); // initial + 2 retries
     });
 
-    test('two concurrent print calls do not interleave bytes (Skill 7)', () async {
+    test('two concurrent print calls do not interleave bytes (Skill 7)',
+        () async {
       // 8 PM rush scenario: order A and order B submitted 20 ms apart
       final fake = FakeTransport(
         writeDelay: const Duration(milliseconds: 30),
       );
       final printer = EscposPrinter.custom(fake);
 
-      final orderA = Receipt()..title('ORDER A')..cut();
-      final orderB = Receipt()..title('ORDER B')..cut();
+      final orderA = Receipt()
+        ..title('ORDER A')
+        ..cut();
+      final orderB = Receipt()
+        ..title('ORDER B')
+        ..cut();
 
       final aFuture = printer.print(orderA);
       await Future<void>.delayed(const Duration(milliseconds: 10));

@@ -8,7 +8,8 @@ class GrayBitmap {
     required this.width,
     required this.height,
     required this.pixels,
-  }) : assert(pixels.length == width * height, 'pixels length must equal width * height');
+  }) : assert(pixels.length == width * height,
+            'pixels length must equal width * height');
 
   /// Creates a blank white grayscale bitmap of the given dimensions.
   factory GrayBitmap.blank(int width, int height) {
@@ -67,7 +68,8 @@ class GrayBitmap {
     final monoData = Uint8List(bytesPerLine * height);
 
     // Working copy with float buffer for error diffusion
-    final buffer = Float32List.fromList(pixels.map((p) => p.toDouble()).toList());
+    final buffer =
+        Float32List.fromList(pixels.map((p) => p.toDouble()).toList());
 
     for (var y = 0; y < height; y++) {
       final lineOffset = y * bytesPerLine;
@@ -178,4 +180,3 @@ class MonoBitmap {
     return result;
   }
 }
-

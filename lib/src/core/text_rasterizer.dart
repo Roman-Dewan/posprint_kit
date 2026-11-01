@@ -146,4 +146,3 @@ class FakeRasterizer implements TextRasterizer {
     return GrayBitmap(width: width, height: mockHeight, pixels: pixels);
   }
 }
-

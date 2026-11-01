@@ -82,7 +82,8 @@ class EscposPrinter {
     TextRasterizer? rasterizer,
   })  : assert(vendorId > 0, 'vendorId must be a positive integer.'),
         assert(productId > 0, 'productId must be a positive integer.'),
-        transport = UsbTransport(vendorId: vendorId, productId: productId, maxChunkSize: 4096),
+        transport = UsbTransport(
+            vendorId: vendorId, productId: productId, maxChunkSize: 4096),
         rasterizer = rasterizer ?? const FakeRasterizer();
 
   /// Custom constructor allowing injection of any [PrinterTransport] (e.g. [FakeTransport]).
@@ -129,7 +130,8 @@ class EscposPrinter {
       ..text('posprint_kit diagnostic receipt', align: PosAlign.center)
       ..divider()
       ..text(ruler)
-      ..text('Width: ${profile.dotsWidth} dots | Cols: ${profile.columnsNormal}')
+      ..text(
+          'Width: ${profile.dotsWidth} dots | Cols: ${profile.columnsNormal}')
       ..divider()
       ..text('English: Thank you for your visit!')
       ..text('Español: Café crème brûlée & Niño')

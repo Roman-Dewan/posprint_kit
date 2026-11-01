@@ -20,7 +20,8 @@ import 'text_rasterizer.dart';
 ///   ..cut();
 /// ```
 class Receipt {
-  Receipt([List<ReceiptOp>? initialOps]) : ops = initialOps != null ? List.of(initialOps) : [];
+  Receipt([List<ReceiptOp>? initialOps])
+      : ops = initialOps != null ? List.of(initialOps) : [];
 
   /// Ready-made template for a standard retail/restaurant receipt.
   ///
@@ -55,7 +56,9 @@ class Receipt {
         ..text(footer, align: PosAlign.center);
     }
 
-    return receipt..feed(2)..cut();
+    return receipt
+      ..feed(2)
+      ..cut();
   }
 
   /// The recorded list of printing operations.
@@ -232,10 +235,8 @@ class Receipt {
   /// Pulses the cash drawer RJ11/RJ12 port to kick open the cash drawer.
   ///
   /// [pin5]: set to `true` for cash drawers wired to pin 5 instead of pin 2.
-  Receipt drawer({bool pin5 = false}) =>
-      _add(CashDrawerOp(pin5: pin5));
+  Receipt drawer({bool pin5 = false}) => _add(CashDrawerOp(pin5: pin5));
 
   /// Appends raw ESC/POS byte sequence directly.
   Receipt raw(Uint8List bytes) => _add(RawBytesOp(bytes));
 }
-

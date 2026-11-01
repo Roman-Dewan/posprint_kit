@@ -9,9 +9,11 @@ import 'package:posprint_kit/src/core/receipt_encoder.dart';
 
 void main() {
   group('ReceiptEncoder Golden-Bytes Tests', () {
-    test('text with bold, size and alignment emits matching ESC/POS commands', () async {
+    test('text with bold, size and alignment emits matching ESC/POS commands',
+        () async {
       final receipt = Receipt()
-        ..text('Centered Bold', align: PosAlign.center, bold: true, size: TextSize.doubleSize);
+        ..text('Centered Bold',
+            align: PosAlign.center, bold: true, size: TextSize.doubleSize);
 
       final bytes = await encodeForTest(receipt);
 
@@ -22,20 +24,35 @@ void main() {
       // Text: "Centered Bold\n"
       // Cleanup: bold off (1B 45 00), size normal (1D 21 00), align left (1B 61 00)
       final expected = <int>[
-        0x1B, 0x74, 0x00,
-        0x1B, 0x61, 0x01,
-        0x1B, 0x45, 0x01,
-        0x1D, 0x21, 0x11,
+        0x1B,
+        0x74,
+        0x00,
+        0x1B,
+        0x61,
+        0x01,
+        0x1B,
+        0x45,
+        0x01,
+        0x1D,
+        0x21,
+        0x11,
         ...ascii.encode('Centered Bold\n'),
-        0x1B, 0x45, 0x00,
-        0x1D, 0x21, 0x00,
-        0x1B, 0x61, 0x00,
+        0x1B,
+        0x45,
+        0x00,
+        0x1D,
+        0x21,
+        0x00,
+        0x1B,
+        0x61,
+        0x00,
       ];
 
       expect(bytes, expected);
     });
 
-    test('row formats native text with price flush against the right margin', () async {
+    test('row formats native text with price flush against the right margin',
+        () async {
       final receipt = Receipt()..row('Burger x2', '12.00');
 
       // 48 columns total for generic80
@@ -44,7 +61,9 @@ void main() {
 
       final expectedRow = 'Burger x2${' ' * 34}12.00\n';
       final expected = <int>[
-        0x1B, 0x74, 0x00,
+        0x1B,
+        0x74,
+        0x00,
         ...ascii.encode(expectedRow),
       ];
 
@@ -57,7 +76,9 @@ void main() {
 
       final expectedDivider = '${'-' * 48}\n';
       expect(bytes, [
-        0x1B, 0x74, 0x00,
+        0x1B,
+        0x74,
+        0x00,
         ...ascii.encode(expectedDivider),
       ]);
     });
@@ -75,7 +96,8 @@ void main() {
       ]);
     });
 
-    test('qr("HI") emits model, size, ecc, store, print matching Skill 4', () async {
+    test('qr("HI") emits model, size, ecc, store, print matching Skill 4',
+        () async {
       final receipt = Receipt()..qr('HI', size: 6);
       final bytes = await encodeForTest(receipt);
 
@@ -85,13 +107,15 @@ void main() {
         0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00, // model 2
         0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x06, // module size 6
         0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x31, // error correction M
-        0x1D, 0x28, 0x6B, 0x05, 0x00, 0x31, 0x50, 0x30, 0x48, 0x49, // store "HI"
+        0x1D, 0x28, 0x6B, 0x05, 0x00, 0x31, 0x50, 0x30, 0x48,
+        0x49, // store "HI"
         0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30, // print
         0x1B, 0x61, 0x00, // reset to align left
       ]);
     });
 
-    test('barcode(code128) emits height, width, hri, and barcode command', () async {
+    test('barcode(code128) emits height, width, hri, and barcode command',
+        () async {
       final receipt = Receipt()..barcode('1042', type: BarcodeType.code128);
       final bytes = await encodeForTest(receipt);
 
@@ -158,7 +182,8 @@ void main() {
       expect(bytes, containsAllInOrder(ascii.encode('MY RESTAURANT')));
 
       // Contains divider
-      expect(bytes, containsAllInOrder(ascii.encode('--------------------------------')));
+      expect(bytes,
+          containsAllInOrder(ascii.encode('--------------------------------')));
 
       // Contains row items
       expect(bytes, containsAllInOrder(ascii.encode('Burger x2')));
@@ -186,12 +211,16 @@ void main() {
       );
 
       expect(receipt.ops.length, greaterThanOrEqualTo(8));
-      expect(receipt.ops.any((op) => op is TextOp && op.text == 'BURGER SHOP'), isTrue);
-      expect(receipt.ops.any((op) => op is RowOp && op.left == 'Burger'), isTrue);
+      expect(receipt.ops.any((op) => op is TextOp && op.text == 'BURGER SHOP'),
+          isTrue);
+      expect(
+          receipt.ops.any((op) => op is RowOp && op.left == 'Burger'), isTrue);
       expect(receipt.ops.any((op) => op is CutOp), isTrue);
     });
 
-    test('Receipt.columns formats native ASCII table with flex widths and clean padding', () async {
+    test(
+        'Receipt.columns formats native ASCII table with flex widths and clean padding',
+        () async {
       final receipt = Receipt()
         ..columns([
           const PosColumn(text: '#', width: 1, align: PosAlign.center),
@@ -230,4 +259,3 @@ void main() {
     });
   });
 }
-

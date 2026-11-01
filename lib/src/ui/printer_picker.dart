@@ -112,7 +112,8 @@ class _PrinterPickerState extends State<PrinterPicker> {
           _statusMessage = 'Test page sent successfully!';
         } else {
           _isSuccess = false;
-          _statusMessage = '${res.errorOrNull?.message}\n${res.errorOrNull?.hint}';
+          _statusMessage =
+              '${res.errorOrNull?.message}\n${res.errorOrNull?.hint}';
         }
       });
     } catch (e) {
@@ -274,13 +275,17 @@ class _PrinterPickerState extends State<PrinterPicker> {
                   color: _isSuccess ? Colors.green.shade50 : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(6.0),
                   border: Border.all(
-                    color: _isSuccess ? Colors.green.shade300 : Colors.red.shade300,
+                    color: _isSuccess
+                        ? Colors.green.shade300
+                        : Colors.red.shade300,
                   ),
                 ),
                 child: Text(
                   _statusMessage!,
                   style: TextStyle(
-                    color: _isSuccess ? Colors.green.shade900 : Colors.red.shade900,
+                    color: _isSuccess
+                        ? Colors.green.shade900
+                        : Colors.red.shade900,
                     fontSize: 13.0,
                   ),
                 ),
@@ -320,4 +325,3 @@ class _PrinterPickerState extends State<PrinterPicker> {
     );
   }
 }
-

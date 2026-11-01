@@ -28,7 +28,8 @@ class WidgetRasterizer {
         child: repaintBoundary,
       ),
       configuration: ViewConfiguration(
-        logicalConstraints: BoxConstraints.tightFor(width: widthDots.toDouble()),
+        logicalConstraints:
+            BoxConstraints.tightFor(width: widthDots.toDouble()),
         devicePixelRatio: 1.0,
       ),
     );

@@ -8,7 +8,10 @@ void main() {
       final printer = EscposPrinter.custom(fake);
 
       // Line 1: Build receipt
-      final receipt = Receipt()..title('FAST BURGER')..row('Burger x1', '6.00')..cut();
+      final receipt = Receipt()
+        ..title('FAST BURGER')
+        ..row('Burger x1', '6.00')
+        ..cut();
 
       // Line 2: Print
       final result = await printer.print(receipt);
@@ -40,7 +43,8 @@ void main() {
     });
 
     test('surfaces friendly error if connection fails', () async {
-      final fake = FakeTransport()..persistentConnectError = PrinterError.connectionLost;
+      final fake = FakeTransport()
+        ..persistentConnectError = PrinterError.connectionLost;
       final printer = EscposPrinter.custom(fake);
 
       final result = await printer.print(Receipt()..text('Hi'));

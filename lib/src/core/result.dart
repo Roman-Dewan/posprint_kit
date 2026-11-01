@@ -56,7 +56,8 @@ class PrinterError {
   static const permissionDenied = PrinterError(
     PrinterErrorCode.permissionDenied,
     message: 'Bluetooth or device permission was denied.',
-    hint: 'Request the permission again. On Android 12+, ensure BLUETOOTH_CONNECT '
+    hint:
+        'Request the permission again. On Android 12+, ensure BLUETOOTH_CONNECT '
         'and BLUETOOTH_SCAN are declared in AndroidManifest.xml.',
   );
 
@@ -72,7 +73,8 @@ class PrinterError {
   static const paperOut = PrinterError(
     PrinterErrorCode.paperOut,
     message: 'The printer is out of paper.',
-    hint: 'Open the printer cover, insert a fresh paper roll, and close the cover securely.',
+    hint:
+        'Open the printer cover, insert a fresh paper roll, and close the cover securely.',
   );
 
   /// Standard cover open error.
@@ -83,11 +85,13 @@ class PrinterError {
   );
 
   /// Creates a [connectionFailed] error with host and port details.
-  static PrinterError connectionFailed({required String host, required int port}) =>
+  static PrinterError connectionFailed(
+          {required String host, required int port}) =>
       PrinterError(
         PrinterErrorCode.connectionFailed,
         message: 'Could not connect to the printer at $host:$port.',
-        hint: 'Check that the printer is on, connected to the same network as this device, '
+        hint:
+            'Check that the printer is on, connected to the same network as this device, '
             'and that the IP is correct (print a self-test page by holding the FEED button '
             'while powering on). Most network receipt printers use port 9100.',
       );
@@ -98,7 +102,8 @@ class PrinterError {
         PrinterErrorCode.timeout,
         message: 'The printer connection to $host timed out'
             '${duration != null ? ' after ${duration.inSeconds} seconds' : ''}.',
-        hint: 'Check that the printer is powered on and reachable on your local network. '
+        hint:
+            'Check that the printer is powered on and reachable on your local network. '
             'Check for firewall restrictions blocking port 9100.',
       );
 
@@ -118,7 +123,8 @@ class PrinterError {
   static PrinterError fontMissing({required String language}) => PrinterError(
         PrinterErrorCode.fontMissing,
         message: 'No system font found on this device for $language.',
-        hint: 'Supply a custom font family or fallback font (e.g. Noto Sans) in your '
+        hint:
+            'Supply a custom font family or fallback font (e.g. Noto Sans) in your '
             'TextStyleSpec configuration, or use an optional font pack.',
       );
 
@@ -126,7 +132,8 @@ class PrinterError {
   static PrinterError renderFailed({required String reason}) => PrinterError(
         PrinterErrorCode.renderFailed,
         message: 'Failed to rasterize receipt content: $reason',
-        hint: 'Verify that receipt dimensions are positive and that image assets exist and are valid.',
+        hint:
+            'Verify that receipt dimensions are positive and that image assets exist and are valid.',
       );
 
   /// Creates an [unknown] error with optional [detail].
@@ -135,12 +142,14 @@ class PrinterError {
         message: detail != null && detail.isNotEmpty
             ? 'An unexpected error occurred: $detail'
             : 'An unexpected printing error occurred.',
-        hint: 'Check the device console and package logs (EscposLink.logLevel = LogLevel.verbose) '
+        hint:
+            'Check the device console and package logs (EscposLink.logLevel = LogLevel.verbose) '
             'for more details.',
       );
 
   @override
-  String toString() => 'PrinterError($code, message: "$message", hint: "$hint")';
+  String toString() =>
+      'PrinterError($code, message: "$message", hint: "$hint")';
 
   @override
   bool operator ==(Object other) =>
@@ -222,7 +231,9 @@ final class Ok<T> extends Result<T> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Ok<T> && runtimeType == other.runtimeType && value == other.value;
+      other is Ok<T> &&
+          runtimeType == other.runtimeType &&
+          value == other.value;
 
   @override
   int get hashCode => Object.hash(runtimeType, value);
@@ -248,9 +259,10 @@ final class Err<T> extends Result<T> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Err<T> && runtimeType == other.runtimeType && error == other.error;
+      other is Err<T> &&
+          runtimeType == other.runtimeType &&
+          error == other.error;
 
   @override
   int get hashCode => Object.hash(runtimeType, error);
 }
-

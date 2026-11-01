@@ -36,7 +36,8 @@ abstract class PrinterTransport {
   /// Reads incoming bytes from the printer with an optional [timeout].
   ///
   /// Returns `null` if no data arrived before timeout.
-  Future<Result<Uint8List?>> read({Duration timeout = const Duration(seconds: 3)});
+  Future<Result<Uint8List?>> read(
+      {Duration timeout = const Duration(seconds: 3)});
 
   /// Closes the active connection and releases system resources.
   Future<void> disconnect();
@@ -53,4 +54,3 @@ abstract class PrinterTransport {
   /// Bluetooth Classic, 20–512 bytes for BLE depending on negotiated MTU.
   int get maxChunkSize;
 }
-

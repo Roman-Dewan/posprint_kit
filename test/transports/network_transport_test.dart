@@ -29,14 +29,17 @@ void main() {
       final writeRes = await transport.write(Uint8List.fromList([0x1B, 0x40]));
       expect(writeRes.isOk, isTrue);
 
-      final received = await serverReceived.future.timeout(const Duration(seconds: 3));
+      final received =
+          await serverReceived.future.timeout(const Duration(seconds: 3));
       expect(received, [0x1B, 0x40]);
 
       await transport.disconnect();
       await server.close();
     });
 
-    test('maps connection refusal to PrinterError.connectionFailed with host and port', () async {
+    test(
+        'maps connection refusal to PrinterError.connectionFailed with host and port',
+        () async {
       // Connect to an unused port on localhost
       final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       final unusedPort = server.port;
@@ -82,4 +85,3 @@ void main() {
     });
   });
 }
-

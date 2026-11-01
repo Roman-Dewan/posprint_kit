@@ -253,4 +253,3 @@ final class RawBytesOp extends ReceiptOp {
 
   final Uint8List bytes;
 }
-

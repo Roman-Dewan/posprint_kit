@@ -65,7 +65,8 @@ void main() {
       expect(result.valueOrNull!, isEmpty);
     });
 
-    test('requestPermission sends vendorId and productId and returns result', () async {
+    test('requestPermission sends vendorId and productId and returns result',
+        () async {
       MethodCall? recordedCall;
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall call) async {
@@ -79,7 +80,8 @@ void main() {
       final result = await UsbTransport.requestPermission(0x04b8, 0x0202);
       expect(result.isOk, isTrue);
       expect(result.valueOrNull, isTrue);
-      expect(recordedCall?.arguments, {'vendorId': 0x04b8, 'productId': 0x0202});
+      expect(
+          recordedCall?.arguments, {'vendorId': 0x04b8, 'productId': 0x0202});
     });
 
     test('connect, write, and disconnect work with valid responses', () async {
@@ -130,7 +132,8 @@ void main() {
         'usb.write',
         'usb.disconnect',
       ]);
-      expect(methodCalls[0].arguments, {'vendorId': 0x04b8, 'productId': 0x0202});
+      expect(
+          methodCalls[0].arguments, {'vendorId': 0x04b8, 'productId': 0x0202});
     });
 
     test('connect maps PERMISSION_DENIED to actionable PrinterError', () async {
@@ -155,7 +158,8 @@ void main() {
       expect(transport.currentState, PosConnectionState.disconnected);
     });
 
-    test('connect maps DEVICE_NOT_FOUND to connectionFailed with hint', () async {
+    test('connect maps DEVICE_NOT_FOUND to connectionFailed with hint',
+        () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall call) async {
         if (call.method == 'usb.connect') {

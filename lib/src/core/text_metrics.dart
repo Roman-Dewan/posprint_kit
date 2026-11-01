@@ -23,7 +23,8 @@ class TextMetrics {
 
     // East Asian Wide / Fullwidth ranges
     return (rune >= 0x1100 && rune <= 0x115F) || // Hangul Jamo
-        (rune >= 0x2E80 && rune <= 0x9FFF) || // CJK Radicals, Ideographs, Kangxi
+        (rune >= 0x2E80 &&
+            rune <= 0x9FFF) || // CJK Radicals, Ideographs, Kangxi
         (rune >= 0xAC00 && rune <= 0xD7AF) || // Hangul Syllables
         (rune >= 0xF900 && rune <= 0xFAFF) || // CJK Compatibility Ideographs
         (rune >= 0xFE30 && rune <= 0xFE4F) || // CJK Compatibility Forms
@@ -31,4 +32,3 @@ class TextMetrics {
         (rune >= 0xFFE0 && rune <= 0xFFE6); // Fullwidth symbols
   }
 }
-

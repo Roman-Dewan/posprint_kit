@@ -186,4 +186,3 @@ class CodePageEncoder {
     for (var r = 0xA0; r <= 0xFF; r++) r: r,
   };
 }
-

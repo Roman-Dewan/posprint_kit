@@ -33,7 +33,8 @@ class TestLanguages {
     code: 'en',
     simple: 'Thank you for your visit',
     complex: 'Burger x2 (w/ extra cheese & jalapeño) \$12.50',
-    longLine: 'This is a very long receipt item description that must wrap properly within the printer paper width',
+    longLine:
+        'This is a very long receipt item description that must wrap properly within the printer paper width',
   );
 
   static const latinAccents = LanguageFixture(
@@ -41,7 +42,8 @@ class TestLanguages {
     code: 'es_fr',
     simple: 'Café déjà vu & Niño',
     complex: 'Crème brûlée aux fraises fraîches - 8,50 €',
-    longLine: 'Por favor revise su cuenta detallada antes de retirarse del establecimiento comercial',
+    longLine:
+        'Por favor revise su cuenta detallada antes de retirarse del establecimiento comercial',
   );
 
   static const cyrillic = LanguageFixture(
@@ -49,7 +51,8 @@ class TestLanguages {
     code: 'ru',
     simple: 'Спасибо за покупку',
     complex: 'Борщ с пампушками и чесноком 450 ₽',
-    longLine: 'Добро пожаловать в наш уютный ресторан традиционной кухни в центре города',
+    longLine:
+        'Добро пожаловать в наш уютный ресторан традиционной кухни в центре города',
   );
 
   static const greek = LanguageFixture(
@@ -57,7 +60,8 @@ class TestLanguages {
     code: 'el',
     simple: 'Ευχαριστώ πολύ',
     complex: 'Χωριάτικη σαλάτα με φέτα και ελιές 7,80 €',
-    longLine: 'Σας ευχαριστούμε για την προτίμησή σας και ελπίζουμε να σας ξαναδούμε σύντομα',
+    longLine:
+        'Σας ευχαριστούμε για την προτίμησή σας και ελπίζουμε να σας ξαναδούμε σύντομα',
   );
 
   static const bangla = LanguageFixture(
@@ -66,7 +70,8 @@ class TestLanguages {
     languageTag: 'bn',
     simple: 'ধন্যবাদ',
     complex: 'ক্ষুদ্র ও মিষ্টি দই (স্ত্রীর পছন্দ) ৳১২০.০০',
-    longLine: 'আমাদের ঐতিহ্যবাহী রেস্তোরাঁয় আসার জন্য আপনাকে আন্তরিক ধন্যবাদ ও স্বাগতম জানাচ্ছি',
+    longLine:
+        'আমাদের ঐতিহ্যবাহী রেস্তোরাঁয় আসার জন্য আপনাকে আন্তরিক ধন্যবাদ ও স্বাগতম জানাচ্ছি',
   );
 
   static const hindi = LanguageFixture(
@@ -75,7 +80,8 @@ class TestLanguages {
     languageTag: 'hi',
     simple: 'धन्यवाद',
     complex: 'स्वादिष्ट मक्खन पनीर मसाला और नान ₹२८०.००',
-    longLine: 'हमारे भोजनालय में पधारने के लिए हार्दिक धन्यवाद, हम आपके सुखद भविष्य की कामना करते हैं',
+    longLine:
+        'हमारे भोजनालय में पधारने के लिए हार्दिक धन्यवाद, हम आपके सुखद भविष्य की कामना करते हैं',
   );
 
   static const chineseSimplified = LanguageFixture(
@@ -121,7 +127,8 @@ class TestLanguages {
     isRtl: true,
     simple: 'شكراً لزيارتكم',
     complex: 'وجبة شاورما دجاج مع بطاطس مقلية 25.50 ر.س',
-    longLine: 'شكراً جزيلاً لزيارتكم الكريمة لمطعمنا ونتمنى لكم يوماً سعيداً وشهية طيبة دائماً',
+    longLine:
+        'شكراً جزيلاً لزيارتكم الكريمة لمطعمنا ونتمنى لكم يوماً سعيداً وشهية طيبة دائماً',
   );
 
   static const thai = LanguageFixture(
@@ -130,7 +137,8 @@ class TestLanguages {
     languageTag: 'th',
     simple: 'ขอบคุณครับ',
     complex: 'ต้มยำกุ้งน้ำข้นพิเศษยอดมะพร้าว ฿220.00',
-    longLine: 'ขอขอบพระคุณลูกค้าทุกท่านที่ให้เกียรติมาอุดหนุนร้านอาหารของเราในโอกาสนี้',
+    longLine:
+        'ขอขอบพระคุณลูกค้าทุกท่านที่ให้เกียรติมาอุดหนุนร้านอาหารของเราในโอกาสนี้',
   );
 
   static const german = LanguageFixture(
@@ -139,7 +147,8 @@ class TestLanguages {
     languageTag: 'de',
     simple: 'Dankeschön',
     complex: 'Wiener Schnitzel mit Kartoffelsalat & Käse - 18,90 €',
-    longLine: 'Vielen Dank für Ihren Besuch in unserem traditionellen Restaurant und bis zum nächsten Mal',
+    longLine:
+        'Vielen Dank für Ihren Besuch in unserem traditionellen Restaurant und bis zum nächsten Mal',
   );
 
   static const portuguese = LanguageFixture(
@@ -148,7 +157,8 @@ class TestLanguages {
     languageTag: 'pt',
     simple: 'Muito obrigado',
     complex: 'Pão de queijo quentinho com café expresso R\$ 12,50',
-    longLine: 'Agradecemos a sua preferência e esperamos recebê-lo novamente em nosso estabelecimento comercial',
+    longLine:
+        'Agradecemos a sua preferência e esperamos recebê-lo novamente em nosso estabelecimento comercial',
   );
 
   static const turkish = LanguageFixture(
@@ -157,7 +167,8 @@ class TestLanguages {
     languageTag: 'tr',
     simple: 'Teşekkürler',
     complex: 'Özel Soslu İskender Kebap ve Fıstıklı Baklava 340 ₺',
-    longLine: 'Bizi tercih ettiğiniz için çok teşekkür eder afiyetler diler tekrar bekleriz',
+    longLine:
+        'Bizi tercih ettiğiniz için çok teşekkür eder afiyetler diler tekrar bekleriz',
   );
 
   static const tamil = LanguageFixture(
@@ -166,7 +177,8 @@ class TestLanguages {
     languageTag: 'ta',
     simple: 'நன்றி',
     complex: 'சுவையான தயிர் சாதம் மற்றும் நெய் தோசை ₹140.00',
-    longLine: 'எங்கள் உணவகத்திற்கு வருகை தந்தமைக்கு மனமார்ந்த நன்றி மீண்டும் வருக நல்வரவு',
+    longLine:
+        'எங்கள் உணவகத்திற்கு வருகை தந்தமைக்கு மனமார்ந்த நன்றி மீண்டும் வருக நல்வரவு',
   );
 
   static const telugu = LanguageFixture(
@@ -175,7 +187,8 @@ class TestLanguages {
     languageTag: 'te',
     simple: 'ధన్యవాదాలు',
     complex: 'రుచికరమైన మసాలా దోస మరియు ఇడ్లీ సాంబార్ ₹120.00',
-    longLine: 'మా రెస్టారెంట్‌ను సందర్శించినందుకు మీకు హృదయపూర్వక ధన్యవాదాలు మళ్ళీ రండి',
+    longLine:
+        'మా రెస్టారెంట్‌ను సందర్శించినందుకు మీకు హృదయపూర్వక ధన్యవాదాలు మళ్ళీ రండి',
   );
 
   /// All supported fixtures in a convenient list, covering all 14 guaranteed core languages

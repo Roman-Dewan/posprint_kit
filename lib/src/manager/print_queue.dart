@@ -126,7 +126,8 @@ class PrintQueue {
           PrinterError(
             PrinterErrorCode.connectionLost,
             message: 'Print job was cancelled.',
-            hint: 'The print queue was cleared or closed before the job started.',
+            hint:
+                'The print queue was cleared or closed before the job started.',
           ),
         ),
       );

@@ -54,7 +54,8 @@ class NetworkTransport implements PrinterTransport {
     _updateState(PosConnectionState.connecting);
 
     try {
-      PosLogger.info('Connecting to printer at $host:$port (timeout: ${timeout.inSeconds}s)...');
+      PosLogger.info(
+          'Connecting to printer at $host:$port (timeout: ${timeout.inSeconds}s)...');
       _socket = await Socket.connect(host, port, timeout: timeout);
 
       _socketSubscription = _socket!.listen(
@@ -68,10 +69,12 @@ class NetworkTransport implements PrinterTransport {
       PosLogger.info('Connected to printer at $host:$port.');
       return const Result.ok(null);
     } on SocketException catch (e) {
-      PosLogger.error('Failed to connect to printer at $host:$port: ${e.message}');
+      PosLogger.error(
+          'Failed to connect to printer at $host:$port: ${e.message}');
       _cleanupSocket();
       _updateState(PosConnectionState.disconnected);
-      return Result.error(PrinterError.connectionFailed(host: host, port: port));
+      return Result.error(
+          PrinterError.connectionFailed(host: host, port: port));
     } on TimeoutException {
       PosLogger.error('Connection to printer at $host:$port timed out.');
       _cleanupSocket();
@@ -101,7 +104,8 @@ class NetworkTransport implements PrinterTransport {
       await _socket!.flush();
       return const Result.ok(null);
     } on SocketException catch (e) {
-      PosLogger.error('SocketException during write to $host:$port: ${e.message}');
+      PosLogger.error(
+          'SocketException during write to $host:$port: ${e.message}');
       await disconnect();
       return const Result.error(PrinterError.connectionLost);
     } catch (e) {
@@ -145,7 +149,8 @@ class NetworkTransport implements PrinterTransport {
   }
 
   void _onError(Object error) {
-    PosLogger.warning('Socket error on printer connection to $host:$port: $error');
+    PosLogger.warning(
+        'Socket error on printer connection to $host:$port: $error');
     disconnect();
   }
 

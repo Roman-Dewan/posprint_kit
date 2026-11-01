@@ -36,14 +36,16 @@ void main() {
     });
 
     test('injecting nextConnectError produces expected error', () async {
-      final fake = FakeTransport()..nextConnectError = PrinterError.permissionDenied;
+      final fake = FakeTransport()
+        ..nextConnectError = PrinterError.permissionDenied;
       final res = await fake.connect();
       expect(res.isError, isTrue);
       expect(res.errorOrNull?.code, PrinterErrorCode.permissionDenied);
     });
 
     test('injecting nextWriteError produces expected error', () async {
-      final fake = FakeTransport()..nextWriteError = PrinterError.connectionLost;
+      final fake = FakeTransport()
+        ..nextWriteError = PrinterError.connectionLost;
       await fake.connect();
       final res = await fake.write(Uint8List.fromList([0x1B, 0x40]));
       expect(res.isError, isTrue);

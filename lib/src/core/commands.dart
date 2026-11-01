@@ -144,18 +144,40 @@ class Commands {
 
   /// GS ( k 4 0 49 65 50 0: Select QR code model 2.
   static const List<int> qrSelectModel2 = [
-    0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00,
+    0x1D,
+    0x28,
+    0x6B,
+    0x04,
+    0x00,
+    0x31,
+    0x41,
+    0x32,
+    0x00,
   ];
 
   /// GS ( k 3 0 49 67 [size]: Set QR module size (1 <= size <= 16).
   static Uint8List qrModuleSize(int size) => Uint8List.fromList([
-        0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, size.clamp(1, 16),
+        0x1D,
+        0x28,
+        0x6B,
+        0x03,
+        0x00,
+        0x31,
+        0x43,
+        size.clamp(1, 16),
       ]);
 
   /// GS ( k 3 0 49 69 [level]: Set QR error correction level.
   /// L = 48 (7%), M = 49 (15%), Q = 50 (25%), H = 51 (30%).
   static Uint8List qrErrorCorrection(int levelByte) => Uint8List.fromList([
-        0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, levelByte,
+        0x1D,
+        0x28,
+        0x6B,
+        0x03,
+        0x00,
+        0x31,
+        0x45,
+        levelByte,
       ]);
 
   /// GS ( k pL pH 49 80 48 [data]: Store QR data in symbol storage area.
@@ -178,7 +200,14 @@ class Commands {
 
   /// GS ( k 3 0 49 81 48: Print the QR code data stored in the symbol storage area.
   static const List<int> qrPrint = [
-    0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30,
+    0x1D,
+    0x28,
+    0x6B,
+    0x03,
+    0x00,
+    0x31,
+    0x51,
+    0x30,
   ];
 
   // ---------------------------------------------------------------------------
@@ -220,15 +249,22 @@ class Commands {
   static Uint8List rasterHeader({
     required int bytesPerLine,
     required int heightDots,
-    int mode = 0x00, // 0: normal, 1: double-width, 2: double-height, 3: quadruple
+    int mode =
+        0x00, // 0: normal, 1: double-width, 2: double-height, 3: quadruple
   }) {
     final xL = bytesPerLine & 0xFF;
     final xH = (bytesPerLine >> 8) & 0xFF;
     final yL = heightDots & 0xFF;
     final yH = (heightDots >> 8) & 0xFF;
     return Uint8List.fromList([
-      0x1D, 0x76, 0x30, mode & 0x03, xL, xH, yL, yH,
+      0x1D,
+      0x76,
+      0x30,
+      mode & 0x03,
+      xL,
+      xH,
+      yL,
+      yH,
     ]);
   }
 }
-

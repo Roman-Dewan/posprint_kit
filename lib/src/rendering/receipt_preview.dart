@@ -190,7 +190,8 @@ class ReceiptPreview extends StatelessWidget {
                   const Icon(Icons.qr_code_2, size: 80.0, color: Colors.black),
                   Text(
                     data,
-                    style: const TextStyle(fontSize: 10.0, color: Colors.black54),
+                    style:
+                        const TextStyle(fontSize: 10.0, color: Colors.black54),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -224,7 +225,8 @@ class ReceiptPreview extends StatelessWidget {
                 const SizedBox(height: 2.0),
                 Text(
                   data,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 11.0),
+                  style:
+                      const TextStyle(fontFamily: 'monospace', fontSize: 11.0),
                 ),
               ],
             ),
@@ -245,4 +247,3 @@ class ReceiptPreview extends StatelessWidget {
     }
   }
 }
-

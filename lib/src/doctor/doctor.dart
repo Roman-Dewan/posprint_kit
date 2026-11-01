@@ -93,8 +93,10 @@ class Doctor {
           const DoctorCheck(
             name: 'iOS Transport Capabilities',
             passed: true,
-            message: 'WiFi and BLE are supported. (Apple iOS does not permit generic USB or Bluetooth Classic SPP).',
-            hint: 'Ensure NSLocalNetworkUsageDescription and NSBluetoothAlwaysUsageDescription are declared in Info.plist.',
+            message:
+                'WiFi and BLE are supported. (Apple iOS does not permit generic USB or Bluetooth Classic SPP).',
+            hint:
+                'Ensure NSLocalNetworkUsageDescription and NSBluetoothAlwaysUsageDescription are declared in Info.plist.',
           ),
         );
       } else if (Platform.isAndroid) {
@@ -102,8 +104,10 @@ class Doctor {
           const DoctorCheck(
             name: 'Android Transport Capabilities',
             passed: true,
-            message: 'WiFi, Bluetooth Classic SPP, BLE, and USB OTG are supported.',
-            hint: 'For Bluetooth on Android 12+, ensure BLUETOOTH_CONNECT is declared. For USB, add <uses-feature android.hardware.usb.host android:required="false" />.',
+            message:
+                'WiFi, Bluetooth Classic SPP, BLE, and USB OTG are supported.',
+            hint:
+                'For Bluetooth on Android 12+, ensure BLUETOOTH_CONNECT is declared. For USB, add <uses-feature android.hardware.usb.host android:required="false" />.',
           ),
         );
       }

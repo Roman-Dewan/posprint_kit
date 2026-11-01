@@ -82,7 +82,8 @@ class TextEngine {
     final maxLeftCols = cols - rightWidth - 1;
     if (maxLeftCols > 0) {
       final truncatedLeft = _wrapOrTruncate(left, maxLeftCols);
-      final padding = cols - TextMetrics.columnWidth(truncatedLeft) - rightWidth;
+      final padding =
+          cols - TextMetrics.columnWidth(truncatedLeft) - rightWidth;
       return '$truncatedLeft${' ' * padding.clamp(1, cols)}$right\n';
     }
 
@@ -264,4 +265,3 @@ class TextEngine {
     return result.isEmpty ? const [''] : result;
   }
 }
-

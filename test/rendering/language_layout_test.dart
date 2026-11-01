@@ -11,7 +11,9 @@ void main() {
       rasterizer = FlutterTextRasterizer();
     });
 
-    test('T-512 Han unification: renders with zh-Hans and ja locales without crashing', () async {
+    test(
+        'T-512 Han unification: renders with zh-Hans and ja locales without crashing',
+        () async {
       // Characters that vary under Han unification: 直, 骨
       const hanText = '直骨';
 
@@ -35,7 +37,8 @@ void main() {
       expect(jaBitmap.pixels.any((p) => p < 128), isTrue);
     });
 
-    test('T-513 Bangla conjuncts and vowel marks survive 1-bit conversion', () async {
+    test('T-513 Bangla conjuncts and vowel marks survive 1-bit conversion',
+        () async {
       // Test words with small dependent vowel signs and conjunct clusters:
       // কি, কু, ধন্যবাদ, ক্ষুদ্র, স্ত্রী
       const banglaText = 'কি কু ধন্যবাদ ক্ষুদ্র স্ত্রী';
@@ -64,7 +67,8 @@ void main() {
       expect(blackDotsCount, greaterThan(100));
     });
 
-    test('Tamil and Telugu ligatures and vowel signs survive 1-bit conversion', () async {
+    test('Tamil and Telugu ligatures and vowel signs survive 1-bit conversion',
+        () async {
       // Tamil: நன்றி, தயிர் சாதம்
       final taGray = await rasterizer.renderText(
         'நன்றி தயிர் சாதம் நெய் தோசை',
@@ -113,4 +117,3 @@ void main() {
     });
   });
 }
-

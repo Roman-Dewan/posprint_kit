@@ -48,7 +48,8 @@ void main() {
       expect(result.valueOrNull!, isEmpty);
     });
 
-    test('listPairedDevices maps PERMISSION_DENIED to actionable PrinterError', () async {
+    test('listPairedDevices maps PERMISSION_DENIED to actionable PrinterError',
+        () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall call) async {
         if (call.method == 'bt.listPaired') {
@@ -67,7 +68,8 @@ void main() {
       expect(err.hint, contains('BLUETOOTH_CONNECT'));
     });
 
-    test('listPairedDevices maps BLUETOOTH_DISABLED to actionable PrinterError', () async {
+    test('listPairedDevices maps BLUETOOTH_DISABLED to actionable PrinterError',
+        () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (MethodCall call) async {
         if (call.method == 'bt.listPaired') {
