@@ -1,25 +1,23 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:posprint_kit/advanced.dart';
-import 'package:posprint_kit/posprint_kit.dart';
 
 void main() {
   runApp(const PosPrintKitExampleApp());
 }
 
-
-/// Alias for backwards compatibility with widget tests.
+/// Alias for backwards compatibility with existing widget tests.
 typedef MyApp = PosPrintKitExampleApp;
 
-/// Main example application for testing posprint_kit features.
+/// A simple, beginner-friendly demo app showing how to use `posprint_kit`
+/// to print thermal receipts over WiFi, Bluetooth, and USB in any language.
 class PosPrintKitExampleApp extends StatelessWidget {
   const PosPrintKitExampleApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'POS Print Kit Test App',
+      title: 'POS Print Kit Test Code',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
@@ -38,42 +36,26 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  String _platformVersion = 'Loading...';
   PrinterProfile _selectedProfile = PrinterProfile.generic80;
+  bool _use5ColumnReceipt = false;
 
-  // Network printer config
+  // Connection inputs
   final _hostController = TextEditingController(text: '192.168.0.101');
   final _portController = TextEditingController(text: '9100');
-
-  // Bluetooth printer config & state
   final _btAddressController = TextEditingController(text: '1C:1A:1B:CE:47:09');
-  List<BluetoothDevice> _pairedBtDevices = [];
-  BluetoothDevice? _selectedBtDevice;
-  bool _isScanningBt = false;
-
-  // USB printer config & state
   final _usbVidController = TextEditingController(text: '0x324F');
   final _usbPidController = TextEditingController(text: '0x00D2');
-  List<UsbDevice> _usbDevices = [];
-  UsbDevice? _selectedUsbDevice;
-  bool _isScanningUsb = false;
 
-  // Diagnostics & Status
+  // Discovered devices & doctor report
+  List<BluetoothDevice> _pairedBtDevices = [];
+  BluetoothDevice? _selectedBtDevice;
+  List<UsbDevice> _usbDevices = [];
+  DoctorReport? _doctorReport;
+
+  // Status & loading indicators
   String? _statusMessage;
   bool _isSuccess = true;
   bool _isLoading = false;
-  DoctorReport? _doctorReport;
-
-  // In-memory test output
-  Uint8List? _lastRecordedBytes;
-  int _lastBytesLength = 0;
-  bool _use5ColumnReceipt = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initPlatformState();
-  }
 
   @override
   void dispose() {
@@ -85,48 +67,41 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> _initPlatformState() async {
-    String platformVersion;
-    try {
-      final plugin = PosprintKit();
-      platformVersion =
-          await plugin.getPlatformVersion() ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
+  // ---------------------------------------------------------------------------
+  // RECEIPT BUILDERS: Clean examples of how to format receipts
+  // ---------------------------------------------------------------------------
 
-    if (!mounted) return;
-    setState(() {
-      _platformVersion = platformVersion;
-    });
-  }
-
+  /// Example 1: Standard 2-column receipt with multi-language support.
   Receipt _buildSampleReceipt() {
     return Receipt()
       ..title('MY RESTAURANT')
-      ..text('Order #1042 • Dine-in • Table 4', align: PosAlign.center)
+      ..text('Table 4 • Dine-in • Order #1042', align: PosAlign.center)
       ..divider()
+      // English (native monospace text)
       ..row('Burger x2 (w/ cheese)', '12.00')
+      // Bangla (auto-rendered as high-res 1-bit thermal image with joined conjuncts)
       ..row('বার্গার x1 (চিজি)', '6.00', languageTag: 'bn')
+      // Japanese Kanji + Kana
       ..row('チキンカレー x1', '9.00', languageTag: 'ja')
+      // Simplified Chinese
       ..row('招牌牛肉面 x1', '14.50', languageTag: 'zh-Hans')
+      // Arabic (auto-rendered Right-to-Left)
       ..row('وجبة شاورما x1', '8.50', languageTag: 'ar')
       ..divider()
       ..total('TOTAL', '50.00')
       ..feed(1)
-      ..qr('https://github.com/posprint_kit/order/1042', size: 6)
+      ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
       ..barcode('10429812', type: BarcodeType.code128)
       ..feed(2)
       ..cut();
   }
 
-  /// Builds a realistic 5-column restaurant order receipt demonstrating [Receipt.columns]:
-  /// [# (SL), Item Name, Qty, Price, Total] with multi-line auto-wrapping,
-  /// flex ratios (1:5:1:2:2), per-column alignment, clean whitespace, and multilingual scripts.
+  /// Example 2: 5-column restaurant table layout using [Receipt.columns].
+  /// Shows flex ratios [1, 5, 1, 2, 2], column alignments, and text auto-wrapping.
   Receipt _build5ColumnOrderReceipt() {
     return Receipt()
       ..title('5-COLUMN BISTRO ORDER')
-      ..text('Order #1042 • Table 12 • 5-Column POS Format', align: PosAlign.center)
+      ..text('Order #1042 • 5-Column POS Format', align: PosAlign.center)
       ..divider()
       ..columns([
         const PosColumn(text: '#', width: 1, align: PosAlign.center),
@@ -138,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..divider()
       ..columns([
         const PosColumn(text: '01', width: 1, align: PosAlign.center),
-        const PosColumn(text: 'আরাবিকা কফি বিন ১২ আউন্স', width: 5),
+        const PosColumn(text: 'আরাবিকা কফি বিন (Coffee)', width: 5),
         const PosColumn(text: '50', width: 1, align: PosAlign.center),
         const PosColumn(text: '100.00', width: 2, align: PosAlign.right),
         const PosColumn(text: '5000.00', width: 2, align: PosAlign.right),
@@ -152,20 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ], languageTag: 'ja')
       ..columns([
         const PosColumn(text: '03', width: 1, align: PosAlign.center),
-        const PosColumn(text: '招牌红烧牛肉面 (Beef Noodles)', width: 5),
-        const PosColumn(text: '1', width: 1, align: PosAlign.center),
-        const PosColumn(text: '14.00', width: 2, align: PosAlign.right),
-        const PosColumn(text: '14.00', width: 2, align: PosAlign.right),
-      ], languageTag: 'zh-Hans')
-      ..columns([
-        const PosColumn(text: '04', width: 1, align: PosAlign.center),
-        const PosColumn(text: 'మసాలా దోస (Masala Dosa)', width: 5),
-        const PosColumn(text: '2', width: 1, align: PosAlign.center),
-        const PosColumn(text: '5.00', width: 2, align: PosAlign.right),
-        const PosColumn(text: '10.00', width: 2, align: PosAlign.right),
-      ], languageTag: 'te')
-      ..columns([
-        const PosColumn(text: '05', width: 1, align: PosAlign.center),
         const PosColumn(text: 'Fresh Lemon Mint Iced Tea', width: 5),
         const PosColumn(text: '3', width: 1, align: PosAlign.center),
         const PosColumn(text: '3.00', width: 2, align: PosAlign.right),
@@ -174,8 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..divider()
       ..total('TOTAL', '54.50')
       ..feed(1)
-      ..qr('https://github.com/posprint_kit/order/5cols-1042', size: 6)
-      ..barcode('10429812', type: BarcodeType.code128)
+      ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
       ..feed(2)
       ..cut();
   }
@@ -183,90 +143,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Receipt _getActiveReceipt() =>
       _use5ColumnReceipt ? _build5ColumnOrderReceipt() : _buildSampleReceipt();
 
-  Future<void> _runVirtualPrintTest() async {
+  // ---------------------------------------------------------------------------
+  // PRINT EXECUTION HELPER: Clean 3-step printing flow
+  // ---------------------------------------------------------------------------
+
+  Future<void> _executePrint(
+    String targetLabel,
+    EscposPrinter printer, {
+    bool testPageOnly = false,
+  }) async {
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Encoding receipt into ESC/POS bytes...';
+      _statusMessage = 'Sending print job to $targetLabel...';
       _isSuccess = true;
     });
-
-    final fakeTransport = FakeTransport();
-    final printer = EscposPrinter.custom(
-      fakeTransport,
-      profile: _selectedProfile,
-      rasterizer: FlutterTextRasterizer(),
-    );
-
-    final stopwatch = Stopwatch()..start();
-    final receipt = _getActiveReceipt();
-    final result = await printer.print(receipt);
-    stopwatch.stop();
-
-    await printer.close();
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-      if (result.isOk) {
-        _isSuccess = true;
-        _lastRecordedBytes = fakeTransport.recordedBytes;
-        _lastBytesLength = fakeTransport.recordedBytes.length;
-        _statusMessage =
-            'Virtual print test succeeded in ${stopwatch.elapsedMilliseconds} ms!\n'
-            'Generated $_lastBytesLength bytes across ${fakeTransport.writtenChunks.length} chunks.';
-      } else {
-        _isSuccess = false;
-        final err = result.errorOrNull!;
-        _statusMessage = 'Virtual print failed: ${err.message}\nHint: ${err.hint}';
-      }
-    });
-  }
-
-  Future<void> _printToWiFiPrinter({bool testPageOnly = false}) async {
-    final host = _hostController.text.trim();
-    final port = int.tryParse(_portController.text.trim()) ?? 9100;
-
-    if (host.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a printer IP address.')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _statusMessage = 'Connecting to WiFi printer at $host:$port...';
-      _isSuccess = true;
-    });
-
-    final printer = EscposPrinter.wifi(
-      host,
-      port: port,
-      profile: _selectedProfile,
-      rasterizer: FlutterTextRasterizer(),
-    );
 
     try {
       final Result<void> result;
       if (testPageOnly) {
+        // Prints calibration ruler and all supported language sample lines
         result = await printer.printTestPage();
       } else {
+        // Prints the active receipt
         result = await printer.print(_getActiveReceipt());
       }
       await printer.close();
 
       if (!mounted) return;
-
       setState(() {
         _isLoading = false;
         if (result.isOk) {
           _isSuccess = true;
-          _statusMessage = 'Receipt printed successfully to $host:$port!';
+          _statusMessage = 'Success! Receipt printed cleanly to $targetLabel.';
         } else {
           _isSuccess = false;
           final err = result.errorOrNull!;
-          _statusMessage = 'Print failed: ${err.message}\n\nHint: ${err.hint}';
+          _statusMessage = 'Print Error: ${err.message}\nHint: ${err.hint}';
         }
       });
     } catch (e) {
@@ -279,18 +191,109 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _refreshBluetoothDevices() async {
+  // ---------------------------------------------------------------------------
+  // ACTION HANDLERS
+  // ---------------------------------------------------------------------------
+
+  Future<void> _printWiFi({bool testPageOnly = false}) async {
+    final host = _hostController.text.trim();
+    final port = int.tryParse(_portController.text.trim()) ?? 9100;
+    if (host.isEmpty) {
+      _setStatus('Please enter an IP address.', success: false);
+      return;
+    }
+
+    final printer = EscposPrinter.wifi(
+      host,
+      port: port,
+      profile: _selectedProfile,
+      rasterizer: FlutterTextRasterizer(),
+    );
+    await _executePrint(
+      'WiFi ($host:$port)',
+      printer,
+      testPageOnly: testPageOnly,
+    );
+  }
+
+  Future<void> _printBluetooth({bool testPageOnly = false}) async {
+    final address = _btAddressController.text.trim();
+    if (address.isEmpty) {
+      _setStatus(
+        'Please select or enter a Bluetooth MAC address.',
+        success: false,
+      );
+      return;
+    }
+
+    final printer = EscposPrinter.bluetooth(
+      address,
+      profile: _selectedProfile,
+      rasterizer: FlutterTextRasterizer(),
+    );
+    await _executePrint(
+      'Bluetooth ($address)',
+      printer,
+      testPageOnly: testPageOnly,
+    );
+  }
+
+  Future<void> _printUsb({bool testPageOnly = false}) async {
+    final vid = _parseId(_usbVidController.text, 0x04b8);
+    final pid = _parseId(_usbPidController.text, 0x0202);
+
+    final printer = EscposPrinter.usb(
+      vendorId: vid,
+      productId: pid,
+      profile: _selectedProfile,
+      rasterizer: FlutterTextRasterizer(),
+    );
+    await _executePrint(
+      'USB (VID 0x${vid.toRadixString(16)})',
+      printer,
+      testPageOnly: testPageOnly,
+    );
+  }
+
+  Future<void> _runVirtualPrintTest() async {
     setState(() {
-      _isScanningBt = true;
-      _statusMessage = 'Scanning paired Bluetooth devices...';
+      _isLoading = true;
+      _statusMessage = 'Running virtual in-memory print test...';
       _isSuccess = true;
     });
 
-    var res = await BluetoothTransport.listPairedDevices();
+    final fakeTransport = FakeTransport();
+    final printer = EscposPrinter.custom(
+      fakeTransport,
+      profile: _selectedProfile,
+      rasterizer: FlutterTextRasterizer(),
+    );
 
-    // On Android 12+ (API 31+), if permission denied, prompt for runtime permission
-    if (res.isError &&
-        res.errorOrNull?.code == PrinterErrorCode.permissionDenied) {
+    final stopwatch = Stopwatch()..start();
+    final result = await printer.print(_getActiveReceipt());
+    stopwatch.stop();
+    await printer.close();
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      if (result.isOk) {
+        _isSuccess = true;
+        _statusMessage =
+            'Virtual Print Succeeded in ${stopwatch.elapsedMilliseconds} ms!\n'
+            'Encoded ${fakeTransport.recordedBytes.length} ESC/POS bytes into memory.';
+      } else {
+        _isSuccess = false;
+        final err = result.errorOrNull!;
+        _statusMessage = 'Error: ${err.message}\nHint: ${err.hint}';
+      }
+    });
+  }
+
+  Future<void> _scanBluetooth() async {
+    setState(() => _isLoading = true);
+    var res = await BluetoothTransport.listPairedDevices();
+    if (res.isError && res.errorOrNull?.code == PrinterErrorCode.permissionDenied) {
       final permRes = await BluetoothTransport.requestPermission();
       if (permRes.isOk && (permRes.valueOrNull ?? false)) {
         res = await BluetoothTransport.listPairedDevices();
@@ -299,170 +302,58 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted) return;
     setState(() {
-      _isScanningBt = false;
+      _isLoading = false;
       if (res.isOk) {
         _pairedBtDevices = res.valueOrNull ?? [];
         _isSuccess = true;
+        _statusMessage = 'Found ${_pairedBtDevices.length} paired Bluetooth device(s).';
         if (_pairedBtDevices.isNotEmpty) {
-          _statusMessage = 'Found ${_pairedBtDevices.length} paired Bluetooth device(s).';
-          if (_selectedBtDevice == null) {
-            _selectBluetoothDevice(_pairedBtDevices.first);
-          }
-        } else {
-          _statusMessage =
-              'No paired Bluetooth devices found.\nPlease pair your thermal printer in Android Bluetooth Settings first.';
+          _selectedBtDevice = _pairedBtDevices.first;
+          _btAddressController.text = _selectedBtDevice!.address;
         }
       } else {
         _isSuccess = false;
-        final err = res.errorOrNull!;
-        _statusMessage =
-            'Failed to list Bluetooth devices: ${err.message}\nHint: ${err.hint}';
+        _statusMessage = res.errorOrNull?.message ?? 'Failed to list Bluetooth devices.';
       }
     });
   }
 
-  Future<void> _requestBluetoothPermission() async {
-    setState(() {
-      _isLoading = true;
-      _statusMessage = 'Requesting Bluetooth permission...';
-      _isSuccess = true;
-    });
-
-    final res = await BluetoothTransport.requestPermission();
-
+  Future<void> _scanUsb() async {
+    setState(() => _isLoading = true);
+    final res = await UsbTransport.listDevices();
     if (!mounted) return;
     setState(() {
       _isLoading = false;
-      if (res.isOk && (res.valueOrNull ?? false)) {
-        _isSuccess = true;
-        _statusMessage = 'Bluetooth permission granted!';
-      } else {
-        _isSuccess = false;
-        final err = res.errorOrNull;
-        _statusMessage = err != null
-            ? 'Bluetooth permission error: ${err.message}\nHint: ${err.hint}'
-            : 'Bluetooth permission was denied by user.';
-      }
-    });
-
-    await _refreshBluetoothDevices();
-  }
-
-  void _selectBluetoothDevice(BluetoothDevice device) {
-    setState(() {
-      _selectedBtDevice = device;
-      _btAddressController.text = device.address;
-    });
-  }
-
-  Future<void> _printToBluetoothPrinter({bool testPageOnly = false}) async {
-    final address = _btAddressController.text.trim();
-    if (address.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select or enter a Bluetooth MAC address.'),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _statusMessage = 'Connecting to Bluetooth device ($address)...';
-      _isSuccess = true;
-    });
-
-    final printer = EscposPrinter.bluetooth(
-      address,
-      profile: _selectedProfile,
-      rasterizer: FlutterTextRasterizer(),
-    );
-
-    try {
-      final Result<void> result;
-      if (testPageOnly) {
-        result = await printer.printTestPage();
-      } else {
-        result = await printer.print(_getActiveReceipt());
-      }
-      await printer.close();
-
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-        if (result.isOk) {
-          _isSuccess = true;
-          _statusMessage = 'Receipt printed successfully via Bluetooth to $address!';
-        } else {
-          _isSuccess = false;
-          final err = result.errorOrNull!;
-          _statusMessage =
-              'Bluetooth print failed: ${err.message}\n\nHint: ${err.hint}';
-        }
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _isSuccess = false;
-        _statusMessage = 'Unexpected Bluetooth error: $e';
-      });
-    }
-  }
-
-  Future<void> _refreshUsbDevices() async {
-    setState(() {
-      _isScanningUsb = true;
-      _statusMessage = 'Scanning connected USB devices...';
-      _isSuccess = true;
-    });
-
-    final res = await UsbTransport.listDevices();
-
-    if (!mounted) return;
-    setState(() {
-      _isScanningUsb = false;
       if (res.isOk) {
         _usbDevices = res.valueOrNull ?? [];
         _isSuccess = true;
+        _statusMessage = 'Found ${_usbDevices.length} USB device(s).';
         if (_usbDevices.isNotEmpty) {
-          _statusMessage = 'Found ${_usbDevices.length} USB device(s).';
-          if (_selectedUsbDevice == null) {
-            _selectUsbDevice(_usbDevices.first);
-          } else {
-            for (final d in _usbDevices) {
-              if (d.vendorId == _selectedUsbDevice!.vendorId &&
-                  d.productId == _selectedUsbDevice!.productId) {
-                _selectedUsbDevice = d;
-                break;
-              }
-            }
-          }
-        } else {
-          _statusMessage =
-              'No USB devices detected.\nMake sure printer is plugged in via USB OTG cable and powered on.';
+          final first = _usbDevices.first;
+          _usbVidController.text = '0x${first.vendorId.toRadixString(16).toUpperCase()}';
+          _usbPidController.text = '0x${first.productId.toRadixString(16).toUpperCase()}';
         }
       } else {
         _isSuccess = false;
-        final err = res.errorOrNull!;
-        _statusMessage =
-            'Failed to list USB devices: ${err.message}\nHint: ${err.hint}';
+        _statusMessage = res.errorOrNull?.message ?? 'Failed to list USB devices.';
       }
     });
   }
 
-  void _selectUsbDevice(UsbDevice device) {
+  Future<void> _runDoctor() async {
+    setState(() => _isLoading = true);
+    final report = await EscposLink.doctor();
+    if (!mounted) return;
     setState(() {
-      _selectedUsbDevice = device;
-      _usbVidController.text =
-          '0x${device.vendorId.toRadixString(16).padLeft(4, '0').toUpperCase()}';
-      _usbPidController.text =
-          '0x${device.productId.toRadixString(16).padLeft(4, '0').toUpperCase()}';
+      _isLoading = false;
+      _doctorReport = report;
+      _isSuccess = !report.hasErrors;
+      _statusMessage =
+          'Diagnostics finished: ${report.checks.length} checks performed.';
     });
   }
 
-  int _parseUsbId(String text, int defaultVal) {
+  int _parseId(String text, int defaultVal) {
     final clean = text.trim();
     if (clean.toLowerCase().startsWith('0x')) {
       return int.tryParse(clean.substring(2), radix: 16) ?? defaultVal;
@@ -470,167 +361,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return int.tryParse(clean) ?? defaultVal;
   }
 
-  Future<void> _requestUsbPermission([UsbDevice? targetDevice]) async {
-    final vid = targetDevice?.vendorId ?? _parseUsbId(_usbVidController.text, 0x04b8);
-    final pid = targetDevice?.productId ?? _parseUsbId(_usbPidController.text, 0x0202);
-
+  void _setStatus(String msg, {required bool success}) {
     setState(() {
-      _isLoading = true;
-      _statusMessage =
-          'Requesting USB permission for VID 0x${vid.toRadixString(16)} PID 0x${pid.toRadixString(16)}...';
-      _isSuccess = true;
-    });
-
-    final res = await UsbTransport.requestPermission(vid, pid);
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-      if (res.isOk && (res.valueOrNull ?? false)) {
-        _isSuccess = true;
-        _statusMessage = 'USB permission granted!';
-      } else {
-        _isSuccess = false;
-        final err = res.errorOrNull;
-        _statusMessage = err != null
-            ? 'USB permission error: ${err.message}\nHint: ${err.hint}'
-            : 'USB permission was denied by user.';
-      }
-    });
-
-    await _refreshUsbDevices();
-  }
-
-  Future<void> _printToUsbPrinter({bool testPageOnly = false}) async {
-    final vid = _parseUsbId(_usbVidController.text, 0x04b8);
-    final pid = _parseUsbId(_usbPidController.text, 0x0202);
-
-    // If permission has not been granted yet, request it automatically
-    final isPermitted = _selectedUsbDevice?.hasPermission ?? false;
-    if (!isPermitted) {
-      setState(() {
-        _isLoading = true;
-        _statusMessage =
-            'Requesting USB permission for printer (VID: 0x${vid.toRadixString(16)}, PID: 0x${pid.toRadixString(16)})...';
-        _isSuccess = true;
-      });
-
-      final permRes = await UsbTransport.requestPermission(vid, pid);
-      if (permRes.isError || (permRes.valueOrNull != true)) {
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-          _isSuccess = false;
-          _statusMessage =
-              'USB permission was denied by user. Please accept the prompt on your Android screen.';
-        });
-        return;
-      }
-      await _refreshUsbDevices();
-    }
-
-    setState(() {
-      _isLoading = true;
-      _statusMessage =
-          'Connecting to USB printer (VID: 0x${vid.toRadixString(16)}, PID: 0x${pid.toRadixString(16)})...';
-      _isSuccess = true;
-    });
-
-    final printer = EscposPrinter.usb(
-      vendorId: vid,
-      productId: pid,
-      profile: _selectedProfile,
-      rasterizer: FlutterTextRasterizer(),
-    );
-
-    try {
-      final Result<void> result;
-      if (testPageOnly) {
-        result = await printer.printTestPage();
-      } else {
-        result = await printer.print(_getActiveReceipt());
-      }
-      await printer.close();
-
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-        if (result.isOk) {
-          _isSuccess = true;
-          _statusMessage = 'Receipt printed successfully via USB!';
-        } else {
-          _isSuccess = false;
-          final err = result.errorOrNull!;
-          _statusMessage =
-              'USB print failed: ${err.message}\n\nHint: ${err.hint}';
-        }
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _isSuccess = false;
-        _statusMessage = 'Unexpected USB error: $e';
-      });
-    }
-  }
-
-  Future<void> _runDoctorCheck() async {
-    setState(() {
-      _isLoading = true;
-      _statusMessage = 'Running diagnostics...';
-    });
-
-    final report = await EscposLink.doctor();
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-      _doctorReport = report;
-      _statusMessage = 'Diagnostics finished.';
-      _isSuccess = !report.hasErrors;
+      _statusMessage = msg;
+      _isSuccess = success;
     });
   }
 
-  void _showPrinterPickerDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (dialogCtx) {
-        return Dialog(
-          insetPadding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: PrinterPicker(
-              initialProfile: _selectedProfile,
-              onPrinterSelected: (chosenPrinter) {
-                Navigator.of(dialogCtx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Selected printer: ${chosenPrinter.profile.dotsWidth} dots wide.',
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
+  // ---------------------------------------------------------------------------
+  // MAIN UI
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('POS Print Kit Test Code'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.print_outlined),
-            tooltip: 'Open Printer Picker',
-            onPressed: _showPrinterPickerDialog,
-          ),
-        ],
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: IndexedStack(
         index: _currentIndex,
@@ -647,22 +394,13 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
         destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.receipt),
-            label: 'Preview',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.wifi),
-            label: 'WiFi Print',
-          ),
+          NavigationDestination(icon: Icon(Icons.receipt), label: 'Preview'),
+          NavigationDestination(icon: Icon(Icons.wifi), label: 'WiFi Print'),
           NavigationDestination(
             icon: Icon(Icons.bluetooth),
             label: 'Bluetooth',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.usb),
-            label: 'USB',
-          ),
+          NavigationDestination(icon: Icon(Icons.usb), label: 'USB'),
           NavigationDestination(
             icon: Icon(Icons.memory),
             label: 'Virtual Test',
@@ -675,6 +413,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // TABS
+  // ---------------------------------------------------------------------------
 
   Widget _buildPreviewTab() {
     return SingleChildScrollView(
@@ -702,9 +444,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                     selected: {_selectedProfile},
-                    onSelectionChanged: (set) {
-                      setState(() => _selectedProfile = set.first);
-                    },
+                    onSelectionChanged: (set) =>
+                        setState(() => _selectedProfile = set.first),
                   ),
                   const SizedBox(height: 12.0),
                   const Text('Receipt Layout Format:'),
@@ -723,30 +464,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                     selected: {_use5ColumnReceipt},
-                    onSelectionChanged: (set) {
-                      setState(() => _use5ColumnReceipt = set.first);
-                    },
+                    onSelectionChanged: (set) =>
+                        setState(() => _use5ColumnReceipt = set.first),
                   ),
                 ],
               ),
             ),
           ),
-          if (_use5ColumnReceipt) ...[
-            const SizedBox(height: 8.0),
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(color: Colors.indigo.shade200),
-              ),
-              child: const Text(
-                '✨ 5-Column POS Format: [# (1x) • Item (5x) • Qty (1x) • Price (2x) • Total (2x)]\n'
-                'Supports flex ratios, per-column alignment, clean whitespace padding, and multi-line wrapping on both 58 mm and 80 mm thermal paper.',
-                style: TextStyle(fontSize: 12.0, color: Colors.indigo),
-              ),
-            ),
-          ],
           const SizedBox(height: 12.0),
           Center(
             child: Text(
@@ -761,7 +485,6 @@ class _HomeScreenState extends State<HomeScreen> {
             receipt: _getActiveReceipt(),
             profile: _selectedProfile,
           ),
-          const SizedBox(height: 16.0),
         ],
       ),
     );
@@ -779,8 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6.0),
           const Text(
-            'Connects directly to an ESC/POS receipt printer on your local network over TCP port 9100.',
-            style: TextStyle(color: Colors.black54),
+            'Connects directly to an ESC/POS receipt printer on your network over TCP port 9100.',
           ),
           const SizedBox(height: 16.0),
           TextField(
@@ -791,37 +513,27 @@ class _HomeScreenState extends State<HomeScreen> {
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.lan),
             ),
-            keyboardType: TextInputType.datetime,
           ),
           const SizedBox(height: 12.0),
           TextField(
             controller: _portController,
             decoration: const InputDecoration(
               labelText: 'Port (default 9100)',
-              hintText: '9100',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.numbers),
             ),
-            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16.0),
           _buildStatusBanner(),
           const SizedBox(height: 16.0),
           FilledButton.icon(
-            onPressed: _isLoading ? null : () => _printToWiFiPrinter(),
-            icon: _isLoading
-                ? const SizedBox(
-                    width: 18.0,
-                    height: 18.0,
-                    child: CircularProgressIndicator(strokeWidth: 2.0),
-                  )
-                : const Icon(Icons.print),
+            onPressed: _isLoading ? null : () => _printWiFi(),
+            icon: const Icon(Icons.print),
             label: const Text('Print Sample Multi-Language Receipt'),
           ),
           const SizedBox(height: 10.0),
           OutlinedButton.icon(
-            onPressed:
-                _isLoading ? null : () => _printToWiFiPrinter(testPageOnly: true),
+            onPressed: _isLoading ? null : () => _printWiFi(testPageOnly: true),
             icon: const Icon(Icons.receipt_long),
             label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
           ),
@@ -843,25 +555,12 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 6.0),
           const Text(
             'Connects to paired ESC/POS thermal printers over Bluetooth Classic (RFCOMM SPP).',
-            style: TextStyle(color: Colors.black54),
           ),
           const SizedBox(height: 16.0),
           FilledButton.tonalIcon(
-            onPressed: _isScanningBt ? null : _refreshBluetoothDevices,
-            icon: _isScanningBt
-                ? const SizedBox(
-                    width: 18.0,
-                    height: 18.0,
-                    child: CircularProgressIndicator(strokeWidth: 2.0),
-                  )
-                : const Icon(Icons.bluetooth_searching),
+            onPressed: _isLoading ? null : _scanBluetooth,
+            icon: const Icon(Icons.bluetooth_searching),
             label: const Text('Scan Paired Bluetooth Devices'),
-          ),
-          const SizedBox(height: 8.0),
-          OutlinedButton.icon(
-            onPressed: _isLoading ? null : _requestBluetoothPermission,
-            icon: const Icon(Icons.security),
-            label: const Text('Request Bluetooth Permission (Android 12+)'),
           ),
           const SizedBox(height: 12.0),
           DropdownButtonFormField<BluetoothDevice>(
@@ -871,24 +570,23 @@ class _HomeScreenState extends State<HomeScreen> {
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Select Paired Bluetooth Device',
-              hintText: 'Choose from paired printers',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.bluetooth_connected),
             ),
             items: _pairedBtDevices.map((d) {
-              final displayName =
-                  d.name.isNotEmpty ? d.name : 'Unknown Device';
-              return DropdownMenuItem<BluetoothDevice>(
+              return DropdownMenuItem(
                 value: d,
                 child: Text(
-                  '$displayName (${d.address})',
-                  overflow: TextOverflow.ellipsis,
+                  '${d.name.isNotEmpty ? d.name : "Printer"} (${d.address})',
                 ),
               );
             }).toList(),
-            onChanged: (chosen) {
-              if (chosen != null) {
-                _selectBluetoothDevice(chosen);
+            onChanged: (d) {
+              if (d != null) {
+                setState(() {
+                  _selectedBtDevice = d;
+                  _btAddressController.text = d.address;
+                });
               }
             },
           ),
@@ -897,32 +595,23 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: _btAddressController,
             decoration: const InputDecoration(
               labelText: 'Bluetooth MAC Address',
-              hintText: '1C:1A:1B:CE:47:09',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.edit_note),
-              helperText:
-                  'Auto-filled when selecting a device from the dropdown above, or enter manually',
             ),
           ),
           const SizedBox(height: 16.0),
           _buildStatusBanner(),
           const SizedBox(height: 16.0),
           FilledButton.icon(
-            onPressed: _isLoading ? null : () => _printToBluetoothPrinter(),
-            icon: _isLoading
-                ? const SizedBox(
-                    width: 18.0,
-                    height: 18.0,
-                    child: CircularProgressIndicator(strokeWidth: 2.0),
-                  )
-                : const Icon(Icons.print),
+            onPressed: _isLoading ? null : () => _printBluetooth(),
+            icon: const Icon(Icons.print),
             label: const Text('Print Sample Multi-Language Receipt'),
           ),
           const SizedBox(height: 10.0),
           OutlinedButton.icon(
             onPressed: _isLoading
                 ? null
-                : () => _printToBluetoothPrinter(testPageOnly: true),
+                : () => _printBluetooth(testPageOnly: true),
             icon: const Icon(Icons.receipt_long),
             label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
           ),
@@ -943,73 +632,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6.0),
           const Text(
-            'Connects directly to ESC/POS thermal printers via USB cable or USB OTG adapter.',
-            style: TextStyle(color: Colors.black54),
+            'Connects directly to thermal printers via USB cable or USB OTG adapter.',
           ),
           const SizedBox(height: 16.0),
           FilledButton.tonalIcon(
-            onPressed: _isScanningUsb ? null : _refreshUsbDevices,
-            icon: _isScanningUsb
-                ? const SizedBox(
-                    width: 18.0,
-                    height: 18.0,
-                    child: CircularProgressIndicator(strokeWidth: 2.0),
-                  )
-                : const Icon(Icons.usb),
+            onPressed: _isLoading ? null : _scanUsb,
+            icon: const Icon(Icons.usb),
             label: const Text('Scan Connected USB Devices'),
           ),
           const SizedBox(height: 12.0),
-          if (_usbDevices.isNotEmpty) ...[
-            Text(
-              'Connected USB Devices (${_usbDevices.length})',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 6.0),
-            for (final d in _usbDevices)
-              Card(
-                elevation: (_selectedUsbDevice?.vendorId == d.vendorId &&
-                        _selectedUsbDevice?.productId == d.productId)
-                    ? 3
-                    : 1,
-                color: (_selectedUsbDevice?.vendorId == d.vendorId &&
-                        _selectedUsbDevice?.productId == d.productId)
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : null,
-                child: ListTile(
-                  leading: const Icon(Icons.usb),
-                  title: Text(d.name),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'VID: 0x${d.vendorId.toRadixString(16).padLeft(4, '0').toUpperCase()} (${d.vendorId})  '
-                        'PID: 0x${d.productId.toRadixString(16).padLeft(4, '0').toUpperCase()} (${d.productId})',
-                      ),
-                      const SizedBox(height: 4.0),
-                      Text(
-                        d.hasPermission
-                            ? '✓ Permission Granted'
-                            : '⚠ Permission Required',
-                        style: TextStyle(
-                          color:
-                              d.hasPermission ? Colors.green : Colors.deepOrange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                  trailing: (!d.hasPermission)
-                      ? ElevatedButton(
-                          onPressed: () => _requestUsbPermission(d),
-                          child: const Text('Grant Perm'),
-                        )
-                      : const Text('Select'),
-                  onTap: () => _selectUsbDevice(d),
-                ),
-              ),
-            const SizedBox(height: 12.0),
-          ],
           Row(
             children: [
               Expanded(
@@ -1017,7 +648,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _usbVidController,
                   decoration: const InputDecoration(
                     labelText: 'Vendor ID (VID)',
-                    hintText: '0x324F',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.usb),
                   ),
@@ -1029,7 +659,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _usbPidController,
                   decoration: const InputDecoration(
                     labelText: 'Product ID (PID)',
-                    hintText: '0x00D2',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.memory),
                   ),
@@ -1037,30 +666,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10.0),
-          OutlinedButton.icon(
-            onPressed: _isLoading ? null : () => _requestUsbPermission(),
-            icon: const Icon(Icons.security),
-            label: const Text('Request USB Permission for VID/PID'),
-          ),
           const SizedBox(height: 16.0),
           _buildStatusBanner(),
           const SizedBox(height: 16.0),
           FilledButton.icon(
-            onPressed: _isLoading ? null : () => _printToUsbPrinter(),
-            icon: _isLoading
-                ? const SizedBox(
-                    width: 18.0,
-                    height: 18.0,
-                    child: CircularProgressIndicator(strokeWidth: 2.0),
-                  )
-                : const Icon(Icons.print),
+            onPressed: _isLoading ? null : () => _printUsb(),
+            icon: const Icon(Icons.print),
             label: const Text('Print Sample Multi-Language Receipt'),
           ),
           const SizedBox(height: 10.0),
           OutlinedButton.icon(
-            onPressed:
-                _isLoading ? null : () => _printToUsbPrinter(testPageOnly: true),
+            onPressed: _isLoading ? null : () => _printUsb(testPageOnly: true),
             icon: const Icon(Icons.receipt_long),
             label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
           ),
@@ -1081,9 +697,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6.0),
           const Text(
-            'Test the complete encoding pipeline (shaping, 1-bit rasterization, command formatting) '
-            'without requiring physical thermal hardware.',
-            style: TextStyle(color: Colors.black54),
+            'Test the complete encoding pipeline (text shaping, 1-bit thermal rasterization, '
+            'ESC/POS commands) in memory without needing a physical printer.',
           ),
           const SizedBox(height: 16.0),
           FilledButton.icon(
@@ -1093,29 +708,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16.0),
           _buildStatusBanner(),
-          if (_lastRecordedBytes != null) ...[
-            const SizedBox(height: 16.0),
-            Text(
-              'Recorded Byte Stream Inspector',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8.0),
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade900,
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Text(
-                _hexDumpPreview(_lastRecordedBytes!),
-                style: const TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12.0,
-                  color: Colors.lightGreenAccent,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1136,19 +728,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               FilledButton.icon(
-                onPressed: _isLoading ? null : _runDoctorCheck,
+                onPressed: _isLoading ? null : _runDoctor,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Check'),
               ),
             ],
           ),
-          const SizedBox(height: 8.0),
-          Text(
-            'OS: $_platformVersion',
-            style: const TextStyle(color: Colors.black54),
-          ),
           const SizedBox(height: 16.0),
-          if (_doctorReport != null) ...[
+          if (_doctorReport != null)
             for (final check in _doctorReport!.checks)
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 4.0),
@@ -1159,30 +746,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: check.passed ? Colors.green : Colors.red,
                   ),
                   title: Text(check.name),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(check.message),
-                      if (check.hint != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(
-                            'Hint: ${check.hint}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.0,
-                            ),
-                          ),
-                        ),
-                    ],
+                  subtitle: Text(
+                    check.message +
+                        (check.hint != null ? '\nHint: ${check.hint}' : ''),
                   ),
                 ),
-              ),
-          ] else
+              )
+          else
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(32.0),
-                child: Text('Tap "Check" to run EscposLink.doctor().'),
+                child: Text(
+                  'Tap "Check" to test Android permissions and printer support.',
+                ),
               ),
             ),
         ],
@@ -1192,7 +768,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildStatusBanner() {
     if (_statusMessage == null) return const SizedBox.shrink();
-
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
@@ -1206,7 +781,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            _isSuccess ? Icons.check_circle_outline : Icons.info_outline,
+            _isSuccess ? Icons.check_circle_outline : Icons.error_outline,
             color: _isSuccess ? Colors.green.shade800 : Colors.red.shade800,
           ),
           const SizedBox(width: 10.0),
@@ -1222,24 +797,5 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
-
-  String _hexDumpPreview(Uint8List bytes) {
-    final buffer = StringBuffer();
-    final take = bytes.length.clamp(0, 160);
-    for (var i = 0; i < take; i += 16) {
-      final lineBytes = bytes.sublist(i, (i + 16).clamp(0, take));
-      final hex = lineBytes
-          .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
-          .join(' ');
-      final asciiChars = lineBytes
-          .map((b) => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
-          .join();
-      buffer.writeln('${hex.padRight(48)} | $asciiChars');
-    }
-    if (bytes.length > take) {
-      buffer.writeln('... (${bytes.length - take} more bytes)');
-    }
-    return buffer.toString();
   }
 }
