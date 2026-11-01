@@ -9,18 +9,6 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 
-    // OLD:
-    // expect(
-    //   find.byWidgetPredicate(
-    //     (Widget widget) =>
-    //         widget is Text && widget.data!.startsWith('Running on:'),
-    //   ),
-    //   findsOneWidget,
-    // );
-    // OLD:
-    // expect(find.text('POS Print Kit Test Code'), findsOneWidget);
-    // expect(find.text('Preview'), findsOneWidget);
-    // expect(find.text('WiFi Print'), findsOneWidget);
     expect(find.text('POS Print Kit Test Code'), findsOneWidget);
     expect(find.text('Preview'), findsOneWidget);
     expect(find.text('WiFi Print'), findsOneWidget);

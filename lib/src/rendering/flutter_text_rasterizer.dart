@@ -1,7 +1,6 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-// OLD: import 'package:flutter/rendering.dart';
 
 import '../core/ops.dart';
 import '../core/raster.dart';
@@ -17,6 +16,21 @@ class FlutterTextRasterizer implements TextRasterizer {
 
   final bool enableCache;
   final Map<String, GrayBitmap> _cache = {};
+
+  /// Default multilingual font family fallback chain covering guaranteed scripts:
+  /// Latin, Bengali, Han (Simplified & Traditional), Japanese, Devanagari (Hindi),
+  /// Tamil, Telugu, Arabic, and Thai.
+  static const List<String> defaultFontFamilyFallback = [
+    'Noto Sans',
+    'Noto Sans Bengali',
+    'Noto Sans CJK SC',
+    'Noto Sans CJK JP',
+    'Noto Sans Devanagari',
+    'Noto Sans Tamil',
+    'Noto Sans Telugu',
+    'Noto Sans Arabic',
+    'Noto Sans Thai',
+  ];
 
   @override
   Future<GrayBitmap> renderText(
@@ -53,16 +67,8 @@ class FlutterTextRasterizer implements TextRasterizer {
           fontSize: style.fontSize,
           fontWeight: style.bold ? ui.FontWeight.bold : ui.FontWeight.normal,
           fontFamily: style.fontFamily,
-          fontFamilyFallback: style.fontFamilyFallback ??
-              const [
-                'Noto Sans',
-                'Noto Sans Bengali',
-                'Noto Sans CJK SC',
-                'Noto Sans CJK JP',
-                'Noto Sans Devanagari',
-                'Noto Sans Arabic',
-                'Noto Sans Thai',
-              ],
+          fontFamilyFallback:
+              style.fontFamilyFallback ?? defaultFontFamilyFallback,
           letterSpacing: style.letterSpacing,
         ),
       )
@@ -122,16 +128,7 @@ class FlutterTextRasterizer implements TextRasterizer {
     }
 
     final locale = languageTag != null ? ui.Locale(languageTag) : null;
-    final fallback = style.fontFamilyFallback ??
-        const [
-          'Noto Sans',
-          'Noto Sans Bengali',
-          'Noto Sans CJK SC',
-          'Noto Sans CJK JP',
-          'Noto Sans Devanagari',
-          'Noto Sans Arabic',
-          'Noto Sans Thai',
-        ];
+    final fallback = style.fontFamilyFallback ?? defaultFontFamilyFallback;
 
     final textStyle = ui.TextStyle(
       color: const ui.Color(0xFF000000),
@@ -193,12 +190,6 @@ class FlutterTextRasterizer implements TextRasterizer {
     );
 
     canvas.drawParagraph(leftParagraph, ui.Offset.zero);
-
-    // OLD:
-    // final rightX = widthDots.toDouble() - rightWidth;
-    // canvas.drawParagraph(rightParagraph, ui.Offset(rightX, 0));
-    // Since rightParagraph was laid out with width: widthDots and textAlign: right,
-    // drawing at Offset.zero renders it flush against the right margin (widthDots).
     canvas.drawParagraph(rightParagraph, ui.Offset.zero);
 
     final picture = recorder.endRecording();
@@ -207,6 +198,135 @@ class FlutterTextRasterizer implements TextRasterizer {
 
     if (byteData == null) {
       throw StateError('Failed to extract RGBA bytes from rendered row');
+    }
+
+    final gray = _rgbaToGrayscale(
+      byteData: byteData,
+      width: widthDots,
+      height: rowHeight,
+    );
+
+    if (enableCache) {
+      _cache[cacheKey] = gray;
+    }
+
+    return gray;
+  }
+
+  @override
+  Future<GrayBitmap> renderColumns(
+    List<PosColumn> columns, {
+    required int widthDots,
+    required TextStyleSpec style,
+    String? languageTag,
+  }) async {
+    if (columns.isEmpty) {
+      final blankPixels = Uint8List(widthDots)..fillRange(0, widthDots, 255);
+      return GrayBitmap(width: widthDots, height: 1, pixels: blankPixels);
+    }
+
+    final cacheKey =
+        'COLS:${columns.map((c) => '${c.text}:${c.width}:${c.align}:${c.bold}').join(';')}|$widthDots|${style.fontSize}|${style.bold}|$languageTag';
+    if (enableCache && _cache.containsKey(cacheKey)) {
+      return _cache[cacheKey]!;
+    }
+
+    final locale = languageTag != null ? ui.Locale(languageTag) : null;
+    final fallback = style.fontFamilyFallback ?? defaultFontFamilyFallback;
+
+    final numCols = columns.length;
+    const gap = 8.0; // clean whitespace gap between columns in dots
+    final totalGaps = numCols > 1 ? (numCols - 1) * gap : 0.0;
+    final availableDots =
+        (widthDots.toDouble() - totalGaps).clamp(20.0, widthDots.toDouble());
+
+    final totalFlex =
+        columns.fold<int>(0, (sum, c) => sum + (c.width > 0 ? c.width : 1));
+
+    // Calculate width and starting X position for each column
+    final colWidths = List<double>.filled(numCols, 0.0);
+    final colOffsets = List<double>.filled(numCols, 0.0);
+    var currentX = 0.0;
+
+    for (var i = 0; i < numCols; i++) {
+      final flex = columns[i].width > 0 ? columns[i].width : 1;
+      final w = (availableDots * flex / totalFlex)
+          .floorToDouble()
+          .clamp(10.0, availableDots);
+      colWidths[i] = w;
+      colOffsets[i] = currentX;
+      currentX += w + gap;
+    }
+
+    // Measure and layout paragraphs for each column
+    final paragraphs = <ui.Paragraph>[];
+    var maxHeight = 0.0;
+
+    for (var i = 0; i < numCols; i++) {
+      final col = columns[i];
+      final colStyle = col.style;
+      final isBold = col.bold || style.bold;
+      final fontSize =
+          colStyle.fontSize != 26.0 ? colStyle.fontSize : style.fontSize;
+
+      final textStyle = ui.TextStyle(
+        color: const ui.Color(0xFF000000),
+        fontSize: fontSize,
+        fontWeight: isBold ? ui.FontWeight.bold : ui.FontWeight.normal,
+        fontFamily: colStyle.fontFamily ?? style.fontFamily,
+        fontFamilyFallback: colStyle.fontFamilyFallback ?? fallback,
+        letterSpacing: colStyle.letterSpacing ?? style.letterSpacing,
+      );
+
+      final isRtl = _isRtl(languageTag);
+      final textAlign = _toTextAlign(col.align, isRtl);
+      final textDirection = isRtl ? ui.TextDirection.rtl : ui.TextDirection.ltr;
+
+      final pStyle = ui.ParagraphStyle(
+        textAlign: textAlign,
+        textDirection: textDirection,
+        fontSize: fontSize,
+        fontWeight: isBold ? ui.FontWeight.bold : ui.FontWeight.normal,
+        locale: locale,
+        height: colStyle.lineHeight,
+      );
+
+      final builder = ui.ParagraphBuilder(pStyle)
+        ..pushStyle(textStyle)
+        ..addText(col.text);
+
+      final p = builder.build()
+        ..layout(ui.ParagraphConstraints(width: colWidths[i]));
+
+      paragraphs.add(p);
+      if (p.height > maxHeight) {
+        maxHeight = p.height;
+      }
+    }
+
+    final rowHeight = (maxHeight.ceil()).clamp(1, 10000);
+
+    final recorder = ui.PictureRecorder();
+    final canvas = ui.Canvas(recorder);
+
+    // Fill white background
+    final bgPaint = ui.Paint()..color = const ui.Color(0xFFFFFFFF);
+    canvas.drawRect(
+      ui.Rect.fromLTWH(0, 0, widthDots.toDouble(), rowHeight.toDouble()),
+      bgPaint,
+    );
+
+    // Render all column paragraphs side-by-side with top alignment
+    for (var i = 0; i < numCols; i++) {
+      canvas.drawParagraph(paragraphs[i], ui.Offset(colOffsets[i], 0));
+    }
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(widthDots, rowHeight);
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+
+    if (byteData == null) {
+      throw StateError('Failed to extract RGBA bytes from rendered columns');
     }
 
     final gray = _rgbaToGrayscale(

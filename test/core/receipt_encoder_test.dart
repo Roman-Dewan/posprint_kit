@@ -190,6 +190,44 @@ void main() {
       expect(receipt.ops.any((op) => op is RowOp && op.left == 'Burger'), isTrue);
       expect(receipt.ops.any((op) => op is CutOp), isTrue);
     });
+
+    test('Receipt.columns formats native ASCII table with flex widths and clean padding', () async {
+      final receipt = Receipt()
+        ..columns([
+          const PosColumn(text: '#', width: 1, align: PosAlign.center),
+          const PosColumn(text: 'Item', width: 5),
+          const PosColumn(text: 'Qty', width: 2, align: PosAlign.center),
+          const PosColumn(text: 'Price', width: 3, align: PosAlign.right),
+          const PosColumn(text: 'Total', width: 3, align: PosAlign.right),
+        ], bold: true)
+        ..columns([
+          const PosColumn(text: '1', width: 1, align: PosAlign.center),
+          const PosColumn(text: 'Burger', width: 5),
+          const PosColumn(text: '2', width: 2, align: PosAlign.center),
+          const PosColumn(text: '6.00', width: 3, align: PosAlign.right),
+          const PosColumn(text: '12.00', width: 3, align: PosAlign.right),
+        ]);
+
+      final bytes = await encodeForTest(receipt);
+      expect(bytes, isNotEmpty);
+      expect(bytes.sublist(0, 3), [0x1B, 0x74, 0x00]); // CP437
+      expect(bytes, containsAllInOrder(ascii.encode('Burger')));
+      expect(bytes, containsAllInOrder(ascii.encode('12.00')));
+    });
+
+    test('Receipt.columns in TextMode.image renders via rasterizer', () async {
+      final receipt = Receipt()
+        ..columns([
+          const PosColumn(text: '1', width: 1),
+          const PosColumn(text: 'Burger', width: 5),
+          const PosColumn(text: '10.00', width: 2, align: PosAlign.right),
+        ], mode: TextMode.image);
+
+      final bytes = await encodeForTest(receipt);
+      expect(bytes, isNotEmpty);
+      // Contains raster command GS v 0
+      expect(bytes, containsAllInOrder([0x1D, 0x76, 0x30, 0x00]));
+    });
   });
 }
 

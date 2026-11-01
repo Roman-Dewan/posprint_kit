@@ -100,7 +100,6 @@ class PrintQueue {
         );
         await Future<void>.delayed(delay);
       } catch (e, stackTrace) {
-        // OLD: PosLogger.error('Unhandled exception executing print job: $e', e, stackTrace);
         PosLogger.error(
           'Unhandled exception executing print job: $e',
           error: e,

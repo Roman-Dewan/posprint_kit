@@ -1,8 +1,5 @@
-// OLD: import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:posprint_kit/advanced.dart';
-// OLD: import 'package:posprint_kit/posprint_kit.dart';
-// OLD: import 'package:posprint_kit/src/manager/print_queue.dart';
 
 void main() {
   group('PrintQueue & PrinterManager (Skill 7)', () {
@@ -37,7 +34,6 @@ void main() {
         () async {
           attempts++;
           if (attempts < 3) {
-            // OLD: return const Result.error(PrinterError.connectionLost);
             return const Result<String>.error(PrinterError.connectionLost);
           }
           return const Result.ok('recovered');
@@ -61,7 +57,6 @@ void main() {
       final res = await queue.enqueue(
         () async {
           attempts++;
-          // OLD: return const Result.error(PrinterError.paperOut);
           return const Result<String>.error(PrinterError.paperOut);
         },
         maxRetries: 2,

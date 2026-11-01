@@ -46,17 +46,6 @@ Most thermal printers have limited built-in code pages and cannot print Asian or
 
 ---
 
-<!-- OLD:
-## Key Features
-
-1. **The 3-Line API**: Designed so junior developers can connect and print immediately without learning ESC/POS or byte commands.
-2. **Friendly Errors**: Every `PrinterError` provides a clear `message` (what happened) and a `hint` (how to fix it).
-3. **Queue & Automatic Retry**: Print jobs are executed strictly sequentially without interleaving bytes, and retry transient network dropouts with backoff.
-4. **On-Screen Preview (`ReceiptPreview`)**: Visualize receipts in Flutter widgets without wasting paper.
-5. **Setup Diagnostics (`EscposLink.doctor()`)**: Built-in verification utility similar to `flutter doctor` that checks network, OS permissions, and capabilities.
-6. **Drop-in Printer Picker (`PrinterPicker`)**: Ready-made modal/dialog widget for scanning, configuring, and testing printers.
--->
-
 ## Key Features
 
 * **Unified Transports**: WiFi / LAN (port 9100), Bluetooth Classic (SPP), and USB OTG (with auto-permission handling).

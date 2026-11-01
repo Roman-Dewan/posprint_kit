@@ -33,12 +33,6 @@ class PosprintKitPlugin :
         call: MethodCall,
         result: Result
     ) {
-        // OLD:
-        // if (call.method == "getPlatformVersion") {
-        //     result.success("Android ${android.os.Build.VERSION.RELEASE}")
-        // } else {
-        //     result.notImplemented()
-        // }
         when {
             call.method == "getPlatformVersion" -> {
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")

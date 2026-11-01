@@ -1,6 +1,5 @@
 ## 0.0.1
 
-<!-- OLD: * TODO: Describe initial release. -->
 * Phase 0 Setup:
   - Plugin scaffold verified with strict analysis options (`analysis_options.yaml`).
   - Folder structure and architecture documentation (`doc/quickstart.md`, `cookbook.md`, `troubleshooting.md`, `glossary.md`).
@@ -40,6 +39,12 @@
   - `WidgetRasterizer` for printing arbitrary Flutter widgets as thermal receipts.
   - `ReceiptPreview` widget displaying visual on-screen receipts without physical printers.
   - Tests for Han unification (zh-Hans vs ja) and Bangla conjuncts/vowel mark retention.
+  - Added test fixtures for all 14 guaranteed languages (`test/fixtures/languages.dart`), including Tamil (`ta`), Telugu (`te`), Turkish (`tr`), German (`de`), and Portuguese (`pt`).
+  - Added `Noto Sans Tamil` and `Noto Sans Telugu` to default `fontFamilyFallback` in `FlutterTextRasterizer`.
+  - Added `PosColumn` class, `ColumnsOp`, and fluent `Receipt.columns(...)` API for 3, 4, 5+ column layouts with flex ratios and per-column alignment.
+  - Monospace multi-column formatter in `TextEngine.formatNativeColumns` with clean whitespace padding and multi-line auto-wrapping.
+  - Pixel-perfect `FlutterTextRasterizer.renderColumns` with top-aligned multi-line cell wrapping for 58 mm (384 dots) and 80 mm (576 dots).
+  - Multi-column recipe in `doc/cookbook.md` and interactive 5-column order screen in `example/lib/main.dart`.
 * Phase 6 Android Bluetooth Classic (SPP):
   - Native Kotlin `BluetoothHandler` listing paired devices, opening RFCOMM sockets over standard SPP UUID (`00001101-0000-1000-8000-00805F9B34FB`), and writing bytes on `Dispatchers.IO`.
   - `BluetoothTransport` and `BluetoothDevice` with `listPairedDevices()`.

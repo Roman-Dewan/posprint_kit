@@ -133,14 +133,65 @@ class TestLanguages {
     longLine: 'ขอขอบพระคุณลูกค้าทุกท่านที่ให้เกียรติมาอุดหนุนร้านอาหารของเราในโอกาสนี้',
   );
 
-  /// All supported fixtures in a convenient list.
+  static const german = LanguageFixture(
+    name: 'German',
+    code: 'de',
+    languageTag: 'de',
+    simple: 'Dankeschön',
+    complex: 'Wiener Schnitzel mit Kartoffelsalat & Käse - 18,90 €',
+    longLine: 'Vielen Dank für Ihren Besuch in unserem traditionellen Restaurant und bis zum nächsten Mal',
+  );
+
+  static const portuguese = LanguageFixture(
+    name: 'Portuguese',
+    code: 'pt',
+    languageTag: 'pt',
+    simple: 'Muito obrigado',
+    complex: 'Pão de queijo quentinho com café expresso R\$ 12,50',
+    longLine: 'Agradecemos a sua preferência e esperamos recebê-lo novamente em nosso estabelecimento comercial',
+  );
+
+  static const turkish = LanguageFixture(
+    name: 'Turkish',
+    code: 'tr',
+    languageTag: 'tr',
+    simple: 'Teşekkürler',
+    complex: 'Özel Soslu İskender Kebap ve Fıstıklı Baklava 340 ₺',
+    longLine: 'Bizi tercih ettiğiniz için çok teşekkür eder afiyetler diler tekrar bekleriz',
+  );
+
+  static const tamil = LanguageFixture(
+    name: 'Tamil',
+    code: 'ta',
+    languageTag: 'ta',
+    simple: 'நன்றி',
+    complex: 'சுவையான தயிர் சாதம் மற்றும் நெய் தோசை ₹140.00',
+    longLine: 'எங்கள் உணவகத்திற்கு வருகை தந்தமைக்கு மனமார்ந்த நன்றி மீண்டும் வருக நல்வரவு',
+  );
+
+  static const telugu = LanguageFixture(
+    name: 'Telugu',
+    code: 'te',
+    languageTag: 'te',
+    simple: 'ధన్యవాదాలు',
+    complex: 'రుచికరమైన మసాలా దోస మరియు ఇడ్లీ సాంబార్ ₹120.00',
+    longLine: 'మా రెస్టారెంట్‌ను సందర్శించినందుకు మీకు హృదయపూర్వక ధన్యవాదాలు మళ్ళీ రండి',
+  );
+
+  /// All supported fixtures in a convenient list, covering all 14 guaranteed core languages
+  /// plus Greek, Korean, Traditional Chinese, and Arabic.
   static const List<LanguageFixture> all = [
     english,
     latinAccents,
+    german,
+    portuguese,
+    turkish,
     cyrillic,
     greek,
     bangla,
     hindi,
+    tamil,
+    telugu,
     chineseSimplified,
     chineseTraditional,
     japanese,

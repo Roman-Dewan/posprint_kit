@@ -110,7 +110,6 @@ class Doctor {
     } catch (e) {
       PosLogger.warning('Platform detection limited in this environment: $e');
       checks.add(
-        // OLD: DoctorCheck(
         const DoctorCheck(
           name: 'Platform Environment',
           passed: true,

@@ -111,6 +111,38 @@ class ReceiptPreview extends StatelessWidget {
           ),
         );
 
+      case ColumnsOp(:final columns, :final bold):
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < columns.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6.0),
+                Expanded(
+                  flex: columns[i].width > 0 ? columns[i].width : 1,
+                  child: Text(
+                    columns[i].text,
+                    textAlign: switch (columns[i].align) {
+                      PosAlign.left => TextAlign.left,
+                      PosAlign.center => TextAlign.center,
+                      PosAlign.right => TextAlign.right,
+                    },
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12.0,
+                      fontWeight: (columns[i].bold || bold)
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+
       case DividerOp(:final character):
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),

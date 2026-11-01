@@ -63,6 +63,54 @@ void main() {
       // Must have substantial black dots for text and marks
       expect(blackDotsCount, greaterThan(100));
     });
+
+    test('Tamil and Telugu ligatures and vowel signs survive 1-bit conversion', () async {
+      // Tamil: நன்றி, தயிர் சாதம்
+      final taGray = await rasterizer.renderText(
+        'நன்றி தயிர் சாதம் நெய் தோசை',
+        widthDots: 576,
+        style: const TextStyleSpec(fontSize: 26.0),
+        languageTag: 'ta',
+      );
+      final taMono = taGray.toMono(threshold: 128);
+      expect(taMono.data.any((b) => b != 0), isTrue);
+
+      // Telugu: ధన్యవాదాలు, దోస
+      final teGray = await rasterizer.renderText(
+        'ధన్యవాదాలు మసాలా దోస ఇడ్లీ',
+        widthDots: 576,
+        style: const TextStyleSpec(fontSize: 26.0),
+        languageTag: 'te',
+      );
+      final teMono = teGray.toMono(threshold: 128);
+      expect(teMono.data.any((b) => b != 0), isTrue);
+    });
+
+    test('German, Portuguese, and Turkish accents render cleanly', () async {
+      final deGray = await rasterizer.renderText(
+        'Dankeschön Wiener Schnitzel & Käse',
+        widthDots: 576,
+        style: const TextStyleSpec(fontSize: 24.0),
+        languageTag: 'de',
+      );
+      expect(deGray.pixels.any((p) => p < 128), isTrue);
+
+      final ptGray = await rasterizer.renderText(
+        'Muito obrigado Pão de queijo quentinho',
+        widthDots: 576,
+        style: const TextStyleSpec(fontSize: 24.0),
+        languageTag: 'pt',
+      );
+      expect(ptGray.pixels.any((p) => p < 128), isTrue);
+
+      final trGray = await rasterizer.renderText(
+        'Teşekkürler İskender Kebap ve Fıstıklı',
+        widthDots: 576,
+        style: const TextStyleSpec(fontSize: 24.0),
+        languageTag: 'tr',
+      );
+      expect(trGray.pixels.any((p) => p < 128), isTrue);
+    });
   });
 }
 

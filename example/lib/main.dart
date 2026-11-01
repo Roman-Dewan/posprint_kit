@@ -8,31 +8,6 @@ void main() {
   runApp(const PosPrintKitExampleApp());
 }
 
-// OLD:
-// class MyApp extends StatefulWidget {
-//   const MyApp({super.key});
-//   @override
-//   State<MyApp> createState() => _MyAppState();
-// }
-// class _MyAppState extends State<MyApp> {
-//   String _platformVersion = 'Unknown';
-//   final _posprintKitPlugin = PosprintKit();
-//   @override
-//   void initState() {
-//     super.initState();
-//     initPlatformState();
-//   }
-//   Future<void> initPlatformState() async { ... }
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       home: Scaffold(
-//         appBar: AppBar(title: const Text('Plugin example app')),
-//         body: Center(child: Text('Running on: $_platformVersion\n')),
-//       ),
-//     );
-//   }
-// }
 
 /// Alias for backwards compatibility with widget tests.
 typedef MyApp = PosPrintKitExampleApp;
@@ -67,18 +42,18 @@ class _HomeScreenState extends State<HomeScreen> {
   PrinterProfile _selectedProfile = PrinterProfile.generic80;
 
   // Network printer config
-  final _hostController = TextEditingController(text: '192.168.1.50');
+  final _hostController = TextEditingController(text: '192.168.0.101');
   final _portController = TextEditingController(text: '9100');
 
   // Bluetooth printer config & state
-  final _btAddressController = TextEditingController(text: '00:11:22:33:44:55');
+  final _btAddressController = TextEditingController(text: '1C:1A:1B:CE:47:09');
   List<BluetoothDevice> _pairedBtDevices = [];
   BluetoothDevice? _selectedBtDevice;
   bool _isScanningBt = false;
 
   // USB printer config & state
-  final _usbVidController = TextEditingController(text: '0x04B8');
-  final _usbPidController = TextEditingController(text: '0x0202');
+  final _usbVidController = TextEditingController(text: '0x324F');
+  final _usbPidController = TextEditingController(text: '0x00D2');
   List<UsbDevice> _usbDevices = [];
   UsbDevice? _selectedUsbDevice;
   bool _isScanningUsb = false;
@@ -92,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // In-memory test output
   Uint8List? _lastRecordedBytes;
   int _lastBytesLength = 0;
+  bool _use5ColumnReceipt = false;
 
   @override
   void initState() {
@@ -144,6 +120,69 @@ class _HomeScreenState extends State<HomeScreen> {
       ..cut();
   }
 
+  /// Builds a realistic 5-column restaurant order receipt demonstrating [Receipt.columns]:
+  /// [# (SL), Item Name, Qty, Price, Total] with multi-line auto-wrapping,
+  /// flex ratios (1:5:1:2:2), per-column alignment, clean whitespace, and multilingual scripts.
+  Receipt _build5ColumnOrderReceipt() {
+    return Receipt()
+      ..title('5-COLUMN BISTRO ORDER')
+      ..text('Order #1042 • Table 12 • 5-Column POS Format', align: PosAlign.center)
+      ..divider()
+      ..columns([
+        const PosColumn(text: '#', width: 1, align: PosAlign.center),
+        const PosColumn(text: 'Item', width: 5),
+        const PosColumn(text: 'Qty', width: 1, align: PosAlign.center),
+        const PosColumn(text: 'Price', width: 2, align: PosAlign.right),
+        const PosColumn(text: 'Total', width: 2, align: PosAlign.right),
+      ], bold: true)
+      ..divider()
+      ..columns([
+        const PosColumn(text: '01', width: 1, align: PosAlign.center),
+        const PosColumn(text: 'আরাবিকা কফি বিন ১২ আউন্স', width: 5),
+        const PosColumn(text: '50', width: 1, align: PosAlign.center),
+        const PosColumn(text: '100.00', width: 2, align: PosAlign.right),
+        const PosColumn(text: '5000.00', width: 2, align: PosAlign.right),
+      ], languageTag: 'bn')
+      ..columns([
+        const PosColumn(text: '02', width: 1, align: PosAlign.center),
+        const PosColumn(text: 'チキンカレー (Chicken Curry)', width: 5),
+        const PosColumn(text: '81', width: 1, align: PosAlign.center),
+        const PosColumn(text: '9.50', width: 2, align: PosAlign.right),
+        const PosColumn(text: '12000.00', width: 2, align: PosAlign.right),
+      ], languageTag: 'ja')
+      ..columns([
+        const PosColumn(text: '03', width: 1, align: PosAlign.center),
+        const PosColumn(text: '招牌红烧牛肉面 (Beef Noodles)', width: 5),
+        const PosColumn(text: '1', width: 1, align: PosAlign.center),
+        const PosColumn(text: '14.00', width: 2, align: PosAlign.right),
+        const PosColumn(text: '14.00', width: 2, align: PosAlign.right),
+      ], languageTag: 'zh-Hans')
+      ..columns([
+        const PosColumn(text: '04', width: 1, align: PosAlign.center),
+        const PosColumn(text: 'మసాలా దోస (Masala Dosa)', width: 5),
+        const PosColumn(text: '2', width: 1, align: PosAlign.center),
+        const PosColumn(text: '5.00', width: 2, align: PosAlign.right),
+        const PosColumn(text: '10.00', width: 2, align: PosAlign.right),
+      ], languageTag: 'te')
+      ..columns([
+        const PosColumn(text: '05', width: 1, align: PosAlign.center),
+        const PosColumn(text: 'Fresh Lemon Mint Iced Tea', width: 5),
+        const PosColumn(text: '3', width: 1, align: PosAlign.center),
+        const PosColumn(text: '3.00', width: 2, align: PosAlign.right),
+        const PosColumn(text: '9.00', width: 2, align: PosAlign.right),
+      ])
+      ..divider()
+      ..total('TOTAL', '54.50')
+      ..feed(1)
+      ..qr('https://github.com/posprint_kit/order/5cols-1042', size: 6)
+      ..barcode('10429812', type: BarcodeType.code128)
+      ..feed(2)
+      ..cut();
+  }
+
+  Receipt _getActiveReceipt() =>
+      _use5ColumnReceipt ? _build5ColumnOrderReceipt() : _buildSampleReceipt();
+
   Future<void> _runVirtualPrintTest() async {
     setState(() {
       _isLoading = true;
@@ -159,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     final stopwatch = Stopwatch()..start();
-    final receipt = _buildSampleReceipt();
+    final receipt = _getActiveReceipt();
     final result = await printer.print(receipt);
     stopwatch.stop();
 
@@ -213,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (testPageOnly) {
         result = await printer.printTestPage();
       } else {
-        result = await printer.print(_buildSampleReceipt());
+        result = await printer.print(_getActiveReceipt());
       }
       await printer.close();
 
@@ -344,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (testPageOnly) {
         result = await printer.printTestPage();
       } else {
-        result = await printer.print(_buildSampleReceipt());
+        result = await printer.print(_getActiveReceipt());
       }
       await printer.close();
 
@@ -509,7 +548,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (testPageOnly) {
         result = await printer.printTestPage();
       } else {
-        result = await printer.print(_buildSampleReceipt());
+        result = await printer.print(_getActiveReceipt());
       }
       await printer.close();
 
@@ -667,20 +706,59 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() => _selectedProfile = set.first);
                     },
                   ),
+                  const SizedBox(height: 12.0),
+                  const Text('Receipt Layout Format:'),
+                  const SizedBox(height: 8.0),
+                  SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Standard 2-Column'),
+                        icon: Icon(Icons.table_rows),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text('5-Column Order Table'),
+                        icon: Icon(Icons.table_chart),
+                      ),
+                    ],
+                    selected: {_use5ColumnReceipt},
+                    onSelectionChanged: (set) {
+                      setState(() => _use5ColumnReceipt = set.first);
+                    },
+                  ),
                 ],
               ),
             ),
           ),
+          if (_use5ColumnReceipt) ...[
+            const SizedBox(height: 8.0),
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: Colors.indigo.shade50,
+                borderRadius: BorderRadius.circular(8.0),
+                border: Border.all(color: Colors.indigo.shade200),
+              ),
+              child: const Text(
+                '✨ 5-Column POS Format: [# (1x) • Item (5x) • Qty (1x) • Price (2x) • Total (2x)]\n'
+                'Supports flex ratios, per-column alignment, clean whitespace padding, and multi-line wrapping on both 58 mm and 80 mm thermal paper.',
+                style: TextStyle(fontSize: 12.0, color: Colors.indigo),
+              ),
+            ),
+          ],
           const SizedBox(height: 12.0),
           Center(
             child: Text(
-              'Live Receipt Preview (Bangla, Chinese, Japanese, Arabic, English)',
+              _use5ColumnReceipt
+                  ? 'Live 5-Column Table Preview (${_selectedProfile.dotsWidth} dots)'
+                  : 'Live Receipt Preview (Bangla, Chinese, Japanese, Arabic, English)',
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ),
           const SizedBox(height: 8.0),
           ReceiptPreview(
-            receipt: _buildSampleReceipt(),
+            receipt: _getActiveReceipt(),
             profile: _selectedProfile,
           ),
           const SizedBox(height: 16.0),
@@ -709,7 +787,7 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: _hostController,
             decoration: const InputDecoration(
               labelText: 'Printer IP Address',
-              hintText: '192.168.1.50',
+              hintText: '192.168.0.101',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.lan),
             ),
@@ -786,17 +864,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: const Text('Request Bluetooth Permission (Android 12+)'),
           ),
           const SizedBox(height: 12.0),
-          // OLD:
-          // if (_pairedBtDevices.isNotEmpty) ...[
-          //   Text(
-          //     'Paired Devices (${_pairedBtDevices.length})',
-          //     style: Theme.of(context).textTheme.titleSmall,
-          //   ),
-          //   const SizedBox(height: 6.0),
-          //   for (final d in _pairedBtDevices)
-          //     Card( ... ),
-          //   const SizedBox(height: 12.0),
-          // ],
           DropdownButtonFormField<BluetoothDevice>(
             initialValue: _pairedBtDevices.contains(_selectedBtDevice)
                 ? _selectedBtDevice
@@ -830,7 +897,7 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: _btAddressController,
             decoration: const InputDecoration(
               labelText: 'Bluetooth MAC Address',
-              hintText: '00:11:22:33:44:55',
+              hintText: '1C:1A:1B:CE:47:09',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.edit_note),
               helperText:
@@ -950,7 +1017,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _usbVidController,
                   decoration: const InputDecoration(
                     labelText: 'Vendor ID (VID)',
-                    hintText: '0x04B8 or 1208',
+                    hintText: '0x324F',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.usb),
                   ),
@@ -962,7 +1029,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _usbPidController,
                   decoration: const InputDecoration(
                     labelText: 'Product ID (PID)',
-                    hintText: '0x0202 or 514',
+                    hintText: '0x00D2',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.memory),
                   ),

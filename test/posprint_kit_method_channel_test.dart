@@ -5,15 +5,14 @@ import 'package:posprint_kit/posprint_kit_method_channel.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // OLD: MethodChannelPosprintKit platform = MethodChannelPosprintKit();
   final MethodChannelPosprintKit platform = MethodChannelPosprintKit();
   const MethodChannel channel = MethodChannel('posprint_kit');
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-          return '42';
-        });
+      return '42';
+    });
   });
 
   tearDown(() {

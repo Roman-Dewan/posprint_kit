@@ -78,6 +78,15 @@ abstract class TextRasterizer {
     required TextStyleSpec style,
     String? languageTag,
   });
+
+  /// Renders a multi-column row (3, 4, 5+ columns) with flex widths, per-column alignment,
+  /// clean whitespace, and multi-line wrapping within [widthDots].
+  Future<GrayBitmap> renderColumns(
+    List<PosColumn> columns, {
+    required int widthDots,
+    required TextStyleSpec style,
+    String? languageTag,
+  });
 }
 
 /// Deterministic, pure-Dart mock rasterizer for testing receipt encoding without Flutter.
@@ -107,6 +116,18 @@ class FakeRasterizer implements TextRasterizer {
     String? languageTag,
   }) async {
     return _createDeterministicBitmap(widthDots, '$left|$right|${style.bold}');
+  }
+
+  @override
+  Future<GrayBitmap> renderColumns(
+    List<PosColumn> columns, {
+    required int widthDots,
+    required TextStyleSpec style,
+    String? languageTag,
+  }) async {
+    final seed =
+        columns.map((c) => '${c.text}:${c.width}:${c.align}').join('|');
+    return _createDeterministicBitmap(widthDots, '$seed|${style.bold}');
   }
 
   GrayBitmap _createDeterministicBitmap(int width, String seed) {

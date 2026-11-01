@@ -71,13 +71,6 @@ class _PrinterPickerState extends State<PrinterPicker> {
           _btAddressController.text.trim(),
           profile: _profile,
         );
-      // OLD:
-      // case Transport.usb:
-      //   return EscposPrinter.usb(
-      //     vendorId: 0x04b8,
-      //     productId: 0x0202,
-      //     profile: _profile,
-      //   );
       case Transport.usb:
         final rawVid = _usbVidController.text.trim();
         final rawPid = _usbPidController.text.trim();
@@ -220,12 +213,6 @@ class _PrinterPickerState extends State<PrinterPicker> {
                 ),
               ),
             ] else ...[
-              // OLD:
-              // const ListTile(
-              //   leading: Icon(Icons.usb),
-              //   title: Text('USB Thermal Printer'),
-              //   subtitle: Text('Plug printer into Android device using an OTG cable.'),
-              // ),
               Row(
                 children: [
                   Expanded(

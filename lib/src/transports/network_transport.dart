@@ -103,7 +103,6 @@ class NetworkTransport implements PrinterTransport {
     } on SocketException catch (e) {
       PosLogger.error('SocketException during write to $host:$port: ${e.message}');
       await disconnect();
-      // OLD: return Result.error(PrinterError.connectionLost);
       return const Result.error(PrinterError.connectionLost);
     } catch (e) {
       PosLogger.error('Unexpected write failure to $host:$port: $e');

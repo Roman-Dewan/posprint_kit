@@ -133,6 +133,36 @@ class Receipt {
         ),
       );
 
+  /// Prints a multi-column row (3, 4, 5+ columns) with configurable flex widths,
+  /// per-column alignment, clean whitespace spacing, and multi-line auto-wrapping.
+  ///
+  /// Example:
+  /// ```dart
+  /// receipt.columns([
+  ///   PosColumn(text: '#', width: 1, align: PosAlign.center),
+  ///   PosColumn(text: 'Item', width: 5),
+  ///   PosColumn(text: 'Qty', width: 2, align: PosAlign.center),
+  ///   PosColumn(text: 'Price', width: 3, align: PosAlign.right),
+  ///   PosColumn(text: 'Total', width: 3, align: PosAlign.right),
+  /// ], bold: true);
+  /// ```
+  Receipt columns(
+    List<PosColumn> cols, {
+    bool bold = false,
+    TextMode mode = TextMode.auto,
+    String? languageTag,
+    TextStyleSpec style = const TextStyleSpec(),
+  }) =>
+      _add(
+        ColumnsOp(
+          cols,
+          bold: bold,
+          mode: mode,
+          languageTag: languageTag,
+          style: style,
+        ),
+      );
+
   /// Prints a horizontal divider line across the full paper width.
   Receipt divider({String character = '-'}) =>
       _add(DividerOp(character: character));

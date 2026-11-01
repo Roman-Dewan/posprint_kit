@@ -1,10 +1,8 @@
 import 'dart:io' show Platform;
-// OLD: import 'dart:typed_data';
 import 'core/logger.dart';
 import 'core/ops.dart';
 import 'core/printer_profile.dart';
 import 'core/receipt.dart';
-// OLD: import 'core/receipt_encoder.dart';
 import 'core/result.dart';
 import 'core/text_rasterizer.dart';
 import 'doctor/doctor.dart';
@@ -73,7 +71,6 @@ class EscposPrinter {
           address.trim().isNotEmpty,
           'Bluetooth device address/MAC cannot be empty.',
         ),
-        // OLD: transport = FakeTransport(maxChunkSize: 512),
         transport = BluetoothTransport(address, maxChunkSize: 512),
         rasterizer = rasterizer ?? const FakeRasterizer();
 
@@ -85,7 +82,6 @@ class EscposPrinter {
     TextRasterizer? rasterizer,
   })  : assert(vendorId > 0, 'vendorId must be a positive integer.'),
         assert(productId > 0, 'productId must be a positive integer.'),
-        // OLD: transport = FakeTransport(maxChunkSize: 4096),
         transport = UsbTransport(vendorId: vendorId, productId: productId, maxChunkSize: 4096),
         rasterizer = rasterizer ?? const FakeRasterizer();
 
@@ -119,38 +115,6 @@ class EscposPrinter {
   PosConnectionState get currentState => manager.currentState;
 
   /// Encodes and sends [receipt] to the printer through the FIFO queue.
-  // OLD:
-  // Future<Result<void>> print(Receipt receipt) async {
-  //   if (transport.currentState != PosConnectionState.connected) {
-  //     PosLogger.info('Opening connection before printing...');
-  //     final connectRes = await transport.connect();
-  //     if (connectRes.isError) {
-  //       return connectRes;
-  //     }
-  //   }
-  //   final encoder = ReceiptEncoder(profile, rasterizer);
-  //   final encodeRes = await encoder.encode(receipt);
-  //   if (encodeRes.isError) {
-  //     return Result.error(encodeRes.errorOrNull!);
-  //   }
-  //   final bytes = encodeRes.valueOrNull!;
-  //   PosLogger.verbose('Writing ${bytes.length} bytes to printer...');
-  //   final maxChunk = transport.maxChunkSize;
-  //   if (bytes.length <= maxChunk) {
-  //     return transport.write(bytes);
-  //   }
-  //   var offset = 0;
-  //   while (offset < bytes.length) {
-  //     final chunkSize = (bytes.length - offset).clamp(0, maxChunk);
-  //     final chunk = Uint8List.sublistView(bytes, offset, offset + chunkSize);
-  //     final writeRes = await transport.write(chunk);
-  //     if (writeRes.isError) {
-  //       return writeRes;
-  //     }
-  //     offset += chunkSize;
-  //   }
-  //   return const Result.ok(null);
-  // }
   Future<Result<void>> print(Receipt receipt) => manager.print(receipt);
 
   /// Prints a comprehensive test receipt containing a measurement ruler, QR code,
@@ -187,7 +151,6 @@ class EscposPrinter {
   /// Closes the transport connection and releases resources.
   Future<void> close() async {
     PosLogger.info('Closing printer connection...');
-    // OLD: await transport.disconnect();
     await manager.close();
   }
 }

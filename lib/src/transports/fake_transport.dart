@@ -96,7 +96,6 @@ class FakeTransport implements PrinterTransport {
   @override
   Future<Result<void>> write(Uint8List bytes) async {
     if (_currentState != PosConnectionState.connected) {
-      // OLD: return Result.error(PrinterError.connectionLost);
       return const Result.error(PrinterError.connectionLost);
     }
 
@@ -116,7 +115,6 @@ class FakeTransport implements PrinterTransport {
 
     if (failAfterWritesCount != null &&
         _successfulWritesCount >= failAfterWritesCount!) {
-      // OLD: return Result.error(PrinterError.connectionLost);
       return const Result.error(PrinterError.connectionLost);
     }
 

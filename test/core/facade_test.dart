@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:posprint_kit/advanced.dart';
-// OLD: import 'package:posprint_kit/posprint_kit.dart';
 
 void main() {
   group('EscposPrinter Facade (The 3-line test)', () {
@@ -41,7 +40,6 @@ void main() {
     });
 
     test('surfaces friendly error if connection fails', () async {
-      // OLD: final fake = FakeTransport()..nextConnectError = PrinterError.connectionLost;
       final fake = FakeTransport()..persistentConnectError = PrinterError.connectionLost;
       final printer = EscposPrinter.custom(fake);
 

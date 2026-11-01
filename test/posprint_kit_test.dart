@@ -19,9 +19,7 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    // OLD: PosprintKit posprintKitPlugin = PosprintKit();
     final PosprintKit posprintKitPlugin = PosprintKit();
-    // OLD: MockPosprintKitPlatform fakePlatform = MockPosprintKitPlatform();
     final MockPosprintKitPlatform fakePlatform = MockPosprintKitPlatform();
     PosprintKitPlatform.instance = fakePlatform;
 

@@ -128,6 +128,59 @@ final class RowOp extends ReceiptOp {
   final TextStyleSpec style;
 }
 
+/// Represents a single column cell within a multi-column row.
+class PosColumn {
+  const PosColumn({
+    required this.text,
+    this.width = 1,
+    this.align = PosAlign.left,
+    this.bold = false,
+    this.style = const TextStyleSpec(),
+  });
+
+  /// The text content of this column cell.
+  final String text;
+
+  /// Relative flex width ratio (e.g. 1, 5, 2, 3, 3) or relative share of width.
+  final int width;
+
+  /// Text alignment inside this column (left, center, right).
+  final PosAlign align;
+
+  /// Whether this column cell text is bold.
+  final bool bold;
+
+  /// Optional text styling override for this column cell.
+  final TextStyleSpec style;
+}
+
+/// Prints a multi-column row (3, 4, 5+ columns) with configurable flex widths,
+/// per-column alignment, clean whitespace spacing, and multi-line wrapping.
+final class ColumnsOp extends ReceiptOp {
+  const ColumnsOp(
+    this.columns, {
+    this.bold = false,
+    this.mode = TextMode.auto,
+    this.languageTag,
+    this.style = const TextStyleSpec(),
+  });
+
+  /// The list of column definitions making up this row.
+  final List<PosColumn> columns;
+
+  /// Whether the entire column row should be rendered in bold.
+  final bool bold;
+
+  /// Printing mode: [TextMode.auto] (default), [TextMode.native], or [TextMode.image].
+  final TextMode mode;
+
+  /// Optional BCP-47 language tag (e.g. 'bn', 'ja', 'zh-Hans') for proper font shaping.
+  final String? languageTag;
+
+  /// Styling specifications for font sizing and line spacing.
+  final TextStyleSpec style;
+}
+
 /// Prints a horizontal divider line across the full paper width.
 final class DividerOp extends ReceiptOp {
   const DividerOp({this.character = '-'});

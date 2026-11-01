@@ -181,6 +181,72 @@ class ReceiptEncoder {
             }
           }
 
+        case ColumnsOp(
+            :final columns,
+            :final bold,
+            :final mode,
+            :final languageTag,
+            :final style
+          ):
+          final combined = columns.map((c) => c.text).join(' ');
+          if (textEngine.shouldRenderAsImage(combined, mode)) {
+            // Multilingual image rendering
+            try {
+              final gray = await rasterizer.renderColumns(
+                columns,
+                widthDots: profile.dotsWidth,
+                style: style.bold || bold
+                    ? TextStyleSpec(
+                        fontSize: style.fontSize,
+                        bold: true,
+                        fontFamily: style.fontFamily,
+                        fontFamilyFallback: style.fontFamilyFallback,
+                        letterSpacing: style.letterSpacing,
+                        lineHeight: style.lineHeight,
+                      )
+                    : style,
+                languageTag: languageTag,
+              );
+              final mono = gray.toMono(threshold: 128);
+              for (final band in mono.toBands(profile.maxBandRows)) {
+                buffer.add(band.toEscPosBytes());
+              }
+            } catch (e) {
+              return Result.error(
+                PrinterError.renderFailed(reason: e.toString()),
+              );
+            }
+          } else {
+            // Native monospace multi-column formatting
+            if (currentAlign != PosAlign.left) {
+              buffer.add(Commands.alignLeft);
+              currentAlign = PosAlign.left;
+            }
+            if (bold != currentBold) {
+              buffer.add(bold ? Commands.boldOn : Commands.boldOff);
+              currentBold = bold;
+            }
+            if (currentSize != TextSize.normal) {
+              buffer.add(Commands.sizeNormal);
+              currentSize = TextSize.normal;
+            }
+
+            final formattedColumns = textEngine.formatNativeColumns(columns);
+            try {
+              final (codePage, encodedBytes) =
+                  textEngine.encodeNative(formattedColumns);
+              if (codePage != currentCodePage) {
+                buffer.add(Commands.selectCodePage(codePage.commandNumber));
+                currentCodePage = codePage;
+              }
+              buffer.add(encodedBytes);
+            } catch (e) {
+              return Result.error(
+                PrinterError.renderFailed(reason: e.toString()),
+              );
+            }
+          }
+
         case DividerOp(:final character):
           if (currentAlign != PosAlign.left) {
             buffer.add(Commands.alignLeft);

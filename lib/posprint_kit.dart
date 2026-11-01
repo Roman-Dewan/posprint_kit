@@ -17,7 +17,14 @@ library;
 
 export 'src/core/logger.dart' show LogLevel;
 export 'src/core/ops.dart'
-    show BarcodeType, PosAlign, QrErrorCorrectionLevel, TextMode, TextSize;
+    show
+        BarcodeType,
+        ColumnsOp,
+        PosAlign,
+        PosColumn,
+        QrErrorCorrectionLevel,
+        TextMode,
+        TextSize;
 export 'src/core/printer_profile.dart' show PrinterProfile;
 export 'src/core/receipt.dart' show Receipt;
 export 'src/core/result.dart'
@@ -29,14 +36,6 @@ export 'src/rendering/receipt_preview.dart' show ReceiptPreview;
 export 'src/transports/bluetooth_transport.dart' show BluetoothDevice;
 export 'src/transports/usb_transport.dart' show UsbDevice;
 export 'src/ui/printer_picker.dart' show PrinterPicker;
-
-// OLD:
-// import 'posprint_kit_platform_interface.dart';
-// class PosprintKit {
-//   Future<String?> getPlatformVersion() {
-//     return PosprintKitPlatform.instance.getPlatformVersion();
-//   }
-// }
 
 import 'posprint_kit_platform_interface.dart';
 
