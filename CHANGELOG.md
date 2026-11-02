@@ -1,3 +1,12 @@
+## 1.0.1
+
+* **Bluetooth Classic Printing Reliability & UART Pacing Fix**:
+  - Implemented inter-chunk pacing delay (`chunkDelay: const Duration(milliseconds: 25)`) and 256-byte chunking (`maxChunkSize: 256`) in `BluetoothTransport` and `PrinterManager` to prevent microcontrollers on portable thermal printers from overflowing their UART receive buffers.
+  - Resolved print stalls and freezes when printing raster images or multi-language receipts (`GS v 0`) over Bluetooth Classic RFCOMM SPP.
+  - Added graceful 400 ms RFCOMM socket drain delay in Kotlin `BluetoothHandler.kt` and `BluetoothTransport.disconnect()` to prevent cutting off receipts mid-print when `printer.close()` is invoked immediately after `printer.print()`.
+  - Configured `PrinterProfile.generic58` and `xprinter58` with safe image band height (`maxBandRows: 32`) so raster chunks fit within compact 2 KB printer RAM.
+  - Added paper profile width selector (58 mm / 80 mm) to the Bluetooth screen in the example application.
+
 ## 1.0.0
 
 * **LAN / WiFi Printer Discovery (`NetworkDiscovery` & `NetworkDevice`)**:

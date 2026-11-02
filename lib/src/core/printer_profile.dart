@@ -63,6 +63,7 @@ class PrinterProfile {
     dotsWidth: 384,
     columnsNormal: 32,
     columnsCondensed: 42,
+    maxBandRows: 32,
   );
 
   /// Preset for Epson TM-T20 series (80 mm).
@@ -80,6 +81,7 @@ class PrinterProfile {
     columnsNormal: 32,
     columnsCondensed: 42,
     codePages: [CodePage.cp437],
+    maxBandRows: 32,
     supportsPartialCut: false,
   );
 

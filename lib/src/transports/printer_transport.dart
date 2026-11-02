@@ -50,7 +50,11 @@ abstract class PrinterTransport {
 
   /// Maximum byte payload that can be safely sent in a single transport write.
   ///
-  /// Typical values: 65,536 bytes for TCP network sockets, 512–1024 bytes for
+  /// Typical values: 65,536 bytes for TCP network sockets, 256–512 bytes for
   /// Bluetooth Classic, 20–512 bytes for BLE depending on negotiated MTU.
   int get maxChunkSize;
+
+  /// Delay between consecutive chunk writes to pace data transmission and avoid
+  /// overflowing small hardware receive buffers on printers (defaults to [Duration.zero]).
+  Duration get chunkDelay => Duration.zero;
 }

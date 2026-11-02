@@ -150,7 +150,7 @@ void main() {
       final writeRes = await transport.write(Uint8List.fromList([0x1B, 0x40]));
       expect(writeRes.isOk, isTrue);
 
-      await transport.disconnect();
+      await transport.disconnect(drainDelay: Duration.zero);
       expect(transport.currentState, PosConnectionState.disconnected);
 
       await sub.cancel();
@@ -212,6 +212,39 @@ void main() {
       expect(res.isError, isTrue);
       expect(res.errorOrNull?.code, PrinterErrorCode.connectionLost);
       expect(transport.currentState, PosConnectionState.disconnected);
+    });
+
+    test('write chunks large payloads and respects pacing delay', () async {
+      final writtenChunks = <Uint8List>[];
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+        if (call.method == 'bt.connect') return true;
+        if (call.method == 'bt.write') {
+          writtenChunks.add(call.arguments['bytes'] as Uint8List);
+          return true;
+        }
+        return null;
+      });
+
+      final transport = BluetoothTransport(
+        '00:11:22:33:44:55',
+        maxChunkSize: 100,
+        chunkDelay: const Duration(milliseconds: 5),
+      );
+      await transport.connect();
+
+      final largeData = Uint8List(250);
+      for (var i = 0; i < 250; i++) {
+        largeData[i] = i % 256;
+      }
+
+      final res = await transport.write(largeData);
+      expect(res.isOk, isTrue);
+      expect(writtenChunks.length, 3);
+      expect(writtenChunks[0].length, 100);
+      expect(writtenChunks[1].length, 100);
+      expect(writtenChunks[2].length, 50);
     });
   });
 }

@@ -11,12 +11,16 @@ import 'printer_transport.dart';
 class FakeTransport implements PrinterTransport {
   FakeTransport({
     this.maxChunkSize = 65536,
+    this.chunkDelay = Duration.zero,
     this.connectDelay,
     this.writeDelay,
   });
 
   @override
   final int maxChunkSize;
+
+  @override
+  final Duration chunkDelay;
 
   /// Optional artificial delay applied during [connect].
   final Duration? connectDelay;

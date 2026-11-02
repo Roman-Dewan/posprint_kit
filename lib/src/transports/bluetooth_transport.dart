@@ -38,7 +38,8 @@ class BluetoothDevice {
 class BluetoothTransport implements PrinterTransport {
   BluetoothTransport(
     this.address, {
-    this.maxChunkSize = 512,
+    this.maxChunkSize = 256,
+    this.chunkDelay = const Duration(milliseconds: 25),
   }) : assert(address.trim().isNotEmpty,
             'Bluetooth MAC address cannot be empty.');
 
@@ -47,6 +48,9 @@ class BluetoothTransport implements PrinterTransport {
 
   @override
   final int maxChunkSize;
+
+  @override
+  final Duration chunkDelay;
 
   static const MethodChannel _channel = MethodChannel('posprint_kit');
 
@@ -152,10 +156,36 @@ class BluetoothTransport implements PrinterTransport {
       }
     }
 
+    if (bytes.isEmpty) {
+      return const Result.ok(null);
+    }
+
+    // Split into paced chunks when payload exceeds maxChunkSize
+    if (bytes.length > maxChunkSize) {
+      var offset = 0;
+      while (offset < bytes.length) {
+        final length = (bytes.length - offset).clamp(0, maxChunkSize);
+        final chunk = Uint8List.sublistView(bytes, offset, offset + length);
+        final res = await _writeRawChunk(chunk);
+        if (res.isError) {
+          return res;
+        }
+        offset += length;
+        if (offset < bytes.length && chunkDelay > Duration.zero) {
+          await Future<void>.delayed(chunkDelay);
+        }
+      }
+      return const Result.ok(null);
+    }
+
+    return _writeRawChunk(bytes);
+  }
+
+  Future<Result<void>> _writeRawChunk(Uint8List chunk) async {
     try {
       final bool? success = await _channel.invokeMethod<bool>(
         'bt.write',
-        {'bytes': bytes},
+        {'bytes': chunk},
       );
 
       if (success == true) {
@@ -182,13 +212,18 @@ class BluetoothTransport implements PrinterTransport {
   }
 
   @override
-  Future<void> disconnect() async {
+  Future<void> disconnect({
+    Duration drainDelay = const Duration(milliseconds: 400),
+  }) async {
     if (_currentState == PosConnectionState.disconnected) {
       return;
     }
 
     _updateState(PosConnectionState.disconnecting);
     try {
+      if (drainDelay > Duration.zero) {
+        await Future<void>.delayed(drainDelay);
+      }
       await _channel.invokeMethod<void>('bt.disconnect');
     } catch (_) {}
     _updateState(PosConnectionState.disconnected);

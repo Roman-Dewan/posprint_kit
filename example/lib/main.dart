@@ -251,41 +251,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Future<void> _scanNetworkPrinters() async {
-  //   setState(() {
-  //     _isLoading = true;
-  //     _statusMessage =
-  //         'Scanning local network for ESC/POS printers on port 9100...';
-  //     _isSuccess = true;
-  //   });
-
-  //   final res = await NetworkTransport.discoverDevices();
-
-  //   if (!mounted) return;
-  //   setState(() {
-  //     _isLoading = false;
-  //     if (res.isOk) {
-  //       _discoveredNetworkDevices = res.valueOrNull ?? [];
-  //       if (_discoveredNetworkDevices.isNotEmpty) {
-  //         _isSuccess = true;
-  //         _statusMessage =
-  //             'Found ${_discoveredNetworkDevices.length} network printer(s).';
-  //         _selectedNetworkDevice = _discoveredNetworkDevices.first;
-  //         _hostController.text = _selectedNetworkDevice!.ip;
-  //         _portController.text = '${_selectedNetworkDevice!.port}';
-  //       } else {
-  //         _isSuccess = false;
-  //         _statusMessage =
-  //             'No network printers found on port 9100.\nMake sure your printer is powered on and connected to this WiFi.';
-  //       }
-  //     } else {
-  //       _isSuccess = false;
-  //       final err = res.errorOrNull!;
-  //       _statusMessage = 'Discovery failed: ${err.message}\nHint: ${err.hint}';
-  //     }
-  //   });
-  // }
-
   Future<void> _printBluetooth({bool testPageOnly = false}) async {
     final address = _btAddressController.text.trim();
     if (address.isEmpty) {
@@ -712,6 +677,39 @@ class _HomeScreenState extends State<HomeScreen> {
               labelText: 'Bluetooth MAC Address',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.edit_note),
+            ),
+          ),
+          const SizedBox(height: 12.0),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Paper Profile (Width):',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8.0),
+                  SegmentedButton<PrinterProfile>(
+                    segments: const [
+                      ButtonSegment(
+                        value: PrinterProfile.generic58,
+                        label: Text('58 mm (Mobile Standard)'),
+                        icon: Icon(Icons.receipt),
+                      ),
+                      ButtonSegment(
+                        value: PrinterProfile.generic80,
+                        label: Text('80 mm (Desktop POS)'),
+                        icon: Icon(Icons.table_restaurant),
+                      ),
+                    ],
+                    selected: {_selectedProfile},
+                    onSelectionChanged: (set) =>
+                        setState(() => _selectedProfile = set.first),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16.0),

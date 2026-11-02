@@ -63,6 +63,9 @@ class UsbTransport implements PrinterTransport {
   @override
   final int maxChunkSize;
 
+  @override
+  Duration get chunkDelay => Duration.zero;
+
   static const MethodChannel _channel = MethodChannel('posprint_kit');
 
   final _stateController =

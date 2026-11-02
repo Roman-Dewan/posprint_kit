@@ -91,6 +91,9 @@ class EscposPrinter {
 
   /// Connects to a paired Bluetooth Classic printer on Android using its MAC [address].
   ///
+  /// Uses safe 256-byte chunking and inter-chunk pacing delay to prevent microcontrollers
+  /// on portable thermal printers from overflowing their UART receive buffers.
+  ///
   /// ```dart
   /// final printer = EscposPrinter.bluetooth('00:11:22:33:44:55');
   /// ```
@@ -98,11 +101,17 @@ class EscposPrinter {
     String address, {
     this.profile = PrinterProfile.generic58,
     TextRasterizer? rasterizer,
+    int maxChunkSize = 256,
+    Duration chunkDelay = const Duration(milliseconds: 25),
   })  : assert(
           address.trim().isNotEmpty,
           'Bluetooth device address/MAC cannot be empty.',
         ),
-        transport = BluetoothTransport(address, maxChunkSize: 512),
+        transport = BluetoothTransport(
+          address,
+          maxChunkSize: maxChunkSize,
+          chunkDelay: chunkDelay,
+        ),
         rasterizer = rasterizer ?? const FakeRasterizer();
 
   /// Connects to a thermal printer plugged in via USB OTG on Android.

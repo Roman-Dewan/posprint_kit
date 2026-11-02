@@ -254,6 +254,9 @@ class BluetoothHandler(private val context: Context) {
         scope.launch(Dispatchers.IO) {
             synchronized(this@BluetoothHandler) {
                 try {
+                    activeSocket?.outputStream?.flush()
+                    // Allow hardware buffers and in-flight RFCOMM packets to drain
+                    Thread.sleep(400)
                     activeSocket?.close()
                 } catch (_: Exception) {}
                 activeSocket = null

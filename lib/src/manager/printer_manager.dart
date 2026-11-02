@@ -77,8 +77,10 @@ class PrinterManager {
     final bytes = encodeRes.valueOrNull!;
     PosLogger.verbose('Transmitting ${bytes.length} bytes to printer...');
 
-    // 3. Write data in chunks respecting transport MTU / maxChunkSize
+    // 3. Write data in chunks respecting transport MTU / maxChunkSize and chunkDelay pacing
     final maxChunk = transport.maxChunkSize;
+    final pacingDelay = transport.chunkDelay;
+
     if (bytes.length <= maxChunk) {
       return transport.write(bytes);
     }
@@ -92,6 +94,9 @@ class PrinterManager {
         return writeRes;
       }
       offset += chunkSize;
+      if (offset < bytes.length && pacingDelay > Duration.zero) {
+        await Future<void>.delayed(pacingDelay);
+      }
     }
 
     return const Result.ok(null);

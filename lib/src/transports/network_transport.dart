@@ -90,6 +90,9 @@ class NetworkTransport implements PrinterTransport {
   @override
   final int maxChunkSize;
 
+  @override
+  Duration get chunkDelay => Duration.zero;
+
   Socket? _socket;
   StreamSubscription<Uint8List>? _socketSubscription;
 
