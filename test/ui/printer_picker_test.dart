@@ -23,6 +23,7 @@ void main() {
       // Verify header and options
       expect(find.text('Select Thermal Printer'), findsOneWidget);
       expect(find.text('WiFi / LAN'), findsOneWidget);
+      expect(find.text('Scan Network Printers'), findsOneWidget);
       expect(find.text('Bluetooth'), findsOneWidget);
       expect(find.text('USB OTG'), findsOneWidget);
 

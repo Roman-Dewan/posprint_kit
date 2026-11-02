@@ -121,14 +121,28 @@ final receipt = Receipt()
 ## Supported Transports
 
 ### 1. WiFi / Network (TCP Port 9100)
-Connect to kitchen printers, cashier terminals, or wireless print servers:
+Discover and connect to kitchen printers, cashier terminals, or wireless print servers:
 
 ```dart
-final printer = EscposPrinter.wifi(
+// Auto-discover network printers on the local WiFi subnet
+final result = await NetworkTransport.discoverDevices();
+// Or: final result = await EscposPrinter.discoverWifi();
+
+for (final device in result.valueOrNull ?? []) {
+  print('Found: ${device.name} (${device.model}) at ${device.ip}:${device.port}');
+}
+
+// Connect directly using the discovered NetworkDevice
+final device = result.valueOrNull!.first;
+final printer = EscposPrinter.network(device);
+
+// Or connect manually by IP address
+final directPrinter = EscposPrinter.wifi(
   '192.168.1.100',
   port: 9100, // default
   profile: PrinterProfile.generic80, // or generic58
 );
+await printer.print(receipt);
 ```
 
 ### 2. Bluetooth Classic (SPP / Android)

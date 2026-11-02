@@ -4,7 +4,11 @@ import 'dart:typed_data';
 
 import '../core/logger.dart';
 import '../core/result.dart';
+import '../discovery/printer_discovery.dart';
 import 'printer_transport.dart';
+
+export '../discovery/printer_discovery.dart'
+    show NetworkDevice, NetworkDiscovery;
 
 /// Communication transport for network-connected thermal receipt printers over raw TCP.
 ///
@@ -20,6 +24,59 @@ class NetworkTransport implements PrinterTransport {
     this.maxChunkSize = 65536,
   })  : assert(host.trim().isNotEmpty, 'host cannot be empty.'),
         assert(port > 0 && port <= 65535, 'port must be between 1 and 65535.');
+
+  /// Creates a [NetworkTransport] connecting to a discovered [NetworkDevice].
+  factory NetworkTransport.fromDevice(
+    NetworkDevice device, {
+    Duration timeout = const Duration(seconds: 5),
+    int maxChunkSize = 65536,
+  }) =>
+      NetworkTransport(
+        device.ip,
+        port: device.port,
+        timeout: timeout,
+        maxChunkSize: maxChunkSize,
+      );
+
+  /// Discovers thermal printers on the local WiFi/LAN network by scanning subnet IP addresses.
+  ///
+  /// - [subnet]: Optional subnet prefix (e.g. `'192.168.1'`). If omitted, auto-detects
+  ///   active IPv4 subnets from local network interfaces.
+  /// - [port]: The TCP port to probe (default `9100`).
+  /// - [ports]: Optional list of alternative ports to probe. Defaults to `[port]`.
+  /// - [timeout]: Connection timeout per IP address (default 300 ms).
+  /// - [batchSize]: Concurrency level when probing IPs (default 32 parallel probes).
+  /// - [onDeviceFound]: Optional callback triggered immediately whenever a printer is discovered.
+  /// - [probeHardware]: If true, queries the printer over TCP with ESC/POS hardware identification
+  ///   commands (`GS I 67` / `GS I 2`) to resolve model name.
+  static Future<Result<List<NetworkDevice>>> discoverDevices({
+    String? subnet,
+    int port = 9100,
+    List<int>? ports,
+    Duration timeout = const Duration(milliseconds: 300),
+    int batchSize = 32,
+    void Function(NetworkDevice device)? onDeviceFound,
+    bool probeHardware = true,
+  }) =>
+      NetworkDiscovery.discoverPrinters(
+        subnet: subnet,
+        port: port,
+        ports: ports,
+        timeout: timeout,
+        batchSize: batchSize,
+        onDeviceFound: onDeviceFound,
+        probeHardware: probeHardware,
+      );
+
+  /// Lists discovered network printers on the local WiFi/LAN network.
+  ///
+  /// Convenience alias matching [UsbTransport.listDevices] and [BluetoothTransport.listPairedDevices].
+  static Future<Result<List<NetworkDevice>>> listDevices({
+    String? subnet,
+    int port = 9100,
+    Duration timeout = const Duration(milliseconds: 300),
+  }) =>
+      discoverDevices(subnet: subnet, port: port, timeout: timeout);
 
   /// Target printer IP address or hostname.
   final String host;

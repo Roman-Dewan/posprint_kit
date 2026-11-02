@@ -50,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<BluetoothDevice> _pairedBtDevices = [];
   BluetoothDevice? _selectedBtDevice;
   List<UsbDevice> _usbDevices = [];
+  List<NetworkDevice> _discoveredNetworkDevices = [];
+  NetworkDevice? _selectedNetworkDevice;
   DoctorReport? _doctorReport;
 
   // Status & loading indicators
@@ -216,6 +218,74 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _scanNetworkPrinters() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage =
+          'Scanning local network for ESC/POS printers on port 9100...';
+      _isSuccess = true;
+    });
+
+    final res = await NetworkTransport.discoverDevices();
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      if (res.isOk) {
+        _discoveredNetworkDevices = res.valueOrNull ?? [];
+        if (_discoveredNetworkDevices.isNotEmpty) {
+          _isSuccess = true;
+          _statusMessage = 'Found ${_discoveredNetworkDevices.length} network printer(s).';
+          _selectedNetworkDevice = _discoveredNetworkDevices.first;
+          _hostController.text = _selectedNetworkDevice!.ip;
+          _portController.text = '${_selectedNetworkDevice!.port}';
+        } else {
+          _isSuccess = false;
+          _statusMessage = 'No network printers found on port 9100.\nMake sure your printer is powered on and connected to this WiFi.';
+        }
+      } else {
+        _isSuccess = false;
+        final err = res.errorOrNull!;
+        _statusMessage = 'Discovery failed: ${err.message}\nHint: ${err.hint}';
+      }
+    });
+  }
+
+  // Future<void> _scanNetworkPrinters() async {
+  //   setState(() {
+  //     _isLoading = true;
+  //     _statusMessage =
+  //         'Scanning local network for ESC/POS printers on port 9100...';
+  //     _isSuccess = true;
+  //   });
+
+  //   final res = await NetworkTransport.discoverDevices();
+
+  //   if (!mounted) return;
+  //   setState(() {
+  //     _isLoading = false;
+  //     if (res.isOk) {
+  //       _discoveredNetworkDevices = res.valueOrNull ?? [];
+  //       if (_discoveredNetworkDevices.isNotEmpty) {
+  //         _isSuccess = true;
+  //         _statusMessage =
+  //             'Found ${_discoveredNetworkDevices.length} network printer(s).';
+  //         _selectedNetworkDevice = _discoveredNetworkDevices.first;
+  //         _hostController.text = _selectedNetworkDevice!.ip;
+  //         _portController.text = '${_selectedNetworkDevice!.port}';
+  //       } else {
+  //         _isSuccess = false;
+  //         _statusMessage =
+  //             'No network printers found on port 9100.\nMake sure your printer is powered on and connected to this WiFi.';
+  //       }
+  //     } else {
+  //       _isSuccess = false;
+  //       final err = res.errorOrNull!;
+  //       _statusMessage = 'Discovery failed: ${err.message}\nHint: ${err.hint}';
+  //     }
+  //   });
+  // }
+
   Future<void> _printBluetooth({bool testPageOnly = false}) async {
     final address = _btAddressController.text.trim();
     if (address.isEmpty) {
@@ -293,7 +363,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _scanBluetooth() async {
     setState(() => _isLoading = true);
     var res = await BluetoothTransport.listPairedDevices();
-    if (res.isError && res.errorOrNull?.code == PrinterErrorCode.permissionDenied) {
+    if (res.isError &&
+        res.errorOrNull?.code == PrinterErrorCode.permissionDenied) {
       final permRes = await BluetoothTransport.requestPermission();
       if (permRes.isOk && (permRes.valueOrNull ?? false)) {
         res = await BluetoothTransport.listPairedDevices();
@@ -306,14 +377,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (res.isOk) {
         _pairedBtDevices = res.valueOrNull ?? [];
         _isSuccess = true;
-        _statusMessage = 'Found ${_pairedBtDevices.length} paired Bluetooth device(s).';
+        _statusMessage =
+            'Found ${_pairedBtDevices.length} paired Bluetooth device(s).';
         if (_pairedBtDevices.isNotEmpty) {
           _selectedBtDevice = _pairedBtDevices.first;
           _btAddressController.text = _selectedBtDevice!.address;
         }
       } else {
         _isSuccess = false;
-        _statusMessage = res.errorOrNull?.message ?? 'Failed to list Bluetooth devices.';
+        _statusMessage =
+            res.errorOrNull?.message ?? 'Failed to list Bluetooth devices.';
       }
     });
   }
@@ -330,12 +403,15 @@ class _HomeScreenState extends State<HomeScreen> {
         _statusMessage = 'Found ${_usbDevices.length} USB device(s).';
         if (_usbDevices.isNotEmpty) {
           final first = _usbDevices.first;
-          _usbVidController.text = '0x${first.vendorId.toRadixString(16).toUpperCase()}';
-          _usbPidController.text = '0x${first.productId.toRadixString(16).toUpperCase()}';
+          _usbVidController.text =
+              '0x${first.vendorId.toRadixString(16).toUpperCase()}';
+          _usbPidController.text =
+              '0x${first.productId.toRadixString(16).toUpperCase()}';
         }
       } else {
         _isSuccess = false;
-        _statusMessage = res.errorOrNull?.message ?? 'Failed to list USB devices.';
+        _statusMessage =
+            res.errorOrNull?.message ?? 'Failed to list USB devices.';
       }
     });
   }
@@ -505,6 +581,45 @@ class _HomeScreenState extends State<HomeScreen> {
             'Connects directly to an ESC/POS receipt printer on your network over TCP port 9100.',
           ),
           const SizedBox(height: 16.0),
+          FilledButton.tonalIcon(
+            onPressed: _isLoading ? null : _scanNetworkPrinters,
+            icon: const Icon(Icons.radar),
+            label: const Text('Scan Network Printers'),
+          ),
+          if (_discoveredNetworkDevices.isNotEmpty) ...[
+            const SizedBox(height: 12.0),
+            DropdownButtonFormField<NetworkDevice>(
+              initialValue:
+                  _discoveredNetworkDevices.contains(_selectedNetworkDevice)
+                  ? _selectedNetworkDevice
+                  : null,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Select Discovered Network Printer',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.print_outlined),
+              ),
+              items: _discoveredNetworkDevices.map((d) {
+                return DropdownMenuItem(
+                  value: d,
+                  child: Text(
+                    d.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: (d) {
+                if (d != null) {
+                  setState(() {
+                    _selectedNetworkDevice = d;
+                    _hostController.text = d.ip;
+                    _portController.text = '${d.port}';
+                  });
+                }
+              },
+            ),
+          ],
+          const SizedBox(height: 12.0),
           TextField(
             controller: _hostController,
             decoration: const InputDecoration(

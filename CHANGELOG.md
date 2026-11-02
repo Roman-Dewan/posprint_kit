@@ -1,5 +1,12 @@
-## 1.0.0 (stable)
+## 1.0.0
 
+* **LAN / WiFi Printer Discovery (`NetworkDiscovery` & `NetworkDevice`)**:
+  - Auto-discover thermal printers across the local network subnet over TCP port 9100.
+  - Returns typed `NetworkDevice` containing device `ip`, `port`, `name`, and `model`.
+  - Reverse DNS hostname resolution and ESC/POS hardware inquiry (`GS I 67` / `GS I 2`) to identify printer model.
+  - Added `NetworkTransport.discoverDevices()` and `NetworkTransport.listDevices()`.
+  - Added `EscposPrinter.network(device)` and `EscposPrinter.discoverWifi()`.
+  - Added network scanning to `PrinterPicker` and example application.
 * **Multi-Column Printing (`Receipt.columns`)**:
   - Support for 3, 4, 5+ columns (e.g., `[SL, Item Name, Qty, Price, Total]`).
   - Configurable flex ratios (`width: 1`, `width: 5`), per-column alignment, clean whitespace, and multi-line wrapping.

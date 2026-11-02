@@ -29,12 +29,16 @@ export 'src/core/printer_profile.dart' show PrinterProfile;
 export 'src/core/receipt.dart' show Receipt;
 export 'src/core/result.dart'
     show Err, Ok, PrinterError, PrinterErrorCode, Result;
+export 'src/discovery/printer_discovery.dart'
+    show NetworkDevice, NetworkDiscovery;
 export 'src/doctor/doctor.dart' show DoctorCheck, DoctorReport;
 export 'src/printer.dart'
     show EscposLink, EscposPrinter, PosPrintKit, Transport;
 export 'src/rendering/receipt_preview.dart' show ReceiptPreview;
-export 'src/transports/bluetooth_transport.dart' show BluetoothDevice;
-export 'src/transports/usb_transport.dart' show UsbDevice;
+export 'src/transports/bluetooth_transport.dart'
+    show BluetoothDevice, BluetoothTransport;
+export 'src/transports/network_transport.dart' show NetworkTransport;
+export 'src/transports/usb_transport.dart' show UsbDevice, UsbTransport;
 export 'src/ui/printer_picker.dart' show PrinterPicker;
 
 import 'posprint_kit_platform_interface.dart';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/printer_profile.dart';
 import '../printer.dart';
+import '../transports/network_transport.dart';
 
 /// A drop-in modal or screen widget allowing users and developers to configure,
 /// discover, and select a thermal printer.
@@ -36,6 +37,10 @@ class _PrinterPickerState extends State<PrinterPicker> {
   // USB controllers
   final _usbVidController = TextEditingController(text: '0x04B8');
   final _usbPidController = TextEditingController(text: '0x0202');
+
+  List<NetworkDevice> _discoveredNetworkDevices = [];
+  NetworkDevice? _selectedNetworkDevice;
+  bool _isScanningNetwork = false;
 
   bool _isTesting = false;
   String? _statusMessage;
@@ -125,6 +130,39 @@ class _PrinterPickerState extends State<PrinterPicker> {
     }
   }
 
+  Future<void> _scanNetworkPrinters() async {
+    setState(() {
+      _isScanningNetwork = true;
+      _statusMessage = 'Scanning local network for printers...';
+      _isSuccess = true;
+    });
+
+    final res = await NetworkTransport.discoverDevices();
+
+    if (!mounted) return;
+    setState(() {
+      _isScanningNetwork = false;
+      if (res.isOk) {
+        _discoveredNetworkDevices = res.valueOrNull ?? [];
+        if (_discoveredNetworkDevices.isNotEmpty) {
+          _statusMessage =
+              'Found ${_discoveredNetworkDevices.length} network printer(s).';
+          _selectedNetworkDevice = _discoveredNetworkDevices.first;
+          _hostController.text = _selectedNetworkDevice!.ip;
+          _portController.text = '${_selectedNetworkDevice!.port}';
+        } else {
+          _isSuccess = false;
+          _statusMessage =
+              'No network printers found on port 9100.\nCheck that your printer is powered on and on the same WiFi.';
+        }
+      } else {
+        _isSuccess = false;
+        final err = res.errorOrNull!;
+        _statusMessage = 'Discovery error: ${err.message}\nHint: ${err.hint}';
+      }
+    });
+  }
+
   void _confirmSelection() {
     widget.onPrinterSelected(_buildCurrentPrinter());
   }
@@ -182,6 +220,51 @@ class _PrinterPickerState extends State<PrinterPicker> {
 
             // Configuration inputs per transport
             if (_selectedTransport == Transport.wifi) ...[
+              FilledButton.tonalIcon(
+                onPressed: _isScanningNetwork ? null : _scanNetworkPrinters,
+                icon: _isScanningNetwork
+                    ? const SizedBox(
+                        width: 18.0,
+                        height: 18.0,
+                        child: CircularProgressIndicator(strokeWidth: 2.0),
+                      )
+                    : const Icon(Icons.search),
+                label: const Text('Scan Network Printers'),
+              ),
+              if (_discoveredNetworkDevices.isNotEmpty) ...[
+                const SizedBox(height: 12.0),
+                DropdownButtonFormField<NetworkDevice>(
+                  initialValue:
+                      _discoveredNetworkDevices.contains(_selectedNetworkDevice)
+                          ? _selectedNetworkDevice
+                          : null,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Select Discovered Printer',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.print_outlined),
+                  ),
+                  items: _discoveredNetworkDevices.map((d) {
+                    return DropdownMenuItem(
+                      value: d,
+                      child: Text(
+                        '${d.name} (${d.ip}:${d.port})',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (d) {
+                    if (d != null) {
+                      setState(() {
+                        _selectedNetworkDevice = d;
+                        _hostController.text = d.ip;
+                        _portController.text = '${d.port}';
+                      });
+                    }
+                  },
+                ),
+              ],
+              const SizedBox(height: 12.0),
               TextField(
                 controller: _hostController,
                 decoration: const InputDecoration(

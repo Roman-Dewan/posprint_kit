@@ -58,6 +58,37 @@ class EscposPrinter {
         transport = NetworkTransport(host, port: port),
         rasterizer = rasterizer ?? const FakeRasterizer();
 
+  /// Connects to a discovered [NetworkDevice].
+  ///
+  /// ```dart
+  /// final devices = await EscposPrinter.discoverWifi();
+  /// final printer = EscposPrinter.network(devices.valueOrNull!.first);
+  /// ```
+  EscposPrinter.network(
+    NetworkDevice device, {
+    PrinterProfile profile = PrinterProfile.generic80,
+    TextRasterizer? rasterizer,
+  }) : this.wifi(
+          device.ip,
+          port: device.port,
+          profile: profile,
+          rasterizer: rasterizer,
+        );
+
+  /// Discovers thermal printers on the local WiFi/LAN network by scanning subnet IP addresses.
+  static Future<Result<List<NetworkDevice>>> discoverWifi({
+    String? subnet,
+    int port = 9100,
+    Duration timeout = const Duration(milliseconds: 300),
+    void Function(NetworkDevice device)? onDeviceFound,
+  }) =>
+      NetworkTransport.discoverDevices(
+        subnet: subnet,
+        port: port,
+        timeout: timeout,
+        onDeviceFound: onDeviceFound,
+      );
+
   /// Connects to a paired Bluetooth Classic printer on Android using its MAC [address].
   ///
   /// ```dart
