@@ -130,6 +130,25 @@ class Commands {
   /// ESC p 1 25 250: Open cash drawer connected to pin 5.
   static const List<int> cashDrawerPin5 = [0x1B, 0x70, 0x01, 0x19, 0xFA];
 
+  /// Sunmi real-time RJ12 cash drawer kick command (DLE DC4 0 0 0).
+  static const List<int> sunmiCashDrawer = [0x10, 0x14, 0x00, 0x00, 0x00];
+
+  /// Generates custom ESC/POS cash drawer pulse `ESC p m t1 t2`.
+  /// [onTime] = pulse ON duration in units of 2ms (e.g. 50 = 100ms).
+  /// [offTime] = pulse OFF duration in units of 2ms (e.g. 250 = 500ms).
+  static Uint8List cashDrawerPulse({
+    bool pin5 = false,
+    int onTime = 50,
+    int offTime = 250,
+  }) =>
+      Uint8List.fromList([
+        0x1B,
+        0x70,
+        pin5 ? 0x01 : 0x00,
+        onTime.clamp(0, 255),
+        offTime.clamp(0, 255),
+      ]);
+
   // ---------------------------------------------------------------------------
   // Code Page Selection (ESC t n)
   // ---------------------------------------------------------------------------
@@ -266,5 +285,24 @@ class Commands {
       yL,
       yH,
     ]);
+  }
+
+  /// Generates a solid 1-bit raster horizontal divider line across [dotsWidth] pixels
+  /// of height [heightDots] dots (default 2 dots).
+  static Uint8List rasterLine({
+    required int dotsWidth,
+    int heightDots = 2,
+  }) {
+    final clampedHeight = heightDots.clamp(1, 255);
+    final bytesPerLine = (dotsWidth + 7) ~/ 8;
+    final header = rasterHeader(
+      bytesPerLine: bytesPerLine,
+      heightDots: clampedHeight,
+    );
+    final totalDataLen = bytesPerLine * clampedHeight;
+    final result = Uint8List(header.length + totalDataLen);
+    result.setRange(0, header.length, header);
+    result.fillRange(header.length, result.length, 0xFF);
+    return result;
   }
 }

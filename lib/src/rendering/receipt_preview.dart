@@ -144,10 +144,14 @@ class ReceiptPreview extends StatelessWidget {
         );
 
       case DividerOp(:final character):
+        final char = character.isEmpty ? '-' : character;
+        final count = (profile.columnsNormal / char.runes.length)
+            .floor()
+            .clamp(1, profile.columnsNormal);
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),
           child: Text(
-            character * 48,
+            char * count,
             maxLines: 1,
             overflow: TextOverflow.clip,
             style: const TextStyle(

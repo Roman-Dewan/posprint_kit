@@ -8,9 +8,9 @@ import 'raster.dart';
 /// Pure Dart representation so core receipt encoding stays decoupled from `dart:ui`.
 class TextStyleSpec {
   const TextStyleSpec({
-    this.fontSize = 26.0,
+    this.fontSize = 24.0,
     this.bold = false,
-    this.fontFamily,
+    this.fontFamily = 'monospace',
     this.fontFamilyFallback,
     this.letterSpacing,
     this.lineHeight = 1.2,

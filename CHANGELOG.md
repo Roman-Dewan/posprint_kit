@@ -1,3 +1,27 @@
+## 1.1.0
+
+* **Sunmi Built-in POS Terminal Integration (`SunmiTransport` & `EscposPrinter.sunmi`)**:
+  - Direct integration with Sunmi's official PrinterX SDK (`com.sunmi:printerx`) and Inner Printer Library (`com.sunmi:printerlibrary`) via native Android MethodChannel bridge (`SunmiHandler.kt`).
+  - Supports Sunmi D3 desktop POS terminals (with integrated 80 mm high-speed 250 mm/s thermal printer and auto-cutter) as well as handhelds (Sunmi V2, V2s, T2, etc.).
+  - Added `EscposPrinter.sunmi()` and `EscposPrinter.inbuilt()` 3-line facades.
+  - Native `LineApi` architecture (`sunmi.printReceipt`) executing fonts, alignments, multi-column tables (`Receipt.columns`), and dashed dividers natively on Sunmi thermal hardware.
+  - Emits genuine dashed hyphens (`- - - - -`) for `receipt.divider()` matching traditional thermal receipt styling.
+  - Dual-channel cash drawer triggering: tries AIDL `InnerPrinterManager` / `IWoyouService.openDrawer()` with 100 ms ESC/POS pulse fallback.
+  - Hardware paper roll inquiry (`SunmiTransport.getPaperWidth()`) returning 80 mm or 58 mm.
+  - Device detection (`SunmiTransport.isSunmiDevice()`) and real-time printer status inquiry (`SunmiTransport.getStatus()`).
+  - Added Android 11+ package visibility declaration (`<queries><package android:name="woyou.aidlservice.jiuiv5" /></queries>`) in `AndroidManifest.xml`.
+  - Added Built-in (Sunmi) transport option to `PrinterPicker` and a dedicated Sunmi printing tab to the example app.
+
+* **100% Universal Thermal Raster QR Code Engine (`QrRasterizer` & `GS v 0`)**:
+  - Automatically converts QR codes into crisp, high-contrast 1-bit monochrome raster bitmaps (`MonoBitmap`) conforming to the ISO/IEC 18004 specification with a 4-module quiet zone.
+  - Fixes missing QR codes on WiFi, Bluetooth, and USB thermal printers (such as Xprinter, Zjiang, Rongta, POS-58, POS-80) whose firmware lacks Epson's proprietary `GS ( k` 2D barcode command.
+  - Added `PrinterProfile.useRasterQr` (defaults to `true`) to guarantee 100% printer compatibility out of the box while preserving legacy hardware `GS ( k` as an opt-in fallback with trailing `LF` line flushing.
+  - Added horizontal alignment support (`PosAlign.center`, `PosAlign.left`, `PosAlign.right`) to `Receipt.qr()`.
+
+* **Customizable Typography & Title Font Sizing**:
+  - `Receipt.title()` now supports a custom `fontSize` parameter (defaults to prominent 36 pt double-size title).
+  - Dynamic font size forwarding in `SunmiTransport` and `SunmiHandler.kt` respecting custom `TextStyleSpec.fontSize` and synchronizing with both `TextStyle.setTextSize` and Sunmi AIDL `setFontSize`.
+
 ## 1.0.1
 
 * **Bluetooth Classic Printing Reliability & UART Pacing Fix**:

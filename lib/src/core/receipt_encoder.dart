@@ -9,6 +9,7 @@ import 'receipt.dart';
 import 'result.dart';
 import 'text_engine.dart';
 import 'text_rasterizer.dart';
+import '../rendering/qr_rasterizer.dart';
 
 /// Transforms a high-level [Receipt] into raw ESC/POS printer byte commands.
 ///
@@ -37,7 +38,9 @@ class ReceiptEncoder {
 
     CodePage currentCodePage =
         profile.codePages.isNotEmpty ? profile.codePages.first : CodePage.cp437;
-    buffer.add(Commands.selectCodePage(currentCodePage.commandNumber));
+    if (!profile.rasterizeAllText) {
+      buffer.add(Commands.selectCodePage(currentCodePage.commandNumber));
+    }
 
     PosAlign currentAlign = PosAlign.left;
     bool currentBold = false;
@@ -54,22 +57,28 @@ class ReceiptEncoder {
             :final languageTag,
             :final style
           ):
-          if (textEngine.shouldRenderAsImage(text, mode)) {
-            // Multilingual image rendering
+          if (profile.rasterizeAllText ||
+              textEngine.shouldRenderAsImage(text, mode)) {
+            // Multilingual / universal raster image rendering
             try {
+              final double fontMultiplier = switch (size) {
+                TextSize.doubleSize => 1.25,
+                TextSize.doubleWidth || TextSize.doubleHeight => 1.15,
+                TextSize.normal => 1.0,
+              };
+              final isBold = style.bold || bold;
+              final effectiveStyle = TextStyleSpec(
+                fontSize: style.fontSize * fontMultiplier,
+                bold: isBold,
+                fontFamily: style.fontFamily ?? 'monospace',
+                fontFamilyFallback: style.fontFamilyFallback,
+                letterSpacing: style.letterSpacing,
+                lineHeight: style.lineHeight,
+              );
               final gray = await rasterizer.renderText(
                 text,
                 widthDots: profile.dotsWidth,
-                style: style.bold || bold
-                    ? TextStyleSpec(
-                        fontSize: style.fontSize,
-                        bold: true,
-                        fontFamily: style.fontFamily,
-                        fontFamilyFallback: style.fontFamilyFallback,
-                        letterSpacing: style.letterSpacing,
-                        lineHeight: style.lineHeight,
-                      )
-                    : style,
+                style: effectiveStyle,
                 align: align,
                 languageTag: languageTag,
               );
@@ -121,7 +130,8 @@ class ReceiptEncoder {
             :final style
           ):
           final combined = '$left $right';
-          if (textEngine.shouldRenderAsImage(combined, mode)) {
+          if (profile.rasterizeAllText ||
+              textEngine.shouldRenderAsImage(combined, mode)) {
             // Render row in pixels so right-alignment and script shaping are exact
             try {
               final gray = await rasterizer.renderRow(
@@ -188,7 +198,8 @@ class ReceiptEncoder {
             :final style
           ):
           final combined = columns.map((c) => c.text).join(' ');
-          if (textEngine.shouldRenderAsImage(combined, mode)) {
+          if (profile.rasterizeAllText ||
+              textEngine.shouldRenderAsImage(combined, mode)) {
             // Multilingual image rendering
             try {
               final gray = await rasterizer.renderColumns(
@@ -247,21 +258,63 @@ class ReceiptEncoder {
           }
 
         case DividerOp(:final character):
-          if (currentAlign != PosAlign.left) {
-            buffer.add(Commands.alignLeft);
-            currentAlign = PosAlign.left;
-          }
-          if (currentBold) {
-            buffer.add(Commands.boldOff);
-            currentBold = false;
-          }
-          if (currentSize != TextSize.normal) {
-            buffer.add(Commands.sizeNormal);
-            currentSize = TextSize.normal;
-          }
+          if (profile.rasterizeAllText) {
+            // Render authentic dashed hyphens via rasterizer matching traditional thermal style
+            final char = character.isEmpty ? '-' : character;
+            final count = (profile.columnsNormal / char.runes.length)
+                .floor()
+                .clamp(1, profile.columnsNormal);
+            final line = char * count;
+            try {
+              final gray = await rasterizer.renderText(
+                line,
+                widthDots: profile.dotsWidth,
+                style: const TextStyleSpec(
+                  fontSize: 22.0,
+                  fontFamily: 'monospace',
+                  lineHeight: 1.0,
+                ),
+                align: PosAlign.center,
+              );
+              final mono = gray.toMono(threshold: 128);
+              for (final band in mono.toBands(profile.maxBandRows)) {
+                buffer.add(band.toEscPosBytes());
+              }
+            } catch (_) {
+              buffer.add(Commands.rasterLine(dotsWidth: profile.dotsWidth, heightDots: 2));
+              buffer.add(Commands.feedLines(1));
+            }
+          } else {
+            if (currentAlign != PosAlign.left) {
+              buffer.add(Commands.alignLeft);
+              currentAlign = PosAlign.left;
+            }
+            if (currentBold) {
+              buffer.add(Commands.boldOff);
+              currentBold = false;
+            }
+            if (currentSize != TextSize.normal) {
+              buffer.add(Commands.sizeNormal);
+              currentSize = TextSize.normal;
+            }
 
-          final line = '${character * profile.columnsNormal}\n';
-          buffer.add(ascii.encode(line));
+            final char = character.isEmpty ? '-' : character;
+            final count = (profile.columnsNormal / char.runes.length)
+                .floor()
+                .clamp(1, profile.columnsNormal);
+            final line = '${char * count}\n';
+
+            try {
+              final (codePage, encodedBytes) = textEngine.encodeNative(line);
+              if (codePage != currentCodePage) {
+                buffer.add(Commands.selectCodePage(codePage.commandNumber));
+                currentCodePage = codePage;
+              }
+              buffer.add(encodedBytes);
+            } catch (_) {
+              buffer.add(ascii.encode('${'-' * profile.columnsNormal}\n'));
+            }
+          }
 
         case FeedOp(:final lines):
           buffer.add(Commands.feedLines(lines));
@@ -276,20 +329,34 @@ class ReceiptEncoder {
             buffer.add(Commands.cutFull);
           }
 
-        case QrOp(:final data, :final size, :final errorCorrection):
-          if (currentAlign != PosAlign.center) {
-            buffer.add(Commands.alignCenter);
-            currentAlign = PosAlign.center;
-          }
-          buffer.add(Commands.qrSelectModel2);
-          buffer.add(Commands.qrModuleSize(size));
-          buffer.add(Commands.qrErrorCorrection(errorCorrection.byteValue));
-          buffer.add(Commands.qrStoreData(utf8.encode(data)));
-          buffer.add(Commands.qrPrint);
+        case QrOp(:final data, :final size, :final align, :final errorCorrection):
+          if (profile.useRasterQr) {
+            final mono = QrRasterizer.renderQr(
+              data: data,
+              widthDots: profile.dotsWidth,
+              moduleSize: size,
+              align: align,
+              errorCorrection: errorCorrection,
+            );
+            for (final band in mono.toBands(profile.maxBandRows)) {
+              buffer.add(band.toEscPosBytes());
+            }
+          } else {
+            if (align != currentAlign) {
+              buffer.add(_alignBytes(align));
+              currentAlign = align;
+            }
+            buffer.add(Commands.qrSelectModel2);
+            buffer.add(Commands.qrModuleSize(size));
+            buffer.add(Commands.qrErrorCorrection(errorCorrection.byteValue));
+            buffer.add(Commands.qrStoreData(utf8.encode(data)));
+            buffer.add(Commands.qrPrint);
+            buffer.addByte(Commands.lf);
 
-          // Reset to left
-          buffer.add(Commands.alignLeft);
-          currentAlign = PosAlign.left;
+            // Reset to left
+            buffer.add(Commands.alignLeft);
+            currentAlign = PosAlign.left;
+          }
 
         case BarcodeOp(
             :final data,

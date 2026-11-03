@@ -72,6 +72,9 @@ kotlin {
 }
 
 dependencies {
+    implementation("com.sunmi:printerlibrary:1.0.24")
+    implementation("com.sunmi:printerx:1.0.20")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-core:5.0.0")
 }

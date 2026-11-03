@@ -135,6 +135,12 @@ class CodePageEncoder {
     0x00DF: 0xE1, // ß
     0x00B0: 0xF8, // °
     0x00B7: 0xFA, // ·
+    // Box-drawing and line characters
+    0x2500: 0xC4, // ─ (box drawings light horizontal)
+    0x2501: 0xC4, // ━ (box drawings heavy horizontal)
+    0x2550: 0xCD, // ═ (box drawings double horizontal)
+    0x2014: 0xC4, // — (em dash -> CP437 horizontal line)
+    0x2013: 0x2D, // – (en dash -> ASCII hyphen)
   };
 
   static final Map<int, int> _unicodeToCp858 = {

@@ -10,3 +10,4 @@ example/.dart_tool/
 # Internal skills and CI
 skills/
 .github/
+reference/

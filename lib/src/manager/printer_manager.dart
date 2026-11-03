@@ -7,6 +7,7 @@ import '../core/receipt_encoder.dart';
 import '../core/result.dart';
 import '../core/text_rasterizer.dart';
 import '../transports/printer_transport.dart';
+import '../transports/sunmi_transport.dart';
 import 'print_queue.dart';
 
 /// Coordinates print job sequencing, chunking, connection lifecycle, and retry handling.
@@ -67,7 +68,14 @@ class PrinterManager {
       }
     }
 
-    // 2. Encode receipt to ESC/POS bytes
+    // 2. If target is Sunmi built-in terminal, execute via Sunmi native LineApi
+    if (transport is SunmiTransport) {
+      PosLogger.info('Executing receipt via Sunmi native LineApi...');
+      return (transport as SunmiTransport)
+          .printReceipt(receipt, profile: profile);
+    }
+
+    // 3. Encode receipt to ESC/POS bytes for standard external printers
     final encoder = ReceiptEncoder(profile, rasterizer);
     final encodeRes = await encoder.encode(receipt);
     if (encodeRes.isError) {

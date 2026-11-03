@@ -105,9 +105,9 @@ class Doctor {
             name: 'Android Transport Capabilities',
             passed: true,
             message:
-                'WiFi, Bluetooth Classic SPP, BLE, and USB OTG are supported.',
+                'WiFi, Bluetooth Classic SPP, BLE, USB OTG, and Sunmi built-in printers are supported.',
             hint:
-                'For Bluetooth on Android 12+, ensure BLUETOOTH_CONNECT is declared. For USB, add <uses-feature android.hardware.usb.host android:required="false" />.',
+                'For Bluetooth on Android 12+, ensure BLUETOOTH_CONNECT is declared. For USB, add <uses-feature android.hardware.usb.host android:required="false" />. For Sunmi POS terminals, ensure <queries> includes woyou.aidlservice.jiuiv5.',
           ),
         );
       }

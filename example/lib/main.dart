@@ -60,6 +60,28 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _checkSunmiPaperWidth();
+  }
+
+  Future<void> _checkSunmiPaperWidth() async {
+    try {
+      final isSunmi = await SunmiTransport.isSunmiDevice();
+      if (isSunmi) {
+        final width = await SunmiTransport.getPaperWidth();
+        if (mounted) {
+          setState(() {
+            _selectedProfile = width <= 58
+                ? PrinterProfile.sunmi58
+                : PrinterProfile.sunmi80;
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
     _hostController.dispose();
     _portController.dispose();
@@ -95,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
       ..barcode('10429812', type: BarcodeType.code128)
       ..feed(2)
+      ..drawer()
       ..cut();
   }
 
@@ -138,6 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..total('TOTAL', '54.50')
       ..feed(1)
       ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
+      ..barcode('123412', width: 40)
       ..feed(2)
       ..cut();
   }
@@ -290,6 +314,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _printSunmi({bool testPageOnly = false}) async {
+    final profile = (_selectedProfile == PrinterProfile.generic58 ||
+            _selectedProfile == PrinterProfile.sunmi58)
+        ? PrinterProfile.sunmi58
+        : PrinterProfile.sunmi80;
+    final printer = EscposPrinter.sunmi(
+      profile: profile,
+      rasterizer: FlutterTextRasterizer(),
+    );
+    await _executePrint(
+      'Built-in (Sunmi)',
+      printer,
+      testPageOnly: testPageOnly,
+    );
+  }
+
+  Future<void> _openSunmiDrawer() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Opening cash drawer via Sunmi API...';
+      _isSuccess = true;
+    });
+
+    final res = await SunmiTransport.openDrawer();
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      if (res.isOk) {
+        _isSuccess = true;
+        _statusMessage = 'Cash drawer opened successfully!';
+      } else {
+        _isSuccess = false;
+        _statusMessage = 'Cash drawer failed: ${res.errorOrNull?.message}';
+      }
+    });
+  }
+
   Future<void> _runVirtualPrintTest() async {
     setState(() {
       _isLoading = true;
@@ -427,13 +488,19 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildWiFiPrintTab(),
           _buildBluetoothPrintTab(),
           _buildUsbPrintTab(),
+          _buildSunmiPrintTab(),
           _buildVirtualTestTab(),
           _buildDoctorTab(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+        onDestinationSelected: (idx) {
+          setState(() => _currentIndex = idx);
+          if (idx == 4) {
+            _checkSunmiPaperWidth();
+          }
+        },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.receipt), label: 'Preview'),
           NavigationDestination(icon: Icon(Icons.wifi), label: 'WiFi Print'),
@@ -442,6 +509,10 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Bluetooth',
           ),
           NavigationDestination(icon: Icon(Icons.usb), label: 'USB'),
+          NavigationDestination(
+            icon: Icon(Icons.point_of_sale),
+            label: 'Sunmi D3',
+          ),
           NavigationDestination(
             icon: Icon(Icons.memory),
             label: 'Virtual Test',
@@ -792,6 +863,116 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _isLoading ? null : () => _printUsb(testPageOnly: true),
             icon: const Icon(Icons.receipt_long),
             label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSunmiPrintTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Sunmi Built-in Thermal Printer',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 6.0),
+          const Text(
+            'Connects directly to the internal thermal receipt printer on Sunmi POS terminals (e.g. Sunmi D3, V2, T2).',
+          ),
+          const SizedBox(height: 16.0),
+          Card(
+            color: Colors.blue.shade50,
+            child: const Padding(
+              padding: EdgeInsets.all(14.0),
+              child: Row(
+                children: [
+                  Icon(Icons.point_of_sale, size: 36.0, color: Colors.blue),
+                  SizedBox(width: 14.0),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Sunmi POS Hardware Integration',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15.0,
+                          ),
+                        ),
+                        SizedBox(height: 4.0),
+                        Text(
+                          'Uses Sunmi PrinterX SDK to send ESC/POS commands directly to the built-in printer with auto-cutter and drawer support.',
+                          style: TextStyle(fontSize: 12.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12.0),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Paper Profile (Width):',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8.0),
+                  SegmentedButton<PrinterProfile>(
+                    segments: const [
+                      ButtonSegment(
+                        value: PrinterProfile.sunmi80,
+                        label: Text('80 mm (Sunmi D3 Standard)'),
+                        icon: Icon(Icons.table_restaurant),
+                      ),
+                      ButtonSegment(
+                        value: PrinterProfile.sunmi58,
+                        label: Text('58 mm (Sunmi V2 Mobile)'),
+                        icon: Icon(Icons.receipt),
+                      ),
+                    ],
+                    selected: {
+                      _selectedProfile == PrinterProfile.generic58 ||
+                              _selectedProfile == PrinterProfile.sunmi58
+                          ? PrinterProfile.sunmi58
+                          : PrinterProfile.sunmi80
+                    },
+                    onSelectionChanged: (set) =>
+                        setState(() => _selectedProfile = set.first),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16.0),
+          _buildStatusBanner(),
+          const SizedBox(height: 16.0),
+          FilledButton.icon(
+            onPressed: _isLoading ? null : () => _printSunmi(),
+            icon: const Icon(Icons.print),
+            label: const Text('Print Sample Multi-Language Receipt'),
+          ),
+          const SizedBox(height: 10.0),
+          OutlinedButton.icon(
+            onPressed:
+                _isLoading ? null : () => _printSunmi(testPageOnly: true),
+            icon: const Icon(Icons.receipt_long),
+            label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
+          ),
+          const SizedBox(height: 10.0),
+          OutlinedButton.icon(
+            onPressed: _isLoading ? null : _openSunmiDrawer,
+            icon: const Icon(Icons.point_of_sale),
+            label: const Text('Kick Cash Drawer (Sunmi API)'),
           ),
         ],
       ),

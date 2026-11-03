@@ -15,4 +15,9 @@
     <!-- USB OTG and Bluetooth hardware features (optional so phones without USB host can still install) -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+
+    <!-- Sunmi POS Printer Service package visibility (Android 11+ / API 30+) -->
+    <queries>
+        <package android:name="woyou.aidlservice.jiuiv5" />
+    </queries>
 </manifest>

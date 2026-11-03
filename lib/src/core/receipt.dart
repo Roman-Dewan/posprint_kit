@@ -94,10 +94,13 @@ class Receipt {
       );
 
   /// Prints a prominent centered title [s] in bold and double size.
+  ///
+  /// [fontSize]: custom font size in points (default 36 for prominent double-size title).
   Receipt title(
     String s, {
     TextMode mode = TextMode.auto,
     String? languageTag,
+    double fontSize = 36,
   }) =>
       _add(
         TextOp(
@@ -107,7 +110,7 @@ class Receipt {
           size: TextSize.doubleSize,
           mode: mode,
           languageTag: languageTag,
-          style: const TextStyleSpec(fontSize: 32, bold: true),
+          style: TextStyleSpec(fontSize: fontSize, bold: true),
         ),
       );
 
@@ -191,13 +194,20 @@ class Receipt {
   /// Prints a QR code containing [data].
   ///
   /// [size]: module size in dots (1 to 16, default 6).
+  /// [align]: horizontal alignment within the line ([PosAlign.center] by default).
   /// [errorCorrection]: error recovery level ([QrErrorCorrectionLevel.m] by default).
   Receipt qr(
     String data, {
     int size = 6,
+    PosAlign align = PosAlign.center,
     QrErrorCorrectionLevel errorCorrection = QrErrorCorrectionLevel.m,
   }) =>
-      _add(QrOp(data, size: size, errorCorrection: errorCorrection));
+      _add(QrOp(
+        data,
+        size: size,
+        align: align,
+        errorCorrection: errorCorrection,
+      ));
 
   /// Prints a 1D barcode with [data].
   ///

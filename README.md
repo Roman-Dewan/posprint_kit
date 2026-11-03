@@ -14,20 +14,21 @@ Print a receipt to any ESC/POS thermal printer in about 3 lines without touching
 
 ```dart
 import 'package:posprint_kit/posprint_kit.dart';
-or 
-import 'package:posprint_kit/advanced.dart';
 
 void main() async {
-  // 1. Connect to printer (WiFi, Bluetooth, or USB)
+  // 1. Connect to printer (WiFi, Bluetooth, USB, or Sunmi Built-in)
   final printer = EscposPrinter.wifi('192.168.1.50');
 
   // 2. Build your receipt with the fluent API
   final receipt = Receipt()
-    ..title('MY RESTAURANT')
+    ..title('MY RESTAURANT', fontSize: 36)
+    ..text('Table 4 • Dine-in • Order #1042', align: PosAlign.center)
+    ..divider()
     ..row('Burger x2', '12.00')
     ..row('বার্গার x1', '6.00', languageTag: 'bn') // Bangla auto-rendered
     ..divider()
     ..total('TOTAL', '18.00')
+    ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
     ..cut();
 
   // 3. Print!
@@ -41,9 +42,10 @@ void main() async {
 ## Key Features
 
 * **3-Line Beginner API**: Print immediately without understanding ESC/POS specifications, baud rates, or hex buffers.
+* **100% Universal QR Codes**: Built-in 1-bit thermal raster engine ensures QR codes print sharply on 100% of WiFi, Bluetooth, and USB printers, bypassing buggy or missing printer firmware `GS ( k` support.
 * **Guaranteed 14 Languages**: Built-in shaping and automatic 1-bit thermal rasterization for complex Asian, Indic, and Middle Eastern scripts.
 * **Multi-Column Tables (`Receipt.columns`)**: Build 3, 4, 5+ column POS receipts (`[#, Item, Qty, Price, Total]`) with customizable flex ratios, alignments, and multi-line wrapping.
-* **Unified Transports**: Connect over **WiFi / LAN** (TCP port 9100), **Bluetooth Classic** (Android SPP), and **USB OTG / Direct** with auto-permissions.
+* **Unified Transports**: Connect over **WiFi / LAN** (TCP port 9100), **Bluetooth Classic** (Android SPP), **USB OTG / Direct**, and **Sunmi Built-in Printers** (Sunmi D3, V2, T2 via native `LineApi`) with auto-permissions and cash drawer kick.
 * **Non-Interleaving Print Queue**: FIFO background queue prevents multiple prints from corrupting each other, with automatic exponential backoff retry.
 * **Friendly Errors**: Every failure returns a typed `Result<T>` with a beginner-friendly `message` and an actionable `hint`.
 * **Zero-Waste UI Tools**: Live on-screen `ReceiptPreview` widget and drop-in `PrinterPicker` connection dialog.
@@ -74,6 +76,11 @@ Add the following permissions depending on the transports you use:
 
     <!-- USB OTG printing -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+
+    <!-- Sunmi POS terminal built-in printer service (Android 11+) -->
+    <queries>
+        <package android:name="woyou.aidlservice.jiuiv5" />
+    </queries>
 </manifest>
 ```
 
@@ -172,7 +179,24 @@ final printer = EscposPrinter.usb(
 await printer.print(receipt);
 ```
 
-### 4. Virtual In-Memory (Unit Testing)
+### 4. Sunmi POS Built-in / Inbuilt Printer (Sunmi D3, V2, T2)
+Connect directly to the integrated thermal receipt printer on Sunmi POS hardware terminals. Receipts are executed via Sunmi's native `LineApi` architecture with automatic dashed dividers, vector typography, and full 14-language support:
+
+```dart
+// Connect to Sunmi built-in printer (Sunmi D3 80 mm or Sunmi V2 58 mm)
+final printer = EscposPrinter.sunmi();
+// Or alias: final printer = EscposPrinter.inbuilt();
+
+await printer.print(receipt);
+await printer.close();
+
+// Optional: query hardware paper width or trigger cash drawer
+final isSunmi = await SunmiTransport.isSunmiDevice();
+final paperWidth = await SunmiTransport.getPaperWidth(); // 80 or 58 mm
+await SunmiTransport.openDrawer(); // Dual-channel AIDL + ESC/POS kick
+```
+
+### 5. Virtual In-Memory (Unit Testing)
 Test your receipt layout and command formatting without real hardware:
 
 ```dart

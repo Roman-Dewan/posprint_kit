@@ -29,4 +29,5 @@ export 'src/transports/bluetooth_transport.dart';
 export 'src/transports/fake_transport.dart';
 export 'src/transports/network_transport.dart';
 export 'src/transports/printer_transport.dart';
+export 'src/transports/sunmi_transport.dart';
 export 'src/transports/usb_transport.dart';

@@ -11,6 +11,7 @@ import 'transports/bluetooth_transport.dart';
 import 'transports/fake_transport.dart';
 import 'transports/network_transport.dart';
 import 'transports/printer_transport.dart';
+import 'transports/sunmi_transport.dart';
 import 'transports/usb_transport.dart';
 
 /// Available physical transport channels.
@@ -26,6 +27,9 @@ enum Transport {
 
   /// USB OTG cable connection (Android).
   usb,
+
+  /// Built-in thermal printer on POS terminals (e.g. Sunmi D3, V2, T2).
+  inbuilt,
 }
 
 /// Beginner-friendly primary facade for connecting to and printing with ESC/POS printers.
@@ -125,6 +129,25 @@ class EscposPrinter {
         transport = UsbTransport(
             vendorId: vendorId, productId: productId, maxChunkSize: 4096),
         rasterizer = rasterizer ?? const FakeRasterizer();
+
+  /// Connects to the built-in thermal receipt printer on Sunmi POS terminals (e.g. Sunmi D3, V2, T2).
+  ///
+  /// ```dart
+  /// final printer = EscposPrinter.sunmi();
+  /// await printer.print(Receipt()..title('SUNMI POS')..cut());
+  /// await printer.close();
+  /// ```
+  EscposPrinter.sunmi({
+    this.profile = PrinterProfile.sunmi80,
+    TextRasterizer? rasterizer,
+  })  : transport = SunmiTransport(),
+        rasterizer = rasterizer ?? const FakeRasterizer();
+
+  /// Alias for [EscposPrinter.sunmi] for built-in POS terminal thermal printers.
+  EscposPrinter.inbuilt({
+    PrinterProfile profile = PrinterProfile.sunmi80,
+    TextRasterizer? rasterizer,
+  }) : this.sunmi(profile: profile, rasterizer: rasterizer);
 
   /// Custom constructor allowing injection of any [PrinterTransport] (e.g. [FakeTransport]).
   EscposPrinter.custom(

@@ -18,12 +18,14 @@ class PosprintKitPlugin :
     private lateinit var channel: MethodChannel
     private var bluetoothHandler: BluetoothHandler? = null
     private var usbHandler: UsbHandler? = null
+    private var sunmiHandler: SunmiHandler? = null
     private var activityBinding: ActivityPluginBinding? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         val context = flutterPluginBinding.applicationContext
         bluetoothHandler = BluetoothHandler(context)
         usbHandler = UsbHandler(context)
+        sunmiHandler = SunmiHandler(context)
 
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "posprint_kit")
         channel.setMethodCallHandler(this)
@@ -43,6 +45,9 @@ class PosprintKitPlugin :
             call.method.startsWith("usb.") -> {
                 usbHandler?.handleMethodCall(call, result) ?: result.error("USB_UNAVAILABLE", "USB handler not initialized", null)
             }
+            call.method.startsWith("sunmi.") -> {
+                sunmiHandler?.handleMethodCall(call, result) ?: result.error("SUNMI_UNAVAILABLE", "Sunmi handler not initialized", null)
+            }
             else -> {
                 result.notImplemented()
             }
@@ -53,6 +58,8 @@ class PosprintKitPlugin :
         channel.setMethodCallHandler(null)
         bluetoothHandler = null
         usbHandler = null
+        sunmiHandler?.destroy()
+        sunmiHandler = null
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

@@ -13,6 +13,7 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    - reference/**
 
 linter:
   rules:

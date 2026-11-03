@@ -26,6 +26,7 @@ void main() {
       expect(find.text('Scan Network Printers'), findsOneWidget);
       expect(find.text('Bluetooth'), findsOneWidget);
       expect(find.text('USB OTG'), findsOneWidget);
+      expect(find.text('Built-in'), findsOneWidget);
 
       // Tap Save & Select
       await tester.tap(find.text('Save & Select'));
@@ -52,6 +53,25 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Bluetooth MAC Address / Name'), findsOneWidget);
+    });
+
+    testWidgets('switching to Built-in shows Sunmi POS hardware card',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: PrinterPicker(onPrinterSelected: (_) {}),
+            ),
+          ),
+        ),
+      );
+
+      // Tap Built-in segment
+      await tester.tap(find.text('Built-in'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Sunmi POS'), findsOneWidget);
     });
   });
 }

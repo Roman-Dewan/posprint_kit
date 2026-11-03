@@ -83,6 +83,36 @@ void main() {
       ]);
     });
 
+    test('divider handles Unicode box-drawing characters without throwing',
+        () async {
+      final receipt = Receipt()..divider(character: '─');
+      final bytes = await encodeForTest(receipt);
+
+      // In CP437, ─ maps to 0xC4
+      final expectedBytes = [
+        0x1B,
+        0x74,
+        0x00,
+        ...List.filled(48, 0xC4),
+        0x0A,
+      ];
+      expect(bytes, expectedBytes);
+    });
+
+    test('divider respects 58mm printer profile column count', () async {
+      final receipt = Receipt()..divider();
+      final bytes =
+          await encodeForTest(receipt, profile: PrinterProfile.generic58);
+
+      final expectedDivider = '${'-' * 32}\n';
+      expect(bytes, [
+        0x1B,
+        0x74,
+        0x00,
+        ...ascii.encode(expectedDivider),
+      ]);
+    });
+
     test('cut full and partial emit GS V 0 and GS V 1', () async {
       final receipt = Receipt()
         ..cut(partial: false, feedDots: 0)
@@ -96,10 +126,13 @@ void main() {
       ]);
     });
 
-    test('qr("HI") emits model, size, ecc, store, print matching Skill 4',
+    test('qr("HI") with useRasterQr=false emits hardware GS ( k commands',
         () async {
       final receipt = Receipt()..qr('HI', size: 6);
-      final bytes = await encodeForTest(receipt);
+      final bytes = await encodeForTest(
+        receipt,
+        profile: const PrinterProfile(dotsWidth: 576, useRasterQr: false),
+      );
 
       expect(bytes, [
         0x1B, 0x74, 0x00, // code page init
@@ -110,8 +143,27 @@ void main() {
         0x1D, 0x28, 0x6B, 0x05, 0x00, 0x31, 0x50, 0x30, 0x48,
         0x49, // store "HI"
         0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30, // print
+        0x0A, // line feed flush
         0x1B, 0x61, 0x00, // reset to align left
       ]);
+    });
+
+    test(
+        'qr("HI") with default useRasterQr=true emits 100% universal GS v 0 raster commands',
+        () async {
+      final receipt = Receipt()..qr('HI', size: 6);
+      final bytes = await encodeForTest(receipt);
+
+      // Select CP437 header: 1B 74 00
+      expect(bytes[0], 0x1B);
+      expect(bytes[1], 0x74);
+      expect(bytes[2], 0x00);
+
+      // Followed by standard ESC/POS GS v 0 (1D 76 30 00) raster bit image command
+      expect(bytes[3], 0x1D);
+      expect(bytes[4], 0x76);
+      expect(bytes[5], 0x30);
+      expect(bytes[6], 0x00);
     });
 
     test('barcode(code128) emits height, width, hri, and barcode command',
@@ -195,8 +247,8 @@ void main() {
       expect(bytes, containsAllInOrder(ascii.encode('TOTAL')));
       expect(bytes, containsAllInOrder(ascii.encode('14.00')));
 
-      // Contains QR print command
-      expect(bytes, containsAllInOrder(Commands.qrPrint));
+      // Contains QR raster command (GS v 0)
+      expect(bytes, containsAllInOrder([0x1D, 0x76, 0x30, 0x00]));
 
       // Ends with cut
       expect(bytes, containsAllInOrder(Commands.cutFull));
@@ -256,6 +308,40 @@ void main() {
       expect(bytes, isNotEmpty);
       // Contains raster command GS v 0
       expect(bytes, containsAllInOrder([0x1D, 0x76, 0x30, 0x00]));
+    });
+
+    test('Sunmi profile with rasterizeAllText encodes title, rows, and divider as raster graphics', () async {
+      final receipt = Receipt()
+        ..title('MY RESTAURANT')
+        ..divider()
+        ..row('Burger x2', '12.00')
+        ..total('TOTAL', '12.00')
+        ..qr('https://sunmi.com', size: 4)
+        ..barcode('10429812')
+        ..cut();
+
+      final bytes = await encodeForTest(
+        receipt,
+        profile: PrinterProfile.sunmi80,
+        init: true,
+      );
+
+      expect(bytes, isNotEmpty);
+      // Starts with ESC @ (hardware init)
+      expect(bytes.sublist(0, 2), Commands.init);
+
+      // Does NOT select code page (avoids ESC t 0 which Sunmi drops)
+      expect(bytes.sublist(2, 5), isNot([0x1B, 0x74, 0x00]));
+
+      // Emits GS v 0 raster commands for text, dividers, and rows
+      expect(bytes, containsAllInOrder([0x1D, 0x76, 0x30, 0x00]));
+
+      // Contains QR and barcode commands
+      expect(bytes, containsAllInOrder([0x1D, 0x76, 0x30, 0x00])); // GS v 0 (raster QR)
+      expect(bytes, containsAllInOrder([0x1D, 0x6B])); // GS k (barcode)
+
+      // Contains cutter command
+      expect(bytes, containsAllInOrder(Commands.cutFull));
     });
   });
 }

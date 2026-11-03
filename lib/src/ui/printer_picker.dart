@@ -95,6 +95,8 @@ class _PrinterPickerState extends State<PrinterPicker> {
           _btAddressController.text.trim(),
           profile: _profile,
         );
+      case Transport.inbuilt:
+        return EscposPrinter.sunmi(profile: _profile);
     }
   }
 
@@ -206,6 +208,11 @@ class _PrinterPickerState extends State<PrinterPicker> {
                   value: Transport.usb,
                   label: Text('USB OTG'),
                   icon: Icon(Icons.usb),
+                ),
+                ButtonSegment(
+                  value: Transport.inbuilt,
+                  label: Text('Built-in'),
+                  icon: Icon(Icons.point_of_sale),
                 ),
               ],
               selected: {_selectedTransport},
@@ -323,6 +330,26 @@ class _PrinterPickerState extends State<PrinterPicker> {
                     ),
                   ),
                 ],
+              ),
+            ],
+            if (_selectedTransport == Transport.inbuilt) ...[
+              Card(
+                color: Colors.blue.shade50,
+                child: const Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.point_of_sale, color: Colors.blue),
+                      SizedBox(width: 12.0),
+                      Expanded(
+                        child: Text(
+                          'Connects to the built-in thermal receipt printer on Sunmi POS hardware (e.g. Sunmi D3, V2, T2).',
+                          style: TextStyle(fontSize: 13.0),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
             const SizedBox(height: 16.0),

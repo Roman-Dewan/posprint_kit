@@ -15,6 +15,8 @@ class PrinterProfile {
     this.hasKoreanFont = false,
     this.maxBandRows = 128,
     this.supportsPartialCut = true,
+    this.rasterizeAllText = false,
+    this.useRasterQr = true,
   });
 
   /// The horizontal printing resolution of the thermal head in dots (pixels).
@@ -51,6 +53,21 @@ class PrinterProfile {
   /// Whether this printer model's cutter mechanism supports partial cuts.
   final bool supportsPartialCut;
 
+  /// Whether all text, rows, and dividers should be rendered as thermal raster image bands.
+  ///
+  /// Set to `true` on POS terminals with integrated thermal printers (like Sunmi D3, V2)
+  /// whose ESC/POS firmware drops raw ASCII text buffers when mixed with graphics or code pages.
+  final bool rasterizeAllText;
+
+  /// Whether QR codes should be rendered as standard 1-bit thermal raster bitmaps (`GS v 0`)
+  /// rather than printer-firmware `GS ( k` 2D barcode commands.
+  ///
+  /// Defaults to `true` to guarantee that QR codes print reliably on 100% of WiFi,
+  /// Bluetooth, and USB thermal printers (such as Xprinter, Rongta, Zjiang, POS-58, POS-80)
+  /// whose ROMs lack Epson ESC/POS `GS ( k` 2D symbol support. Set to `false` for printers
+  /// with native hardware `GS ( k` engines.
+  final bool useRasterQr;
+
   /// Default profile for standard 80 mm thermal receipt printers (576 dots wide, 48 columns).
   static const generic80 = PrinterProfile(
     dotsWidth: 576,
@@ -85,7 +102,27 @@ class PrinterProfile {
     supportsPartialCut: false,
   );
 
+  /// Preset for Sunmi built-in 80 mm thermal printers (e.g. Sunmi D3, T2).
+  ///
+  /// Uses [rasterizeAllText] so all titles, rows, and dividers render as 1-bit thermal raster
+  /// graphics, bypassing the Sunmi hardware firmware's ASCII text buffer drop.
+  static const sunmi80 = PrinterProfile(
+    dotsWidth: 576,
+    columnsNormal: 48,
+    columnsCondensed: 64,
+    rasterizeAllText: true,
+  );
+
+  /// Preset for Sunmi built-in 58 mm thermal printers (e.g. Sunmi V2, V2s).
+  static const sunmi58 = PrinterProfile(
+    dotsWidth: 384,
+    columnsNormal: 32,
+    columnsCondensed: 42,
+    maxBandRows: 32,
+    rasterizeAllText: true,
+  );
+
   @override
   String toString() =>
-      'PrinterProfile(dots: $dotsWidth, cols: $columnsNormal, maxBandRows: $maxBandRows)';
+      'PrinterProfile(dots: $dotsWidth, cols: $columnsNormal, maxBandRows: $maxBandRows, rasterizeAllText: $rasterizeAllText)';
 }

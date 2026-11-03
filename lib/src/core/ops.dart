@@ -208,11 +208,13 @@ final class QrOp extends ReceiptOp {
   const QrOp(
     this.data, {
     this.size = 6,
+    this.align = PosAlign.center,
     this.errorCorrection = QrErrorCorrectionLevel.m,
   });
 
   final String data;
   final int size;
+  final PosAlign align;
   final QrErrorCorrectionLevel errorCorrection;
 }
 

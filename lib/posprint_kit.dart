@@ -38,6 +38,8 @@ export 'src/rendering/receipt_preview.dart' show ReceiptPreview;
 export 'src/transports/bluetooth_transport.dart'
     show BluetoothDevice, BluetoothTransport;
 export 'src/transports/network_transport.dart' show NetworkTransport;
+export 'src/transports/sunmi_transport.dart'
+    show InbuiltTransport, SunmiTransport;
 export 'src/transports/usb_transport.dart' show UsbDevice, UsbTransport;
 export 'src/ui/printer_picker.dart' show PrinterPicker;
 
