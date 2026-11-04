@@ -1,4 +1,4 @@
-## 1.1.0
+## 2.0.0
 
 * **Sunmi Built-in POS Terminal Integration (`SunmiTransport` & `EscposPrinter.sunmi`)**:
   - Direct integration with Sunmi's official PrinterX SDK (`com.sunmi:printerx`) and Inner Printer Library (`com.sunmi:printerlibrary`) via native Android MethodChannel bridge (`SunmiHandler.kt`).
