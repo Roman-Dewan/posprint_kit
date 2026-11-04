@@ -231,19 +231,23 @@ ReceiptPreview(
 import 'package:posprint_kit/posprint_kit.dart';
 
 void main() async {
-  // 1. Connect via USB, WiFi, or Bluetooth
+  // 1. Connect via USB, WiFi, or Bluetooth (strictly for TSPL sticker printers)
   final printer = TsplPrinter.usb(vendorId: 0x0483, productId: 0x5740);
   // or: TsplPrinter.bluetooth('00:11:22:33:44:55');
   // or: TsplPrinter.wifi('192.168.1.100');
 
-  // 2. Build your label sticker
+  // 2. Build your label sticker directly in physical millimeters!
+  // Horizontal (X) = distance from left edge in mm.
+  // Vertical (Y)   = distance from top edge in mm.
   final label = TsplLabel(size: TsplSize.size40x30)
-    ..box(x: 5, y: 5, endX: 315, endY: 235, thickness: 2)
-    ..text('ORGANIC HONEY', x: 20, y: 20, font: TsplFont.font3)
-    ..textRaster('খাঁটি মধু ৫০০ গ্রাম', x: 20, y: 55, fontSize: 18, languageTag: 'bn')
-    ..barcode('890123456789', x: 20, y: 95, height: 45)
-    ..qr('https://honey.example.com', x: 220, y: 95, size: 4)
-    ..text('PRICE: \$12.50', x: 20, y: 165, font: TsplFont.font4)
+    ..boxMm(horizontal: 1.0, vertical: 1.0, endHorizontal: 39.0, endVertical: 29.0, thickness: 2)
+    ..textMm('ORGANIC STORE', horizontal: 2.0, vertical: 2.0, font: TsplFont.font3)
+    ..lineMm(horizontal: 2.0, vertical: 6.0, width: 36.0, thickness: 1)
+    ..textMm('Sourdough Bread', horizontal: 2.0, vertical: 7.5, font: TsplFont.font2)
+    ..textRasterMm('টাটকা রুটি', horizontal: 2.0, vertical: 11.0, fontSize: 13.0, languageTag: 'bn')
+    ..barcodeMm('20491024', horizontal: 2.0, vertical: 15.0, height: 5.5, narrow: 1, wide: 2)
+    ..qrMm('https://posprint.link', horizontal: 28.0, vertical: 15.0, size: 2)
+    ..textMm('PRICE: \$4.50', horizontal: 2.0, vertical: 24.5, font: TsplFont.font3)
     ..print(copies: 1);
 
   // 3. Print!
@@ -252,16 +256,20 @@ void main() async {
 }
 ```
 
-### Multi-Size Label Presets
-`posprint_kit` includes pre-calibrated sizes at 203 DPI (8 dots/mm) and 300 DPI (12 dots/mm):
+### Multi-Size Label Presets & Quick Orientation Swap
+`posprint_kit` includes pre-calibrated sizes for both landscape and portrait sticker rolls:
+* `TsplSize.size40x30`: 40 × 30 mm (Retail shelf tag)
+* `TsplSize.size30x40`: 30 × 40 mm (Portrait price & pharmacy tag)
+* `TsplSize.size50x30`: 50 × 30 mm (Storage / asset sticker)
+* `TsplSize.size30x50`: 30 × 50 mm (Portrait asset tag)
+* `TsplSize.size60x40`: 60 × 40 mm (Shipping / barcode label)
+* `TsplSize.size40x60`: 40 × 60 mm (Portrait product barcode)
 * `TsplSize.size20x30`: 20 × 30 mm (Jewelry, cable, small tag)
 * `TsplSize.size30x20`: 30 × 20 mm (Compact price tag)
-* `TsplSize.size40x30`: 40 × 30 mm (Retail shelf tag)
-* `TsplSize.size50x30`: 50 × 30 mm (Storage / asset sticker)
-* `TsplSize.size60x40`: 60 × 40 mm (Shipping / barcode label)
 * `TsplSize.size70x50`: 70 × 50 mm (Carton box)
 * `TsplSize.size80x50`: 80 × 50 mm (Warehouse logistics)
 * `TsplSize.size100x150`: 100 × 150 mm (4" × 6" waybill)
+* **Quick 90° flip**: `size.flipped` instantly swaps width and height.
 * Custom: `TsplSize(widthMm: 45, heightMm: 25, gapMm: 2.0)`
 
 ### Live Label Preview (`TsplLabelPreview`)

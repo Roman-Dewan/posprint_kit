@@ -10,20 +10,35 @@ sealed class TsplOp {
 class TsplTextOp extends TsplOp {
   const TsplTextOp({
     required this.text,
-    required this.x,
-    required this.y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     this.font = TsplFont.font3,
     this.rotation = TsplRotation.deg0,
     this.xMultiplication = 1,
     this.yMultiplication = 1,
-  })  : assert(xMultiplication >= 1 && xMultiplication <= 10,
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0,
+        assert(xMultiplication >= 1 && xMultiplication <= 10,
             'xMultiplication must be between 1 and 10'),
         assert(yMultiplication >= 1 && yMultiplication <= 10,
             'yMultiplication must be between 1 and 10');
 
   final String text;
-  final int x;
-  final int y;
+
+  /// Horizontal position (X-axis, distance from left edge in dots).
+  final int horizontal;
+
+  /// Vertical position (Y-axis, distance from top edge in dots).
+  final int vertical;
+
+  /// Alias for [horizontal].
+  int get x => horizontal;
+
+  /// Alias for [vertical].
+  int get y => vertical;
+
   final TsplFont font;
   final TsplRotation rotation;
   final int xMultiplication;
@@ -34,19 +49,34 @@ class TsplTextOp extends TsplOp {
 class TsplBarcodeOp extends TsplOp {
   const TsplBarcodeOp({
     required this.data,
-    required this.x,
-    required this.y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     this.type = TsplBarcodeType.code128,
     required this.height,
     this.humanReadable = TsplHumanReadable.belowCenter,
     this.rotation = TsplRotation.deg0,
     this.narrow = 2,
     this.wide = 2,
-  }) : assert(height > 0, 'Barcode height must be positive.');
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0,
+        assert(height > 0, 'Barcode height must be positive.');
 
   final String data;
-  final int x;
-  final int y;
+
+  /// Horizontal position (X-axis, distance from left edge in dots).
+  final int horizontal;
+
+  /// Vertical position (Y-axis, distance from top edge in dots).
+  final int vertical;
+
+  /// Alias for [horizontal].
+  int get x => horizontal;
+
+  /// Alias for [vertical].
+  int get y => vertical;
+
   final TsplBarcodeType type;
   final int height;
   final TsplHumanReadable humanReadable;
@@ -59,16 +89,31 @@ class TsplBarcodeOp extends TsplOp {
 class TsplQrOp extends TsplOp {
   const TsplQrOp({
     required this.data,
-    required this.x,
-    required this.y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     this.size = 4,
     this.ecc = TsplQrEcc.medium,
     this.rotation = TsplRotation.deg0,
-  }) : assert(size >= 1 && size <= 16, 'QR module cell size must be between 1 and 16 dots.');
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0,
+        assert(size >= 1 && size <= 16, 'QR module cell size must be between 1 and 16 dots.');
 
   final String data;
-  final int x;
-  final int y;
+
+  /// Horizontal position (X-axis, distance from left edge in dots).
+  final int horizontal;
+
+  /// Vertical position (Y-axis, distance from top edge in dots).
+  final int vertical;
+
+  /// Alias for [horizontal].
+  int get x => horizontal;
+
+  /// Alias for [vertical].
+  int get y => vertical;
+
   final int size;
   final TsplQrEcc ecc;
   final TsplRotation rotation;
@@ -77,20 +122,42 @@ class TsplQrOp extends TsplOp {
 /// Rectangle outline border with optional corner rounding radius.
 class TsplBoxOp extends TsplOp {
   const TsplBoxOp({
-    required this.x,
-    required this.y,
-    required this.endX,
-    required this.endY,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
+    int? endHorizontal,
+    int? endVertical,
+    int? endX,
+    int? endY,
     this.thickness = 2,
     this.radius,
-  })  : assert(endX >= x, 'endX must be >= x'),
-        assert(endY >= y, 'endY must be >= y'),
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0,
+        endHorizontal = endHorizontal ?? endX ?? (horizontal ?? x ?? 0),
+        endVertical = endVertical ?? endY ?? (vertical ?? y ?? 0),
+        assert((endHorizontal ?? endX ?? 0) >= (horizontal ?? x ?? 0), 'endHorizontal must be >= horizontal'),
+        assert((endVertical ?? endY ?? 0) >= (vertical ?? y ?? 0), 'endVertical must be >= vertical'),
         assert(thickness > 0, 'thickness must be positive.');
 
-  final int x;
-  final int y;
-  final int endX;
-  final int endY;
+  /// Upper-left horizontal position (X-axis in dots).
+  final int horizontal;
+
+  /// Upper-left vertical position (Y-axis in dots).
+  final int vertical;
+
+  /// Lower-right horizontal position (end X in dots).
+  final int endHorizontal;
+
+  /// Lower-right vertical position (end Y in dots).
+  final int endVertical;
+
+  /// Aliases for X and Y coordinates.
+  int get x => horizontal;
+  int get y => vertical;
+  int get endX => endHorizontal;
+  int get endY => endVertical;
+
   final int thickness;
   final int? radius;
 }
@@ -98,15 +165,29 @@ class TsplBoxOp extends TsplOp {
 /// Solid bar / line element.
 class TsplBarOp extends TsplOp {
   const TsplBarOp({
-    required this.x,
-    required this.y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     required this.width,
     required this.height,
-  })  : assert(width > 0, 'width must be positive'),
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0,
+        assert(width > 0, 'width must be positive'),
         assert(height > 0, 'height must be positive');
 
-  final int x;
-  final int y;
+  /// Horizontal position (X-axis in dots).
+  final int horizontal;
+
+  /// Vertical position (Y-axis in dots).
+  final int vertical;
+
+  /// Alias for [horizontal].
+  int get x => horizontal;
+
+  /// Alias for [vertical].
+  int get y => vertical;
+
   final int width;
   final int height;
 }
@@ -114,15 +195,29 @@ class TsplBarOp extends TsplOp {
 /// White on black color inversion rectangle.
 class TsplReverseOp extends TsplOp {
   const TsplReverseOp({
-    required this.x,
-    required this.y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     required this.width,
     required this.height,
-  })  : assert(width > 0, 'width must be positive'),
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0,
+        assert(width > 0, 'width must be positive'),
         assert(height > 0, 'height must be positive');
 
-  final int x;
-  final int y;
+  /// Horizontal position (X-axis in dots).
+  final int horizontal;
+
+  /// Vertical position (Y-axis in dots).
+  final int vertical;
+
+  /// Alias for [horizontal].
+  int get x => horizontal;
+
+  /// Alias for [vertical].
+  int get y => vertical;
+
   final int width;
   final int height;
 }
@@ -131,14 +226,28 @@ class TsplReverseOp extends TsplOp {
 class TsplBitmapOp extends TsplOp {
   const TsplBitmapOp({
     required this.bitmap,
-    required this.x,
-    required this.y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     this.mode = TsplBitmapMode.overwrite,
-  });
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0;
 
   final MonoBitmap bitmap;
-  final int x;
-  final int y;
+
+  /// Horizontal position (X-axis in dots).
+  final int horizontal;
+
+  /// Vertical position (Y-axis in dots).
+  final int vertical;
+
+  /// Alias for [horizontal].
+  int get x => horizontal;
+
+  /// Alias for [vertical].
+  int get y => vertical;
+
   final TsplBitmapMode mode;
 }
 
@@ -149,18 +258,33 @@ class TsplBitmapOp extends TsplOp {
 class TsplRasterTextOp extends TsplOp {
   const TsplRasterTextOp({
     required this.text,
-    required this.x,
-    required this.y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     this.fontSize = 20.0,
     this.bold = false,
     this.fontFamily,
     this.languageTag,
     this.maxWidth,
-  }) : assert(fontSize > 0, 'fontSize must be positive.');
+  })  : horizontal = horizontal ?? x ?? 0,
+        vertical = vertical ?? y ?? 0,
+        assert(fontSize > 0, 'fontSize must be positive.');
 
   final String text;
-  final int x;
-  final int y;
+
+  /// Horizontal position (X-axis in dots).
+  final int horizontal;
+
+  /// Vertical position (Y-axis in dots).
+  final int vertical;
+
+  /// Alias for [horizontal].
+  int get x => horizontal;
+
+  /// Alias for [vertical].
+  int get y => vertical;
+
   final double fontSize;
   final bool bold;
   final String? fontFamily;

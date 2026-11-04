@@ -54,11 +54,35 @@ void main() {
     });
 
     test('presets list contains all standard sizes', () {
-      expect(TsplSize.presets.length, 8);
+      expect(TsplSize.presets.length, 11);
       expect(TsplSize.presets, contains(TsplSize.size20x30));
       expect(TsplSize.presets, contains(TsplSize.size30x20));
       expect(TsplSize.presets, contains(TsplSize.size40x30));
+      expect(TsplSize.presets, contains(TsplSize.size30x40));
+      expect(TsplSize.presets, contains(TsplSize.size50x30));
+      expect(TsplSize.presets, contains(TsplSize.size30x50));
       expect(TsplSize.presets, contains(TsplSize.size60x40));
+      expect(TsplSize.presets, contains(TsplSize.size40x60));
+    });
+
+    test('flipped swaps width and height dimensions', () {
+      const s4030 = TsplSize.size40x30;
+      final flipped = s4030.flipped;
+      expect(flipped.widthMm, 30.0);
+      expect(flipped.heightMm, 40.0);
+      expect(flipped.widthDots, 240);
+      expect(flipped.heightDots, 320);
+    });
+
+    test('mmToDots converts millimeters to printer dots accurately', () {
+      const s203 = TsplSize.size40x30;
+      expect(s203.mmToDots(1.0), 8);
+      expect(s203.mmToDots(2.5), 20);
+      expect(s203.mmToDots(40.0), 320);
+
+      const s300 = TsplSize(widthMm: 40, heightMm: 30, dpi: 300);
+      expect(s300.mmToDots(1.0), 12);
+      expect(s300.mmToDots(2.5), 30);
     });
 
     test('equality and hashCode work as expected', () {

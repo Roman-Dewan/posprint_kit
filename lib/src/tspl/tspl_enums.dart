@@ -152,3 +152,4 @@ enum TsplBitmapMode {
   /// Mode integer parameter sent in the TSPL BITMAP command.
   final int code;
 }
+

@@ -73,7 +73,7 @@ class TsplEncoder {
         final escaped = op.text.replaceAll('"', r'\"');
         _writeAscii(
           builder,
-          'TEXT ${op.x}, ${op.y}, "${op.font.commandName}", ${op.rotation.degrees}, '
+          'TEXT ${op.horizontal}, ${op.vertical}, "${op.font.commandName}", ${op.rotation.degrees}, '
           '${op.xMultiplication}, ${op.yMultiplication}, "$escaped"\r\n',
         );
 
@@ -81,7 +81,7 @@ class TsplEncoder {
         final escaped = op.data.replaceAll('"', r'\"');
         _writeAscii(
           builder,
-          'BARCODE ${op.x}, ${op.y}, "${op.type.commandName}", ${op.height}, '
+          'BARCODE ${op.horizontal}, ${op.vertical}, "${op.type.commandName}", ${op.height}, '
           '${op.humanReadable.code}, ${op.rotation.degrees}, ${op.narrow}, ${op.wide}, "$escaped"\r\n',
         );
 
@@ -89,34 +89,34 @@ class TsplEncoder {
         final escaped = op.data.replaceAll('"', r'\"');
         _writeAscii(
           builder,
-          'QRCODE ${op.x}, ${op.y}, ${op.ecc.level}, ${op.size}, A, ${op.rotation.degrees}, "$escaped"\r\n',
+          'QRCODE ${op.horizontal}, ${op.vertical}, ${op.ecc.level}, ${op.size}, A, ${op.rotation.degrees}, M2, S7, "$escaped"\r\n',
         );
 
       case TsplBoxOp():
         if (op.radius != null && op.radius! > 0) {
           _writeAscii(
             builder,
-            'BOX ${op.x}, ${op.y}, ${op.endX}, ${op.endY}, ${op.thickness}, ${op.radius}\r\n',
+            'BOX ${op.horizontal}, ${op.vertical}, ${op.endHorizontal}, ${op.endVertical}, ${op.thickness}, ${op.radius}\r\n',
           );
         } else {
           _writeAscii(
             builder,
-            'BOX ${op.x}, ${op.y}, ${op.endX}, ${op.endY}, ${op.thickness}\r\n',
+            'BOX ${op.horizontal}, ${op.vertical}, ${op.endHorizontal}, ${op.endVertical}, ${op.thickness}\r\n',
           );
         }
 
       case TsplBarOp():
-        _writeAscii(builder, 'BAR ${op.x}, ${op.y}, ${op.width}, ${op.height}\r\n');
+        _writeAscii(builder, 'BAR ${op.horizontal}, ${op.vertical}, ${op.width}, ${op.height}\r\n');
 
       case TsplReverseOp():
-        _writeAscii(builder, 'REVERSE ${op.x}, ${op.y}, ${op.width}, ${op.height}\r\n');
+        _writeAscii(builder, 'REVERSE ${op.horizontal}, ${op.vertical}, ${op.width}, ${op.height}\r\n');
 
       case TsplBitmapOp():
-        _encodeBitmap(builder, op.bitmap, op.x, op.y, op.mode);
+        _encodeBitmap(builder, op.bitmap, op.horizontal, op.vertical, op.mode);
 
       case TsplRasterTextOp():
         if (rasterizer != null) {
-          final maxW = op.maxWidth ?? (label.size.widthDots - op.x).clamp(16, 2048);
+          final maxW = op.maxWidth ?? (label.size.widthDots - op.horizontal).clamp(16, 2048);
           final gray = await rasterizer!.renderText(
             op.text,
             widthDots: maxW,
@@ -128,13 +128,13 @@ class TsplEncoder {
             languageTag: op.languageTag,
           );
           final mono = gray.toMono();
-          _encodeBitmap(builder, mono, op.x, op.y, TsplBitmapMode.overwrite);
+          _encodeBitmap(builder, mono, op.horizontal, op.vertical, TsplBitmapMode.overwrite);
         } else {
           // Fallback to native text if no rasterizer provided
           final escaped = op.text.replaceAll('"', r'\"');
           _writeAscii(
             builder,
-            'TEXT ${op.x}, ${op.y}, "${TsplFont.font3.commandName}", 0, 1, 1, "$escaped"\r\n',
+            'TEXT ${op.horizontal}, ${op.vertical}, "${TsplFont.font3.commandName}", 0, 1, 1, "$escaped"\r\n',
           );
         }
     }
@@ -148,10 +148,18 @@ class TsplEncoder {
     TsplBitmapMode mode,
   ) {
     // TSPL format: BITMAP X, Y, width_in_bytes, height_in_dots, mode, <binary_data>\r\n
+    // In TSPL: 0 = Black (heats print head), 1 = White (no heat).
+    // ESC/POS MonoBitmap has 1 = Black, 0 = White.
+    // Invert every byte so background (0x00) becomes clean white (0xFF).
     final widthBytes = bitmap.bytesPerLine;
     final heightDots = bitmap.height;
     _writeAscii(builder, 'BITMAP $x, $y, $widthBytes, $heightDots, ${mode.code},');
-    builder.add(bitmap.data);
+
+    final inverted = Uint8List(bitmap.data.length);
+    for (var i = 0; i < bitmap.data.length; i++) {
+      inverted[i] = bitmap.data[i] ^ 0xFF;
+    }
+    builder.add(inverted);
     _writeAscii(builder, '\r\n');
   }
 

@@ -59,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
   TsplSize _selectedTsplSize = TsplSize.size40x30;
   Transport _selectedTsplTransport = Transport.usb;
   int _selectedTsplTemplate = 0;
+  TsplDirection _selectedTsplDirection = TsplDirection.normal;
 
   // Status & loading indicators
   String? _statusMessage;
@@ -1136,7 +1137,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 12.0),
 
-          // 1. Size Selector Dropdown
+          // 1. Size Selector Dropdown & Rotation Toggle
           Card(
             elevation: 1,
             child: Padding(
@@ -1144,26 +1145,62 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('1. SELECT LABEL SIZE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text('1. SELECT LABEL SIZE & ORIENTATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 8.0),
-                  DropdownButtonFormField<TsplSize>(
-                    initialValue: _selectedTsplSize,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: TsplSize.presets.map((s) {
-                      return DropdownMenuItem<TsplSize>(
-                        value: s,
-                        child: Text(s.name),
-                      );
-                    }).toList(),
-                    onChanged: (newSize) {
-                      if (newSize != null) {
-                        setState(() => _selectedTsplSize = newSize);
-                      }
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<TsplSize>(
+                          initialValue: _selectedTsplSize,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            labelText: 'Sticker Dimensions',
+                          ),
+                          items: TsplSize.presets.map((s) {
+                            return DropdownMenuItem<TsplSize>(
+                              value: s,
+                              child: Text(s.name),
+                            );
+                          }).toList(),
+                          onChanged: (newSize) {
+                            if (newSize != null) {
+                              setState(() => _selectedTsplSize = newSize);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      IconButton.filledTonal(
+                        icon: const Icon(Icons.screen_rotation),
+                        tooltip: 'Rotate 90° (Swap Horizontal & Vertical)',
+                        onPressed: () {
+                          setState(() => _selectedTsplSize = _selectedTsplSize.flipped);
+                        },
+                      ),
+                      const SizedBox(width: 4.0),
+                      IconButton.filledTonal(
+                        icon: Icon(_selectedTsplDirection == TsplDirection.normal
+                            ? Icons.arrow_downward
+                            : Icons.arrow_upward),
+                        tooltip: _selectedTsplDirection == TsplDirection.normal
+                            ? 'Feed Direction: Normal (Tap to invert 180°)'
+                            : 'Feed Direction: Inverted 180° (Tap for normal)',
+                        onPressed: () {
+                          setState(() {
+                            _selectedTsplDirection = _selectedTsplDirection == TsplDirection.normal
+                                ? TsplDirection.reverse
+                                : TsplDirection.normal;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6.0),
+                  Text(
+                    'Horizontal (Width / X): ${_selectedTsplSize.widthMm.toInt()} mm | Vertical (Height / Y): ${_selectedTsplSize.heightMm.toInt()} mm | Feed: ${_selectedTsplDirection == TsplDirection.normal ? "Normal" : "Inverted 180°"}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -1377,59 +1414,226 @@ class _HomeScreenState extends State<HomeScreen> {
 
   TsplLabel _buildActiveTsplLabel() {
     final size = _selectedTsplSize;
-    final wDots = size.widthDots;
-    final hDots = size.heightDots;
-    final isCompact = wDots < 280;
+    final wMm = size.widthMm;
+    final hMm = size.heightMm;
 
-    final label = TsplLabel(size: size);
+    // Direct, beginner-friendly TSPL construction using physical millimeters!
+    // Horizontal (X) = distance from left edge in mm.
+    // Vertical (Y)   = distance from top edge in mm.
+    final label = TsplLabel(size: size)..setDirection(_selectedTsplDirection);
 
     switch (_selectedTsplTemplate) {
-      case 0: // Retail Price Tag
-        label.box(x: 4, y: 4, endX: wDots - 4, endY: hDots - 4, thickness: 2);
-        label.text('ORGANIC STORE', x: 12, y: 14, font: isCompact ? TsplFont.font2 : TsplFont.font3);
-        label.line(x: 8, y: 38, width: wDots - 16, thickness: 1);
-        label.text('Sourdough Bread', x: 12, y: 46, font: TsplFont.font2);
-        label.textRaster('টাটকা রুটি', x: 12, y: 70, fontSize: 15, languageTag: 'bn');
+      case 0: // Retail Price Tag (Optimized for 40x30, 50x30, 60x40)
+        // 1. Clean outer margin border
+        label.boxMm(
+          horizontal: 1.0,
+          vertical: 1.0,
+          endHorizontal: wMm - 1.0,
+          endVertical: hMm - 1.0,
+          thickness: 2,
+        );
 
-        if (isCompact) {
-          label.barcode('102498', x: 12, y: 95, height: 35, narrow: 1, wide: 2);
-          label.text('\$4.50', x: 12, y: hDots - 30, font: TsplFont.font3);
+        // 2. Store Header Title
+        label.textMm(
+          'ORGANIC STORE',
+          horizontal: 2.0,
+          vertical: 2.0,
+          font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3,
+        );
+
+        // 3. Crisp horizontal divider line (spaced below header)
+        label.lineMm(
+          horizontal: 2.0,
+          vertical: 6.0,
+          width: wMm - 4.0,
+          thickness: 1,
+        );
+
+        // 4. English Product Name
+        label.textMm(
+          'Sourdough Bread',
+          horizontal: 2.0,
+          vertical: 7.5,
+          font: TsplFont.font2,
+        );
+
+        // 5. Native Multilingual Text (Bangla: টাটকা রুটি) - crisp anti-aliased bitmap
+        label.textRasterMm(
+          'টাটকা রুটি',
+          horizontal: 2.0,
+          vertical: 11.0,
+          fontSize: 13.0,
+          languageTag: 'bn',
+        );
+
+        // 6. Barcode & QR Code elements (Clean side-by-side or stacked without overlap)
+        if (wMm >= 48.0) {
+          // Wide label (50x30, 60x40): Barcode on left, QR code on right
+          label.barcodeMm(
+            '20491024',
+            horizontal: 2.0,
+            vertical: 15.0,
+            height: (hMm * 0.25).clamp(5.0, 10.0),
+            narrow: 2,
+            wide: 2,
+          );
+          label.qrMm(
+            'https://posprint.link',
+            horizontal: wMm - 13.0,
+            vertical: 14.5,
+            size: (wMm ~/ 16).clamp(2, 4),
+          );
+          label.textMm(
+            'PRICE: \$4.50',
+            horizontal: 2.0,
+            vertical: hMm - 5.5,
+            font: TsplFont.font4,
+          );
         } else {
-          final barH = (hDots * 0.22).round().clamp(25, 55);
-          final barY = (hDots * 0.44).round();
-          label.barcode('20491024', x: 12, y: barY, height: barH);
-          label.qr('https://posprint.example.com/item/1024', x: wDots - 75, y: barY, size: (wDots ~/ 90).clamp(2, 4));
-          label.text('PRICE: \$4.50', x: 12, y: hDots - 32, font: TsplFont.font4);
+          // Compact label (40x30, 30x40):
+          label.barcodeMm(
+            '20491024',
+            horizontal: 2.0,
+            vertical: 15.0,
+            height: 5.5,
+            narrow: 1,
+            wide: 2,
+          );
+          label.qrMm(
+            'https://posprint.link',
+            horizontal: wMm - 11.5,
+            vertical: 15.0,
+            size: 2,
+          );
+          label.textMm(
+            'PRICE: \$4.50',
+            horizontal: 2.0,
+            vertical: hMm - 5.0,
+            font: TsplFont.font3,
+          );
         }
         break;
 
       case 1: // Product Barcode Tag
-        label.box(x: 4, y: 4, endX: wDots - 4, endY: hDots - 4, thickness: 2);
-        label.text('SKU: ACME-8892', x: 12, y: 14, font: TsplFont.font2);
-        if (isCompact) {
-          label.barcode('8892019', x: 12, y: 42, height: 45, narrow: 1, wide: 2);
-          label.text('BIN: A-12', x: 12, y: hDots - 26, font: TsplFont.font2);
-        } else {
-          final barH = (hDots * 0.35).round().clamp(30, 80);
-          label.barcode('8892019482', x: 12, y: 42, height: barH);
-          label.qr('https://acme.example.com/sku/8892', x: wDots - 75, y: 42, size: (wDots ~/ 90).clamp(2, 5));
-          label.text('LOT: 2026-11 | BIN: A-12', x: 12, y: hDots - 30, font: TsplFont.font2);
+        label.boxMm(
+          horizontal: 1.0,
+          vertical: 1.0,
+          endHorizontal: wMm - 1.0,
+          endVertical: hMm - 1.0,
+          thickness: 2,
+        );
+        label.textMm(
+          'SKU: ACME-8892',
+          horizontal: 2.5,
+          vertical: 2.5,
+          font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3,
+        );
+        label.lineMm(
+          horizontal: 2.5,
+          vertical: 6.5,
+          width: wMm - 5.0,
+          thickness: 1,
+        );
+
+        final barHeight = (hMm * 0.35).clamp(6.0, 16.0);
+        label.barcodeMm(
+          '8892019482',
+          horizontal: 2.5,
+          vertical: 8.5,
+          height: barHeight,
+          narrow: 2,
+          wide: 2,
+        );
+
+        if (wMm >= 45.0) {
+          label.qrMm(
+            'https://acme.link/8892',
+            horizontal: wMm - 13.0,
+            vertical: 8.5,
+            size: (wMm ~/ 16).clamp(2, 4),
+          );
         }
+        label.textMm(
+          'LOT: 2026-11 | BIN: A-12',
+          horizontal: 2.5,
+          vertical: hMm - 5.0,
+          font: TsplFont.font2,
+        );
         break;
 
       case 2: // Multilingual Badge (Bangla & Arabic)
-        label.box(x: 4, y: 4, endX: wDots - 4, endY: hDots - 4, thickness: 2);
-        label.text('NATURAL HONEY', x: 12, y: 14, font: isCompact ? TsplFont.font2 : TsplFont.font3);
-        label.line(x: 8, y: 38, width: wDots - 16, thickness: 1);
-        label.textRaster('খাঁটি মধু ৫০০ গ্রাম', x: 12, y: 46, fontSize: 16, languageTag: 'bn');
-        label.textRaster('عسل نحل طبيعي', x: 12, y: 72, fontSize: 16, languageTag: 'ar');
+        label.boxMm(
+          horizontal: 1.0,
+          vertical: 1.0,
+          endHorizontal: wMm - 1.0,
+          endVertical: hMm - 1.0,
+          thickness: 2,
+        );
+        label.textMm(
+          'NATURAL HONEY',
+          horizontal: 2.5,
+          vertical: 2.5,
+          font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3,
+        );
+        label.lineMm(
+          horizontal: 2.5,
+          vertical: 6.2,
+          width: wMm - 5.0,
+          thickness: 1,
+        );
+        label.textRasterMm(
+          'খাঁটি মধু ৫০০ গ্রাম',
+          horizontal: 2.5,
+          vertical: 7.5,
+          fontSize: 13.5,
+          languageTag: 'bn',
+        );
+        label.textRasterMm(
+          'عسل نحل طبيعي',
+          horizontal: 2.5,
+          vertical: 12.0,
+          fontSize: 13.5,
+          languageTag: 'ar',
+        );
 
-        if (isCompact) {
-          label.text('500g | \$12.99', x: 12, y: hDots - 28, font: TsplFont.font2);
+        if (hMm >= 35.0) {
+          label.barcodeMm(
+            '99281726',
+            horizontal: 2.5,
+            vertical: 17.5,
+            height: 7.0,
+            narrow: 2,
+            wide: 2,
+          );
+          if (wMm >= 45.0) {
+            label.qrMm(
+              'https://posprint.link/honey',
+              horizontal: wMm - 13.0,
+              vertical: 17.5,
+              size: 3,
+            );
+          }
+          label.textMm(
+            'NET: 500g | \$12.99',
+            horizontal: 2.5,
+            vertical: hMm - 5.5,
+            font: TsplFont.font3,
+          );
         } else {
-          final barY = (hDots * 0.50).round();
-          label.barcode('99281726', x: 12, y: barY, height: (hDots * 0.20).round().clamp(20, 50));
-          label.text('NET: 500g | \$12.99', x: 12, y: hDots - 32, font: TsplFont.font3);
+          label.barcodeMm(
+            '99281726',
+            horizontal: 2.5,
+            vertical: 17.0,
+            height: 4.5,
+            narrow: 1,
+            wide: 2,
+          );
+          label.textMm(
+            'NET: 500g | \$12.99',
+            horizontal: 2.5,
+            vertical: hMm - 4.5,
+            font: TsplFont.font2,
+          );
         }
         break;
     }

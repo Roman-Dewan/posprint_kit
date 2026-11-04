@@ -6,16 +6,22 @@ import 'tspl_size.dart';
 /// A fluent builder for creating coordinate-based sticker labels and barcodes
 /// using TSPL (TSC Printer Language).
 ///
+/// Coordinate system:
+/// - `horizontal` (or `x`): Distance from the left edge of the sticker in dots.
+/// - `vertical` (or `y`): Distance from the top edge of the sticker in dots.
+/// - Or use the `*Mm` helper methods (`textMm`, `barcodeMm`, `boxMm`, etc.)
+///   to specify positions directly in physical millimeters without doing math!
+///
 /// Example:
 /// ```dart
 /// final label = TsplLabel(size: TsplSize.size40x30)
-///   ..direction(TsplDirection.normal)
-///   ..box(x: 5, y: 5, endX: 315, endY: 235, thickness: 2)
-///   ..text('ORGANIC HONEY', x: 20, y: 20, font: TsplFont.font3)
-///   ..textRaster('খাঁটি মধু ৫০০ গ্রাম', x: 20, y: 55, fontSize: 18, languageTag: 'bn')
-///   ..barcode('890123456789', x: 20, y: 95, height: 45)
-///   ..qr('https://honey.example.com', x: 220, y: 95, size: 4)
-///   ..text('PRICE: \$12.50', x: 20, y: 165, font: TsplFont.font4)
+///   ..boxMm(horizontal: 1, vertical: 1, endHorizontal: 39, endVertical: 29)
+///   ..textMm('ORGANIC STORE', horizontal: 2, vertical: 2, font: TsplFont.font3)
+///   ..lineMm(horizontal: 2, vertical: 6, width: 36)
+///   ..textRasterMm('টাটকা রুটি', horizontal: 2, vertical: 8, fontSize: 16, languageTag: 'bn')
+///   ..barcodeMm('20491024', horizontal: 2, vertical: 14, height: 6)
+///   ..qrMm('https://posprint.example.com', horizontal: 25, vertical: 14, size: 3)
+///   ..textMm('PRICE: \$4.50', horizontal: 2, vertical: 23, font: TsplFont.font4)
 ///   ..print(copies: 1);
 /// ```
 class TsplLabel {
@@ -40,10 +46,10 @@ class TsplLabel {
   /// Custom gap distance override in millimeters (null uses [size.gapMm]).
   double? customGapMm;
 
-  /// Origin reference X offset in dots.
+  /// Origin reference horizontal offset in dots (left).
   int referenceX;
 
-  /// Origin reference Y offset in dots.
+  /// Origin reference vertical offset in dots (top).
   int referenceY;
 
   /// Print speed in inches/sec (2 to 6, optional).
@@ -83,10 +89,10 @@ class TsplLabel {
     return this;
   }
 
-  /// Sets the coordinate origin offset in dots.
-  TsplLabel reference(int x, int y) {
-    referenceX = x;
-    referenceY = y;
+  /// Sets the coordinate origin offset in dots: [horizontal] (left) and [vertical] (top).
+  TsplLabel reference(int horizontal, int vertical) {
+    referenceX = horizontal;
+    referenceY = vertical;
     return this;
   }
 
@@ -103,17 +109,19 @@ class TsplLabel {
   }
 
   // ---------------------------------------------------------------------------
-  // VISUAL ELEMENT BUILDERS
+  // DOTS COORDINATE BUILDERS (Horizontal = X, Vertical = Y)
   // ---------------------------------------------------------------------------
 
   /// Adds a text element using built-in printer ROM fonts.
   ///
-  /// For Latin text and digits, ROM fonts are crisp and fast. For complex
-  /// multilingual scripts (Bangla, Arabic, Hindi, CJK), use [textRaster].
+  /// [horizontal] (or [x]): Distance from the left edge in dots.
+  /// [vertical] (or [y]): Distance from the top edge in dots.
   TsplLabel text(
     String text, {
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     TsplFont font = TsplFont.font3,
     TsplRotation rotation = TsplRotation.deg0,
     int xMultiplication = 1,
@@ -121,8 +129,8 @@ class TsplLabel {
   }) {
     ops.add(TsplTextOp(
       text: text,
-      x: x,
-      y: y,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
       font: font,
       rotation: rotation,
       xMultiplication: xMultiplication,
@@ -132,10 +140,15 @@ class TsplLabel {
   }
 
   /// Adds a 1D linear barcode element.
+  ///
+  /// [horizontal] (or [x]): Distance from the left edge in dots.
+  /// [vertical] (or [y]): Distance from the top edge in dots.
   TsplLabel barcode(
     String data, {
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     TsplBarcodeType type = TsplBarcodeType.code128,
     required int height,
     TsplHumanReadable humanReadable = TsplHumanReadable.belowCenter,
@@ -145,8 +158,8 @@ class TsplLabel {
   }) {
     ops.add(TsplBarcodeOp(
       data: data,
-      x: x,
-      y: y,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
       type: type,
       height: height,
       humanReadable: humanReadable,
@@ -159,19 +172,23 @@ class TsplLabel {
 
   /// Adds a 2D QR Code element.
   ///
-  /// [size] specifies module cell width in dots (1 to 16, default 4).
+  /// [horizontal] (or [x]): Distance from the left edge in dots.
+  /// [vertical] (or [y]): Distance from the top edge in dots.
+  /// [size]: Module cell width in dots (1 to 16, default 4).
   TsplLabel qr(
     String data, {
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     int size = 4,
     TsplQrEcc ecc = TsplQrEcc.medium,
     TsplRotation rotation = TsplRotation.deg0,
   }) {
     ops.add(TsplQrOp(
       data: data,
-      x: x,
-      y: y,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
       size: size,
       ecc: ecc,
       rotation: rotation,
@@ -180,19 +197,28 @@ class TsplLabel {
   }
 
   /// Draws a rectangular border box.
+  ///
+  /// [horizontal] (or [x]): Left edge coordinate in dots.
+  /// [vertical] (or [y]): Top edge coordinate in dots.
+  /// [endHorizontal] (or [endX]): Right edge coordinate in dots.
+  /// [endVertical] (or [endY]): Bottom edge coordinate in dots.
   TsplLabel box({
-    required int x,
-    required int y,
-    required int endX,
-    required int endY,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
+    int? endHorizontal,
+    int? endVertical,
+    int? endX,
+    int? endY,
     int thickness = 2,
     int? radius,
   }) {
     ops.add(TsplBoxOp(
-      x: x,
-      y: y,
-      endX: endX,
-      endY: endY,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
+      endHorizontal: endHorizontal ?? endX ?? (horizontal ?? x ?? 0),
+      endVertical: endVertical ?? endY ?? (vertical ?? y ?? 0),
       thickness: thickness,
       radius: radius,
     ));
@@ -200,15 +226,20 @@ class TsplLabel {
   }
 
   /// Draws a solid horizontal or vertical bar.
+  ///
+  /// [horizontal] (or [x]): Distance from the left edge in dots.
+  /// [vertical] (or [y]): Distance from the top edge in dots.
   TsplLabel bar({
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     required int width,
     required int height,
   }) {
     ops.add(TsplBarOp(
-      x: x,
-      y: y,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
       width: width,
       height: height,
     ));
@@ -216,25 +247,37 @@ class TsplLabel {
   }
 
   /// Helper to draw a horizontal dividing line across the label.
+  ///
+  /// [horizontal] (or [x]): Distance from the left edge in dots.
+  /// [vertical] (or [y]): Distance from the top edge in dots.
   TsplLabel line({
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     required int width,
     int thickness = 2,
   }) {
-    return bar(x: x, y: y, width: width, height: thickness);
+    return bar(
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
+      width: width,
+      height: thickness,
+    );
   }
 
   /// Inverts colors (white on black) in the specified rectangular region.
   TsplLabel reverse({
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     required int width,
     required int height,
   }) {
     ops.add(TsplReverseOp(
-      x: x,
-      y: y,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
       width: width,
       height: height,
     ));
@@ -244,14 +287,16 @@ class TsplLabel {
   /// Draws a 1-bit monochrome bitmap onto the label.
   TsplLabel image(
     MonoBitmap bitmap, {
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     TsplBitmapMode mode = TsplBitmapMode.overwrite,
   }) {
     ops.add(TsplBitmapOp(
       bitmap: bitmap,
-      x: x,
-      y: y,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
       mode: mode,
     ));
     return this;
@@ -260,12 +305,14 @@ class TsplLabel {
   /// Renders complex multilingual text (Bangla, Arabic, Hindi, CJK, etc.)
   /// into a 1-bit raster graphic and draws it using TSPL `BITMAP`.
   ///
-  /// Guarantees that non-Latin scripts print accurately on standard label printers
-  /// without requiring special Chinese/Unicode firmware fonts.
+  /// [horizontal] (or [x]): Distance from the left edge in dots.
+  /// [vertical] (or [y]): Distance from the top edge in dots.
   TsplLabel textRaster(
     String text, {
-    required int x,
-    required int y,
+    int? horizontal,
+    int? vertical,
+    int? x,
+    int? y,
     double fontSize = 20.0,
     bool bold = false,
     String? fontFamily,
@@ -274,8 +321,8 @@ class TsplLabel {
   }) {
     ops.add(TsplRasterTextOp(
       text: text,
-      x: x,
-      y: y,
+      horizontal: horizontal ?? x ?? 0,
+      vertical: vertical ?? y ?? 0,
       fontSize: fontSize,
       bold: bold,
       fontFamily: fontFamily,
@@ -283,6 +330,162 @@ class TsplLabel {
       maxWidth: maxWidth,
     ));
     return this;
+  }
+
+  // ---------------------------------------------------------------------------
+  // MILLIMETER CONVENIENCE BUILDERS (Beginner-Friendly: No Math Required!)
+  // ---------------------------------------------------------------------------
+
+  /// Adds text using coordinates specified directly in **millimeters**.
+  TsplLabel textMm(
+    String text, {
+    required double horizontal,
+    required double vertical,
+    TsplFont font = TsplFont.font3,
+    TsplRotation rotation = TsplRotation.deg0,
+    int xMultiplication = 1,
+    int yMultiplication = 1,
+  }) {
+    return this.text(
+      text,
+      horizontal: size.mmToDots(horizontal),
+      vertical: size.mmToDots(vertical),
+      font: font,
+      rotation: rotation,
+      xMultiplication: xMultiplication,
+      yMultiplication: yMultiplication,
+    );
+  }
+
+  /// Adds a barcode using coordinates and height specified in **millimeters**.
+  TsplLabel barcodeMm(
+    String data, {
+    required double horizontal,
+    required double vertical,
+    required double height,
+    TsplBarcodeType type = TsplBarcodeType.code128,
+    TsplHumanReadable humanReadable = TsplHumanReadable.belowCenter,
+    TsplRotation rotation = TsplRotation.deg0,
+    int narrow = 2,
+    int wide = 2,
+  }) {
+    return barcode(
+      data,
+      horizontal: size.mmToDots(horizontal),
+      vertical: size.mmToDots(vertical),
+      height: size.mmToDots(height),
+      type: type,
+      humanReadable: humanReadable,
+      rotation: rotation,
+      narrow: narrow,
+      wide: wide,
+    );
+  }
+
+  /// Adds a QR code using coordinates specified in **millimeters**.
+  TsplLabel qrMm(
+    String data, {
+    required double horizontal,
+    required double vertical,
+    int size = 4,
+    TsplQrEcc ecc = TsplQrEcc.medium,
+    TsplRotation rotation = TsplRotation.deg0,
+  }) {
+    return qr(
+      data,
+      horizontal: this.size.mmToDots(horizontal),
+      vertical: this.size.mmToDots(vertical),
+      size: size,
+      ecc: ecc,
+      rotation: rotation,
+    );
+  }
+
+  /// Draws a rectangular box with coordinates in **millimeters**.
+  TsplLabel boxMm({
+    required double horizontal,
+    required double vertical,
+    required double endHorizontal,
+    required double endVertical,
+    int thickness = 2,
+    double? radius,
+  }) {
+    return box(
+      horizontal: size.mmToDots(horizontal),
+      vertical: size.mmToDots(vertical),
+      endHorizontal: size.mmToDots(endHorizontal),
+      endVertical: size.mmToDots(endVertical),
+      thickness: thickness,
+      radius: radius != null ? size.mmToDots(radius) : null,
+    );
+  }
+
+  /// Draws a horizontal line with coordinates and width in **millimeters**.
+  TsplLabel lineMm({
+    required double horizontal,
+    required double vertical,
+    required double width,
+    int thickness = 2,
+  }) {
+    return line(
+      horizontal: size.mmToDots(horizontal),
+      vertical: size.mmToDots(vertical),
+      width: size.mmToDots(width),
+      thickness: thickness,
+    );
+  }
+
+  /// Draws a solid bar with coordinates and dimensions in **millimeters**.
+  TsplLabel barMm({
+    required double horizontal,
+    required double vertical,
+    required double width,
+    required double height,
+  }) {
+    return bar(
+      horizontal: size.mmToDots(horizontal),
+      vertical: size.mmToDots(vertical),
+      width: size.mmToDots(width),
+      height: size.mmToDots(height),
+    );
+  }
+
+  /// Inverts color in a region specified in **millimeters**.
+  TsplLabel reverseMm({
+    required double horizontal,
+    required double vertical,
+    required double width,
+    required double height,
+  }) {
+    return reverse(
+      horizontal: size.mmToDots(horizontal),
+      vertical: size.mmToDots(vertical),
+      width: size.mmToDots(width),
+      height: size.mmToDots(height),
+    );
+  }
+
+  /// Renders multilingual text (Bangla, Arabic, Hindi, CJK, etc.) with coordinates in **millimeters**.
+  TsplLabel textRasterMm(
+    String text, {
+    required double horizontal,
+    required double vertical,
+    double fontSize = 18.0,
+    bool bold = false,
+    String? fontFamily,
+    String? languageTag,
+    double? maxWidth,
+  }) {
+    return textRaster(
+      text,
+      horizontal: size.mmToDots(horizontal),
+      vertical: size.mmToDots(vertical),
+      fontSize: fontSize,
+      bold: bold,
+      fontFamily: fontFamily,
+      languageTag: languageTag,
+      maxWidth: maxWidth != null ? size.mmToDots(maxWidth) : null,
+    );
   }
 
   /// Appends a cut command at the end of this print job.
