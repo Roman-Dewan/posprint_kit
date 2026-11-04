@@ -5,6 +5,7 @@
   - Supports Sunmi D3 desktop POS terminals (with integrated 80 mm high-speed 250 mm/s thermal printer and auto-cutter) as well as handhelds (Sunmi V2, V2s, T2, etc.).
   - Added `EscposPrinter.sunmi()` and `EscposPrinter.inbuilt()` 3-line facades.
   - Native `LineApi` architecture (`sunmi.printReceipt`) executing fonts, alignments, multi-column tables (`Receipt.columns`), and dashed dividers natively on Sunmi thermal hardware.
+  - Fixed paper feed line pitch: correctly scales `Receipt.feed(lines)` to standard thermal line pitch (32 dots per line in `LineApi.printDividingLine(DividingLine.EMPTY, lines * 32)`) ensuring consistent vertical whitespace before QR codes, barcodes, and paper cuts.
   - Emits genuine dashed hyphens (`- - - - -`) for `receipt.divider()` matching traditional thermal receipt styling.
   - Dual-channel cash drawer triggering: tries AIDL `InnerPrinterManager` / `IWoyouService.openDrawer()` with 100 ms ESC/POS pulse fallback.
   - Hardware paper roll inquiry (`SunmiTransport.getPaperWidth()`) returning 80 mm or 58 mm.
