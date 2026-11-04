@@ -295,6 +295,7 @@ void main() {
       expect(ops[5]['type'], 'qr');
       expect(ops[6]['type'], 'barcode');
       expect(ops[7]['type'], 'feed');
+      expect(ops[7]['lines'], 2);
       expect(ops[8]['type'], 'cut');
       expect(ops[9]['type'], 'drawer');
     });

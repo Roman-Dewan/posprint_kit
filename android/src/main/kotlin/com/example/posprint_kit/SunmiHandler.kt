@@ -293,8 +293,10 @@ class SunmiHandler(private val context: Context) {
                                         lApi.printBarCode(data, barcodeStyle)
                                     }
                                     "feed" -> {
-                                        val lines = (op["lines"] as? Number)?.toInt() ?: 1
-                                        lApi.printDividingLine(DividingLine.EMPTY, lines)
+                                        val lines = (op["lines"] as? Number)?.toInt()?.coerceIn(1, 255) ?: 1
+                                        // LineApi's DividingLine.EMPTY parameter is pixel/dot height, not line count.
+                                        // Standard thermal receipt line height is 32 dots (~4.0 mm) at 203 DPI.
+                                        lApi.printDividingLine(DividingLine.EMPTY, lines * 32)
                                     }
                                     "cut" -> {
                                         lApi.autoOut()
