@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 [![Flutter Platform](https://img.shields.io/badge/platform-android%20%7C%20ios-blue.svg)](https://flutter.dev)
 
-A beginner-friendly, multi-language Flutter plugin for printing thermal receipts in **ESC/POS** mode over **WiFi, Bluetooth, and USB**, supporting any language (English, Bangla, Arabic, Chinese, Japanese, Korean, Hindi, Tamil, Telugu, and more).
+A beginner-friendly, multi-language Flutter plugin for printing thermal receipts (**ESC/POS**) and sticker labels (**TSPL**) over **WiFi, Bluetooth, and USB**, supporting any language (English, Bangla, Arabic, Chinese, Japanese, Korean, Hindi, Tamil, Telugu, and more).
 
 ---
 
@@ -218,6 +218,57 @@ Preview your receipt in Flutter UI exactly as it will appear on paper before pri
 ReceiptPreview(
   receipt: myReceipt,
   profile: PrinterProfile.generic80, // or generic58
+)
+```
+
+---
+
+## Thermal Label & Sticker Printing (TSPL)
+
+`posprint_kit` provides full support for **TSPL / TSPL2 (TSC Printer Language)** for desktop and portable label printers (TSC, Xprinter, Gprinter, Rongta, etc.) over **USB, WiFi, and Bluetooth**:
+
+```dart
+import 'package:posprint_kit/posprint_kit.dart';
+
+void main() async {
+  // 1. Connect via USB, WiFi, or Bluetooth
+  final printer = TsplPrinter.usb(vendorId: 0x0483, productId: 0x5740);
+  // or: TsplPrinter.bluetooth('00:11:22:33:44:55');
+  // or: TsplPrinter.wifi('192.168.1.100');
+
+  // 2. Build your label sticker
+  final label = TsplLabel(size: TsplSize.size40x30)
+    ..box(x: 5, y: 5, endX: 315, endY: 235, thickness: 2)
+    ..text('ORGANIC HONEY', x: 20, y: 20, font: TsplFont.font3)
+    ..textRaster('খাঁটি মধু ৫০০ গ্রাম', x: 20, y: 55, fontSize: 18, languageTag: 'bn')
+    ..barcode('890123456789', x: 20, y: 95, height: 45)
+    ..qr('https://honey.example.com', x: 220, y: 95, size: 4)
+    ..text('PRICE: \$12.50', x: 20, y: 165, font: TsplFont.font4)
+    ..print(copies: 1);
+
+  // 3. Print!
+  await printer.print(label);
+  await printer.close();
+}
+```
+
+### Multi-Size Label Presets
+`posprint_kit` includes pre-calibrated sizes at 203 DPI (8 dots/mm) and 300 DPI (12 dots/mm):
+* `TsplSize.size20x30`: 20 × 30 mm (Jewelry, cable, small tag)
+* `TsplSize.size30x20`: 30 × 20 mm (Compact price tag)
+* `TsplSize.size40x30`: 40 × 30 mm (Retail shelf tag)
+* `TsplSize.size50x30`: 50 × 30 mm (Storage / asset sticker)
+* `TsplSize.size60x40`: 60 × 40 mm (Shipping / barcode label)
+* `TsplSize.size70x50`: 70 × 50 mm (Carton box)
+* `TsplSize.size80x50`: 80 × 50 mm (Warehouse logistics)
+* `TsplSize.size100x150`: 100 × 150 mm (4" × 6" waybill)
+* Custom: `TsplSize(widthMm: 45, heightMm: 25, gapMm: 2.0)`
+
+### Live Label Preview (`TsplLabelPreview`)
+```dart
+TsplLabelPreview(
+  label: myLabel,
+  maxWidth: 320,
 )
 ```
 

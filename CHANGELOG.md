@@ -1,5 +1,15 @@
 ## 2.0.0
 
+* **TSPL Thermal Label & Sticker Printing (`TsplPrinter`, `TsplLabel`, & `TsplSize`)**:
+  - Full support for TSPL / TSPL2 (TSC Printer Language) for barcode and sticker label printers (TSC, Xprinter, Gprinter, Rongta, HPRT, etc.).
+  - Dedicated `TsplPrinter` facade supporting **USB OTG**, **WiFi/LAN (port 9100)**, and **Bluetooth SPP** with automatic connection handling, FIFO job queueing, and MTU chunking.
+  - Multi-size label presets: `20x30`, `30x20`, `40x30`, `60x40`, `50x30`, `70x50`, `80x50`, and `100x150` mm, plus customizable dimensions at 203 DPI (8 dots/mm) and 300 DPI (12 dots/mm).
+  - Fluent `TsplLabel` builder: coordinate-based placement of native ROM text, 1D barcodes (Code 128, EAN13, Code 39, etc.), 2D QR codes, border boxes, divider lines, and color-inversion blocks (`REVERSE`).
+  - True multi-language sticker printing: `label.textRaster()` renders non-Latin scripts (Bangla, Arabic, Hindi, CJK, etc.) into 1-bit monochrome TSPL `BITMAP` commands without requiring specialized firmware ROM fonts.
+  - Drop-in `TsplLabelPreview` Flutter widget providing a realistic sticker simulation with rounded die-cut edges and proportional element scaling.
+  - Hardware control commands: `formFeed()` (advances to tear boundary), `calibrate()` (gap/mark sensor calibration), and `cut()`.
+  - Added dedicated interactive "Label TSPL" tab in the example app with size dropdown, transport selector, live sticker preview, and 1-tap test printing.
+
 * **Sunmi Built-in POS Terminal Integration (`SunmiTransport` & `EscposPrinter.sunmi`)**:
   - Direct integration with Sunmi's official PrinterX SDK (`com.sunmi:printerx`) and Inner Printer Library (`com.sunmi:printerlibrary`) via native Android MethodChannel bridge (`SunmiHandler.kt`).
   - Supports Sunmi D3 desktop POS terminals (with integrated 80 mm high-speed 250 mm/s thermal printer and auto-cutter) as well as handhelds (Sunmi V2, V2s, T2, etc.).

@@ -50,9 +50,15 @@ class _HomeScreenState extends State<HomeScreen> {
   List<BluetoothDevice> _pairedBtDevices = [];
   BluetoothDevice? _selectedBtDevice;
   List<UsbDevice> _usbDevices = [];
+  UsbDevice? _selectedUsbDevice;
   List<NetworkDevice> _discoveredNetworkDevices = [];
   NetworkDevice? _selectedNetworkDevice;
   DoctorReport? _doctorReport;
+
+  // TSPL Label state
+  TsplSize _selectedTsplSize = TsplSize.size40x30;
+  Transport _selectedTsplTransport = Transport.usb;
+  int _selectedTsplTemplate = 0;
 
   // Status & loading indicators
   String? _statusMessage;
@@ -489,6 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildBluetoothPrintTab(),
           _buildUsbPrintTab(),
           _buildSunmiPrintTab(),
+          _buildTsplLabelTab(),
           _buildVirtualTestTab(),
           _buildDoctorTab(),
         ],
@@ -512,6 +519,11 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(
             icon: Icon(Icons.point_of_sale),
             label: 'Sunmi D3',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.label_outlined),
+            selectedIcon: Icon(Icons.label),
+            label: 'Label TSPL',
           ),
           NavigationDestination(
             icon: Icon(Icons.memory),
@@ -1091,5 +1103,417 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // TSPL LABEL PRINTER TAB & ACTIONS
+  // ---------------------------------------------------------------------------
+
+  Widget _buildTsplLabelTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            elevation: 0,
+            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
+            child: const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  Icon(Icons.label, size: 28),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'TSPL Barcode & Sticker Label Printer\nSupports USB, WiFi, and Bluetooth (20x30, 30x20, 40x30, 60x40, etc.)',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12.0),
+
+          // 1. Size Selector Dropdown
+          Card(
+            elevation: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('1. SELECT LABEL SIZE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 8.0),
+                  DropdownButtonFormField<TsplSize>(
+                    initialValue: _selectedTsplSize,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: TsplSize.presets.map((s) {
+                      return DropdownMenuItem<TsplSize>(
+                        value: s,
+                        child: Text(s.name),
+                      );
+                    }).toList(),
+                    onChanged: (newSize) {
+                      if (newSize != null) {
+                        setState(() => _selectedTsplSize = newSize);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12.0),
+
+          // 2. Transport Selector (USB, WiFi, Bluetooth)
+          Card(
+            elevation: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('2. CONNECTION MEDIUM (USB, WiFi, Bluetooth)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 8.0),
+                  SegmentedButton<Transport>(
+                    segments: const [
+                      ButtonSegment(value: Transport.usb, icon: Icon(Icons.usb), label: Text('USB')),
+                      ButtonSegment(value: Transport.wifi, icon: Icon(Icons.wifi), label: Text('WiFi')),
+                      ButtonSegment(value: Transport.bluetooth, icon: Icon(Icons.bluetooth), label: Text('Bluetooth')),
+                    ],
+                    selected: {_selectedTsplTransport},
+                    onSelectionChanged: (set) {
+                      setState(() => _selectedTsplTransport = set.first);
+                    },
+                  ),
+                  const SizedBox(height: 12.0),
+                  if (_selectedTsplTransport == Transport.usb) ...[
+                    FilledButton.tonalIcon(
+                      onPressed: _isLoading ? null : _scanUsb,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Scan Attached USB Printers'),
+                    ),
+                    if (_usbDevices.isNotEmpty) ...[
+                      const SizedBox(height: 8.0),
+                      DropdownButtonFormField<UsbDevice>(
+                        initialValue: _usbDevices.contains(_selectedUsbDevice) ? _selectedUsbDevice : null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Select Attached USB Device',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _usbDevices.map((d) {
+                          return DropdownMenuItem(
+                            value: d,
+                            child: Text(d.name, overflow: TextOverflow.ellipsis),
+                          );
+                        }).toList(),
+                        onChanged: (d) => setState(() => _selectedUsbDevice = d),
+                      ),
+                    ],
+                  ],
+                  if (_selectedTsplTransport == Transport.wifi) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: TextField(
+                            controller: _hostController,
+                            decoration: const InputDecoration(
+                              labelText: 'Printer IP',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: _portController,
+                            decoration: const InputDecoration(
+                              labelText: 'Port',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (_selectedTsplTransport == Transport.bluetooth) ...[
+                    FilledButton.tonalIcon(
+                      onPressed: _isLoading ? null : _scanBluetooth,
+                      icon: const Icon(Icons.bluetooth_searching),
+                      label: const Text('Scan Paired Bluetooth Printers'),
+                    ),
+                    if (_pairedBtDevices.isNotEmpty) ...[
+                      const SizedBox(height: 8.0),
+                      DropdownButtonFormField<BluetoothDevice>(
+                        initialValue: _pairedBtDevices.contains(_selectedBtDevice) ? _selectedBtDevice : null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Select Paired Device',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _pairedBtDevices.map((d) {
+                          return DropdownMenuItem(
+                            value: d,
+                            child: Text('${d.name} (${d.address})', overflow: TextOverflow.ellipsis),
+                          );
+                        }).toList(),
+                        onChanged: (d) => setState(() => _selectedBtDevice = d),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12.0),
+
+          // 3. Label Template Selector
+          Card(
+            elevation: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('3. LABEL CONTENT TEMPLATE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 8.0),
+                  Wrap(
+                    spacing: 8.0,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Retail Price Tag'),
+                        selected: _selectedTsplTemplate == 0,
+                        onSelected: (val) => setState(() => _selectedTsplTemplate = 0),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Product Barcode'),
+                        selected: _selectedTsplTemplate == 1,
+                        onSelected: (val) => setState(() => _selectedTsplTemplate = 1),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Multilingual (বাং/عربي)'),
+                        selected: _selectedTsplTemplate == 2,
+                        onSelected: (val) => setState(() => _selectedTsplTemplate = 2),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12.0),
+
+          // 4. Live Label Preview
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('4. LIVE STICKER PREVIEW', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 12.0),
+                  TsplLabelPreview(
+                    label: _buildActiveTsplLabel(),
+                    maxWidth: 320.0,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16.0),
+
+          // 5. Actions
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FilledButton.icon(
+                      icon: const Icon(Icons.print),
+                      label: Text('Print Sticker Label (${_selectedTsplSize.widthMm.toInt()}×${_selectedTsplSize.heightMm.toInt()} mm)'),
+                      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14.0)),
+                      onPressed: _executeTsplPrint,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.arrow_downward),
+                            label: const Text('Feed / Tear'),
+                            onPressed: _executeTsplFeed,
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.tune),
+                            label: const Text('Calibrate Gap'),
+                            onPressed: _executeTsplCalibrate,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+          if (_statusMessage != null) ...[
+            const SizedBox(height: 12.0),
+            _buildStatusBanner(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  TsplLabel _buildActiveTsplLabel() {
+    final size = _selectedTsplSize;
+    final wDots = size.widthDots;
+    final hDots = size.heightDots;
+    final isCompact = wDots < 280;
+
+    final label = TsplLabel(size: size);
+
+    switch (_selectedTsplTemplate) {
+      case 0: // Retail Price Tag
+        label.box(x: 4, y: 4, endX: wDots - 4, endY: hDots - 4, thickness: 2);
+        label.text('ORGANIC STORE', x: 12, y: 14, font: isCompact ? TsplFont.font2 : TsplFont.font3);
+        label.line(x: 8, y: 38, width: wDots - 16, thickness: 1);
+        label.text('Sourdough Bread', x: 12, y: 46, font: TsplFont.font2);
+        label.textRaster('টাটকা রুটি', x: 12, y: 70, fontSize: 15, languageTag: 'bn');
+
+        if (isCompact) {
+          label.barcode('102498', x: 12, y: 95, height: 35, narrow: 1, wide: 2);
+          label.text('\$4.50', x: 12, y: hDots - 30, font: TsplFont.font3);
+        } else {
+          final barH = (hDots * 0.22).round().clamp(25, 55);
+          final barY = (hDots * 0.44).round();
+          label.barcode('20491024', x: 12, y: barY, height: barH);
+          label.qr('https://posprint.example.com/item/1024', x: wDots - 75, y: barY, size: (wDots ~/ 90).clamp(2, 4));
+          label.text('PRICE: \$4.50', x: 12, y: hDots - 32, font: TsplFont.font4);
+        }
+        break;
+
+      case 1: // Product Barcode Tag
+        label.box(x: 4, y: 4, endX: wDots - 4, endY: hDots - 4, thickness: 2);
+        label.text('SKU: ACME-8892', x: 12, y: 14, font: TsplFont.font2);
+        if (isCompact) {
+          label.barcode('8892019', x: 12, y: 42, height: 45, narrow: 1, wide: 2);
+          label.text('BIN: A-12', x: 12, y: hDots - 26, font: TsplFont.font2);
+        } else {
+          final barH = (hDots * 0.35).round().clamp(30, 80);
+          label.barcode('8892019482', x: 12, y: 42, height: barH);
+          label.qr('https://acme.example.com/sku/8892', x: wDots - 75, y: 42, size: (wDots ~/ 90).clamp(2, 5));
+          label.text('LOT: 2026-11 | BIN: A-12', x: 12, y: hDots - 30, font: TsplFont.font2);
+        }
+        break;
+
+      case 2: // Multilingual Badge (Bangla & Arabic)
+        label.box(x: 4, y: 4, endX: wDots - 4, endY: hDots - 4, thickness: 2);
+        label.text('NATURAL HONEY', x: 12, y: 14, font: isCompact ? TsplFont.font2 : TsplFont.font3);
+        label.line(x: 8, y: 38, width: wDots - 16, thickness: 1);
+        label.textRaster('খাঁটি মধু ৫০০ গ্রাম', x: 12, y: 46, fontSize: 16, languageTag: 'bn');
+        label.textRaster('عسل نحل طبيعي', x: 12, y: 72, fontSize: 16, languageTag: 'ar');
+
+        if (isCompact) {
+          label.text('500g | \$12.99', x: 12, y: hDots - 28, font: TsplFont.font2);
+        } else {
+          final barY = (hDots * 0.50).round();
+          label.barcode('99281726', x: 12, y: barY, height: (hDots * 0.20).round().clamp(20, 50));
+          label.text('NET: 500g | \$12.99', x: 12, y: hDots - 32, font: TsplFont.font3);
+        }
+        break;
+    }
+
+    return label;
+  }
+
+  TsplPrinter _createActiveTsplPrinter() {
+    switch (_selectedTsplTransport) {
+      case Transport.wifi:
+        final host = _hostController.text.trim().isEmpty ? '192.168.1.50' : _hostController.text.trim();
+        final port = int.tryParse(_portController.text.trim()) ?? 9100;
+        return TsplPrinter.wifi(host, port: port, rasterizer: FlutterTextRasterizer());
+      case Transport.bluetooth:
+        final address = _selectedBtDevice?.address ??
+            (_btAddressController.text.trim().isEmpty ? '00:11:22:33:44:55' : _btAddressController.text.trim());
+        return TsplPrinter.bluetooth(address, rasterizer: FlutterTextRasterizer());
+      case Transport.usb:
+      default:
+        final vid = _selectedUsbDevice?.vendorId ?? _parseId(_usbVidController.text, 0x0483);
+        final pid = _selectedUsbDevice?.productId ?? _parseId(_usbPidController.text, 0x5740);
+        return TsplPrinter.usb(vendorId: vid, productId: pid, rasterizer: FlutterTextRasterizer());
+    }
+  }
+
+  Future<void> _executeTsplPrint() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Connecting to TSPL label printer...';
+    });
+    try {
+      final printer = _createActiveTsplPrinter();
+      final label = _buildActiveTsplLabel();
+      final result = await printer.print(label);
+      await printer.close();
+      if (mounted) {
+        if (result.isOk) {
+          _setStatus('Sticker label (${_selectedTsplSize.name}) printed successfully!', success: true);
+        } else {
+          _setStatus('Label print failed: ${result.errorOrNull?.message}', success: false);
+        }
+      }
+    } catch (e) {
+      if (mounted) _setStatus('Error: $e', success: false);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _executeTsplFeed() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Advancing label to tear boundary...';
+    });
+    try {
+      final printer = _createActiveTsplPrinter();
+      final res = await printer.formFeed();
+      await printer.close();
+      if (mounted) {
+        _setStatus(res.isOk ? 'Label advanced successfully (FORMFEED)!' : 'Feed failed: ${res.errorOrNull?.message}', success: res.isOk);
+      }
+    } catch (e) {
+      if (mounted) _setStatus('Error: $e', success: false);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _executeTsplCalibrate() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Calibrating label gap sensor (GAPDETECT)...';
+    });
+    try {
+      final printer = _createActiveTsplPrinter();
+      final res = await printer.calibrate();
+      await printer.close();
+      if (mounted) {
+        _setStatus(res.isOk ? 'Label gap sensor calibrated successfully!' : 'Calibration failed: ${res.errorOrNull?.message}', success: res.isOk);
+      }
+    } catch (e) {
+      if (mounted) _setStatus('Error: $e', success: false);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }

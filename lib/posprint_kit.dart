@@ -41,6 +41,31 @@ export 'src/transports/network_transport.dart' show NetworkTransport;
 export 'src/transports/sunmi_transport.dart'
     show InbuiltTransport, SunmiTransport;
 export 'src/transports/usb_transport.dart' show UsbDevice, UsbTransport;
+export 'src/tspl/tspl_encoder.dart' show TsplEncoder;
+export 'src/tspl/tspl_enums.dart'
+    show
+        TsplBarcodeType,
+        TsplBitmapMode,
+        TsplDirection,
+        TsplFont,
+        TsplHumanReadable,
+        TsplQrEcc,
+        TsplRotation;
+export 'src/tspl/tspl_label.dart' show TsplLabel;
+export 'src/tspl/tspl_ops.dart'
+    show
+        TsplBarOp,
+        TsplBarcodeOp,
+        TsplBitmapOp,
+        TsplBoxOp,
+        TsplOp,
+        TsplQrOp,
+        TsplRasterTextOp,
+        TsplReverseOp,
+        TsplTextOp;
+export 'src/tspl/tspl_printer.dart' show TsplPrinter;
+export 'src/tspl/tspl_size.dart' show TsplSize;
+export 'src/rendering/tspl_label_preview.dart' show TsplLabelPreview;
 export 'src/ui/printer_picker.dart' show PrinterPicker;
 
 import 'posprint_kit_platform_interface.dart';
