@@ -227,6 +227,43 @@ ReceiptPreview(
 
 `posprint_kit` provides full support for **TSPL / TSPL2 (TSC Printer Language)** for desktop and portable label printers (TSC, Xprinter, Gprinter, Rongta, etc.) over **USB, WiFi, and Bluetooth**:
 
+### 1-Line Kitchen / Order Token Sticker (`TsplLabel.token`)
+Generate standard order/token stickers with zero coordinate math:
+
+```dart
+final label = TsplLabel.token(
+  tokenNumber: '027',                                    // TOKEN - 027
+  date: '11/05/2026',                                    // 11/05/2026
+  guest: 'Walk-in',                                      // Guest : Walk-in
+  sequence: '2 of 2',                                    // 2 of 2
+  item: 'Salcoty SMALL',                                 // Salcoty SMALL
+  addons: const ['Sugar Free', 'moglai', 'onion fry'],  // Auto-wrapped with indent
+  specialInstructions: 'add more suger, suger free',      // SI : add more suger, suger free
+  note: 'test dfef cvvvcdd bbbbb vvg nnnnn cccc mmmm zzz', // Auto-wrapped order notes
+  size: TsplSize.size60x40,                              // Dynamic scaling applied!
+);
+
+await printer.print(label);
+```
+
+> [!TIP]
+> **Smart Omission**: If `note`, `specialInstructions`, `addons`, `guest`, or `sequence` are empty or omitted, their labels (`Note:`, `SI :`, `Addon:`) are completely hidden.
+
+### Auto-Flow Layout (Zero Math Required!)
+For custom labels, stack elements sequentially without calculating vertical coordinates:
+
+```dart
+final label = TsplLabel(size: TsplSize.size60x40)
+  ..rowMm(left: 'TOKEN - 027', right: '11/05/2026', font: TsplFont.font3)
+  ..rowMm(left: 'Guest : Walk-in', right: '2 of 2', font: TsplFont.font2)
+  ..dividerMm()
+  ..textLineMm('Salcoty SMALL', font: TsplFont.font3)
+  ..wrappedTextMm('Note: Please prepare without nuts or dairy.');
+```
+
+### Millimeter-Exact Coordinate Builder
+For exact pixel-perfect control over every millimeter:
+
 ```dart
 import 'package:posprint_kit/posprint_kit.dart';
 
@@ -237,8 +274,6 @@ void main() async {
   // or: TsplPrinter.wifi('192.168.1.100');
 
   // 2. Build your label sticker directly in physical millimeters!
-  // Horizontal (X) = distance from left edge in mm.
-  // Vertical (Y)   = distance from top edge in mm.
   final label = TsplLabel(size: TsplSize.size40x30)
     ..boxMm(horizontal: 1.0, vertical: 1.0, endHorizontal: 39.0, endVertical: 29.0, thickness: 2)
     ..textMm('ORGANIC STORE', horizontal: 2.0, vertical: 2.0, font: TsplFont.font3)

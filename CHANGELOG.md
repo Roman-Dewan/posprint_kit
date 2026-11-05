@@ -1,3 +1,19 @@
+## 2.1.0
+
+* **Kitchen / Order Token Sticker Printing (`TsplLabel.token`)**:
+  - Added dedicated 1-line factory constructor `TsplLabel.token(...)` matching standard restaurant/retail POS order stickers: `tokenNumber`, `date`, `guest`, `sequence` (e.g. `2 of 2`), `item` / `items`, `addons`, `specialInstructions` (`si`), and `notes`.
+  - Smart field omission: if optional fields (`note`, `specialInstructions`, `addons`, `guest`, `sequence`) are empty, `null`, or whitespace, neither the field nor its prefix (`Note:`, `SI :`, `Addon:`) is printed.
+* **Auto-Flow Layout API (Zero Coordinate Math)**:
+  - Added auto-advancing "moving pen" builders to `TsplLabel`: `rowMm()` (two-column left/right header), `textLineMm()` (single line), `dividerMm()` (horizontal line across sticker), `spaceMm()` (vertical spacing), `wrappedTextMm()` (multi-line text with hanging indents), and `textRasterLineMm()` (multilingual text).
+* **Dynamic Dimension Scaling for Labels**:
+  - Automatically recalculates font sizes, margins, line gaps, and divider padding based on the physical dimensions:
+    - **Compact stickers** (`< 48 mm` width or `< 35 mm` height): tight 1.5 mm margins, smaller fonts (`font2`/`font1`), and compact 0.8 mm gaps so all fields fit without truncation.
+    - **Standard stickers** (`60×40 mm`, `50×30 mm`): 2.5 mm margins, prominent `font3`/`font2`, and 1.2–2.0 mm gaps.
+    - **Large / long stickers** (`>= 70 mm` width or `>= 50 mm` height): 3.5 mm margins, `font4`/`font3`, and 2.2–3.0 mm gaps.
+* **Example Application Enhancements**:
+  - Standardized on `60×40 mm` as the default label dimension in the TSPL tab.
+  - Added full POS order token template matching physical restaurant/kitchen order stickers.
+
 ## 2.0.0
 
 * **TSPL Thermal Label & Sticker Printing (`TsplPrinter`, `TsplLabel`, & `TsplSize`)**:
