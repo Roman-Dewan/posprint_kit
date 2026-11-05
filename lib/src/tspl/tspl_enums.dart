@@ -62,6 +62,52 @@ enum TsplFont {
 
   /// The font identifier string sent in the TSPL TEXT command.
   final String commandName;
+
+  /// Font character height in printer dots at standard 203 DPI (8 dots/mm).
+  int get heightDots {
+    switch (this) {
+      case TsplFont.font1:
+        return 12;
+      case TsplFont.font2:
+        return 20;
+      case TsplFont.font3:
+        return 24;
+      case TsplFont.font4:
+        return 32;
+      case TsplFont.font5:
+        return 48;
+      case TsplFont.simplifiedChinese24:
+      case TsplFont.traditionalChinese24:
+      case TsplFont.korean24:
+        return 24;
+    }
+  }
+
+  /// Font character width in printer dots at standard 203 DPI (8 dots/mm).
+  int get widthDots {
+    switch (this) {
+      case TsplFont.font1:
+        return 8;
+      case TsplFont.font2:
+        return 12;
+      case TsplFont.font3:
+        return 16;
+      case TsplFont.font4:
+        return 24;
+      case TsplFont.font5:
+        return 32;
+      case TsplFont.simplifiedChinese24:
+      case TsplFont.traditionalChinese24:
+      case TsplFont.korean24:
+        return 24;
+    }
+  }
+
+  /// Approximate character height in millimeters at 203 DPI.
+  double get heightMm => heightDots / 8.0;
+
+  /// Approximate character width in millimeters at 203 DPI.
+  double get widthMm => widthDots / 8.0;
 }
 
 /// 1D linear barcode symbologies supported by TSPL.

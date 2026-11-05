@@ -64,8 +64,89 @@ class TsplLabel {
   /// Whether to issue a paper cut command at the end of printing.
   bool autoCut;
 
+  /// Current vertical pen position in millimeters for auto-flow layout.
+  double _cursorVerticalMm = 2.5;
+
+  /// Default margin in millimeters for auto-flow layout (left, right, and top offset).
+  double marginMm = 2.5;
+
+  /// Returns the current vertical cursor position in millimeters.
+  double get cursorVerticalMm => _cursorVerticalMm;
+
   /// The list of visual elements placed on the label.
   final List<TsplOp> ops = [];
+
+  /// Creates a ready-to-print restaurant / kitchen token order sticker.
+  ///
+  /// Matches standard order tags (e.g. 60×40 mm) with zero manual coordinate math.
+  ///
+  /// Example:
+  /// ```dart
+  /// final label = TsplLabel.token(
+  ///   tokenNumber: '007',
+  ///   guest: 'Walk-in',
+  ///   date: '11/05/2026',
+  ///   items: ['Salcoty SMALL'],
+  /// );
+  /// ```
+  factory TsplLabel.token({
+    required String tokenNumber,
+    String? date,
+    String? guest,
+    required List<String> items,
+    List<String>? notes,
+    TsplSize size = TsplSize.size60x40,
+    double marginMm = 2.5,
+  }) {
+    final label = TsplLabel(size: size);
+    label.marginMm = marginMm;
+    label.cursorMm(marginMm);
+
+    final tokenText = tokenNumber.toUpperCase().startsWith('TOKEN')
+        ? tokenNumber
+        : 'TOKEN - $tokenNumber';
+
+    final dateText = date ?? _currentDateFormatted();
+
+    // 1. Header row: TOKEN - 007 (left) | 11/05/2026 (right)
+    label.rowMm(
+      left: tokenText,
+      right: dateText,
+      font: TsplFont.font3,
+      spacingAfter: 1.5,
+    );
+
+    // 2. Guest row: Guest : Walk-in
+    if (guest != null && guest.isNotEmpty) {
+      final guestText = guest.startsWith('Guest') ? guest : 'Guest : $guest';
+      label.textLineMm(guestText, font: TsplFont.font2, spacingAfter: 1.5);
+    }
+
+    // 3. Crisp horizontal divider line
+    label.dividerMm(thickness: 1, spacingBefore: 1.2, spacingAfter: 2.5);
+
+    // 4. Order items: Salcoty SMALL, etc.
+    for (final item in items) {
+      label.textLineMm(item, font: TsplFont.font3, spacingAfter: 2.0);
+    }
+
+    // 5. Optional item notes / modifiers
+    if (notes != null) {
+      for (final note in notes) {
+        label.textLineMm('- $note', font: TsplFont.font2, spacingAfter: 1.5);
+      }
+    }
+
+    return label;
+  }
+
+  static String _currentDateFormatted() {
+    final now = DateTime.now();
+    final d = now.day.toString().padLeft(2, '0');
+    final m = now.month.toString().padLeft(2, '0');
+    final y = now.year.toString();
+    return '$d/$m/$y';
+  }
 
   // ---------------------------------------------------------------------------
   // FLUENT CONFIGURATION
@@ -80,6 +161,18 @@ class TsplLabel {
   /// Sets the feed direction.
   TsplLabel setDirection(TsplDirection newDirection) {
     direction = newDirection;
+    return this;
+  }
+
+  /// Sets or moves the vertical writing cursor in millimeters for auto-flow methods.
+  TsplLabel cursorMm(double vertical) {
+    _cursorVerticalMm = vertical;
+    return this;
+  }
+
+  /// Sets the default margin in millimeters for auto-flow methods.
+  TsplLabel setMarginMm(double margin) {
+    marginMm = margin;
     return this;
   }
 
@@ -486,6 +579,134 @@ class TsplLabel {
       languageTag: languageTag,
       maxWidth: maxWidth != null ? size.mmToDots(maxWidth) : null,
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // AUTO-FLOW LAYOUT BUILDERS (Zero Coordinate Math!)
+  // ---------------------------------------------------------------------------
+
+  /// Adds a row with [left] text and optional right-aligned [right] text,
+  /// then automatically advances the vertical cursor down.
+  TsplLabel rowMm({
+    required String left,
+    String? right,
+    TsplFont font = TsplFont.font3,
+    double spacingAfter = 1.5,
+  }) {
+    // 1. Left text at current margin and cursor
+    textMm(
+      left,
+      horizontal: marginMm,
+      vertical: _cursorVerticalMm,
+      font: font,
+    );
+
+    // 2. Right text aligned against right margin
+    if (right != null && right.isNotEmpty) {
+      final approxWidthMm = right.length * font.widthMm;
+      final rightX = (size.widthMm - marginMm - approxWidthMm).clamp(marginMm, size.widthMm);
+      textMm(
+        right,
+        horizontal: rightX,
+        vertical: _cursorVerticalMm,
+        font: font,
+      );
+    }
+
+    // 3. Advance vertical cursor
+    _cursorVerticalMm += font.heightMm + spacingAfter;
+    return this;
+  }
+
+  /// Adds a single line of text at the current cursor and advances down.
+  TsplLabel textLineMm(
+    String text, {
+    TsplFont font = TsplFont.font3,
+    double spacingAfter = 1.5,
+    int xMultiplication = 1,
+    int yMultiplication = 1,
+  }) {
+    textMm(
+      text,
+      horizontal: marginMm,
+      vertical: _cursorVerticalMm,
+      font: font,
+      xMultiplication: xMultiplication,
+      yMultiplication: yMultiplication,
+    );
+    _cursorVerticalMm += (font.heightMm * yMultiplication) + spacingAfter;
+    return this;
+  }
+
+  /// Draws a horizontal dividing line across the sticker and advances down.
+  TsplLabel dividerMm({
+    int thickness = 1,
+    double spacingBefore = 1.0,
+    double spacingAfter = 2.0,
+  }) {
+    _cursorVerticalMm += spacingBefore;
+    lineMm(
+      horizontal: marginMm,
+      vertical: _cursorVerticalMm,
+      width: size.widthMm - (marginMm * 2),
+      thickness: thickness,
+    );
+    _cursorVerticalMm += spacingAfter;
+    return this;
+  }
+
+  /// Advances the vertical cursor down by [heightMm].
+  TsplLabel spaceMm(double heightMm) {
+    _cursorVerticalMm += heightMm;
+    return this;
+  }
+
+  /// Adds a line of multilingual raster text (Bangla, Arabic, Hindi, CJK, etc.)
+  /// at the current cursor and advances down.
+  TsplLabel textRasterLineMm(
+    String text, {
+    double fontSize = 14.0,
+    bool bold = false,
+    String? fontFamily,
+    String? languageTag,
+    double spacingAfter = 2.0,
+  }) {
+    textRasterMm(
+      text,
+      horizontal: marginMm,
+      vertical: _cursorVerticalMm,
+      fontSize: fontSize,
+      bold: bold,
+      fontFamily: fontFamily,
+      languageTag: languageTag,
+    );
+    // Convert fontSize points to approximate mm height (~0.35 mm/pt)
+    _cursorVerticalMm += (fontSize * 0.35) + spacingAfter;
+    return this;
+  }
+
+  /// Adds a 1D barcode at the current cursor and advances down.
+  TsplLabel barcodeLineMm(
+    String data, {
+    required double height,
+    TsplBarcodeType type = TsplBarcodeType.code128,
+    TsplHumanReadable humanReadable = TsplHumanReadable.belowCenter,
+    double spacingAfter = 2.5,
+    int narrow = 2,
+    int wide = 2,
+  }) {
+    barcodeMm(
+      data,
+      horizontal: marginMm,
+      vertical: _cursorVerticalMm,
+      height: height,
+      type: type,
+      humanReadable: humanReadable,
+      narrow: narrow,
+      wide: wide,
+    );
+    _cursorVerticalMm += height + (humanReadable != TsplHumanReadable.none ? 3.5 : 0.0) + spacingAfter;
+    return this;
   }
 
   /// Appends a cut command at the end of this print job.

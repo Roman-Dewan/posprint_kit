@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   DoctorReport? _doctorReport;
 
   // TSPL Label state
-  TsplSize _selectedTsplSize = TsplSize.size40x30;
+  TsplSize _selectedTsplSize = TsplSize.size60x40; // Default standard 60x40 mm
   Transport _selectedTsplTransport = Transport.usb;
   int _selectedTsplTemplate = 0;
   TsplDirection _selectedTsplDirection = TsplDirection.normal;
@@ -1327,19 +1327,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     spacing: 8.0,
                     children: [
                       ChoiceChip(
-                        label: const Text('Retail Price Tag'),
+                        label: const Text('Kitchen / Token (60×40)'),
                         selected: _selectedTsplTemplate == 0,
                         onSelected: (val) => setState(() => _selectedTsplTemplate = 0),
                       ),
                       ChoiceChip(
-                        label: const Text('Product Barcode'),
+                        label: const Text('Retail Price Tag'),
                         selected: _selectedTsplTemplate == 1,
                         onSelected: (val) => setState(() => _selectedTsplTemplate = 1),
                       ),
                       ChoiceChip(
-                        label: const Text('Multilingual (বাং/عربي)'),
+                        label: const Text('Product Barcode'),
                         selected: _selectedTsplTemplate == 2,
                         onSelected: (val) => setState(() => _selectedTsplTemplate = 2),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Multilingual (বাং/عربي)'),
+                        selected: _selectedTsplTemplate == 3,
+                        onSelected: (val) => setState(() => _selectedTsplTemplate = 3),
                       ),
                     ],
                   ),
@@ -1417,13 +1422,24 @@ class _HomeScreenState extends State<HomeScreen> {
     final wMm = size.widthMm;
     final hMm = size.heightMm;
 
-    // Direct, beginner-friendly TSPL construction using physical millimeters!
-    // Horizontal (X) = distance from left edge in mm.
-    // Vertical (Y)   = distance from top edge in mm.
+    switch (_selectedTsplTemplate) {
+      case 0: // Kitchen / Order Token (Standard 60x40 matching physical photo)
+        return TsplLabel.token(
+          tokenNumber: '007',
+          guest: 'Walk-in',
+          date: '11/05/2026',
+          items: const ['Salcoty SMALL'],
+          size: size,
+        )..setDirection(_selectedTsplDirection);
+
+      default:
+        break;
+    }
+
     final label = TsplLabel(size: size)..setDirection(_selectedTsplDirection);
 
     switch (_selectedTsplTemplate) {
-      case 0: // Retail Price Tag (Optimized for 40x30, 50x30, 60x40)
+      case 1: // Retail Price Tag (Optimized for 40x30, 50x30, 60x40)
         // 1. Clean outer margin border
         label.boxMm(
           horizontal: 1.0,
@@ -1514,7 +1530,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         break;
 
-      case 1: // Product Barcode Tag
+      case 2: // Product Barcode Tag
         label.boxMm(
           horizontal: 1.0,
           vertical: 1.0,
@@ -1561,7 +1577,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         break;
 
-      case 2: // Multilingual Badge (Bangla & Arabic)
+      case 3: // Multilingual Badge (Bangla & Arabic)
         label.boxMm(
           horizontal: 1.0,
           vertical: 1.0,

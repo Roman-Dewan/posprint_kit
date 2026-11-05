@@ -85,6 +85,50 @@ void main() {
       expect(text, contains('BAR 16, 48, 288, 2\r\n'));
     });
 
+    test('encodes TsplLabel.token factory accurately with 60x40 dimension', () async {
+      final label = TsplLabel.token(
+        tokenNumber: '007',
+        guest: 'Walk-in',
+        date: '11/05/2026',
+        items: const ['Salcoty SMALL'],
+        notes: const ['Extra spicy'],
+        size: TsplSize.size60x40,
+      );
+
+      final bytes = await encoder.encode(label);
+      final text = utf8.decode(bytes);
+
+      expect(text, contains('SIZE 60 mm, 40 mm\r\n'));
+      expect(text, contains('GAP 2 mm, 0 mm\r\n'));
+      expect(text, contains('"TOKEN - 007"'));
+      expect(text, contains('"11/05/2026"'));
+      expect(text, contains('"Guest : Walk-in"'));
+      expect(text, contains('"Salcoty SMALL"'));
+      expect(text, contains('"- Extra spicy"'));
+      expect(text, contains('BAR 20, ')); // divider bar starting at margin 2.5mm = 20 dots
+      expect(text, contains('PRINT 1, 1\r\n'));
+    });
+
+    test('auto-flow methods (rowMm, textLineMm, dividerMm, spaceMm) advance cursor cleanly', () {
+      final label = TsplLabel(size: TsplSize.size60x40);
+      expect(label.cursorVerticalMm, 2.5);
+
+      label.rowMm(left: 'ITEM 1', right: '\$10.00', font: TsplFont.font3, spacingAfter: 2.0);
+      // font3 height is 3.0 mm + 2.0 mm spacing = +5.0 mm
+      expect(label.cursorVerticalMm, closeTo(7.5, 0.01));
+
+      label.dividerMm(thickness: 1, spacingBefore: 1.0, spacingAfter: 2.0);
+      // +1.0 before + 2.0 after = +3.0 mm
+      expect(label.cursorVerticalMm, closeTo(10.5, 0.01));
+
+      label.textLineMm('Sub-item description', font: TsplFont.font2, spacingAfter: 1.5);
+      // font2 height is 2.5 mm + 1.5 mm spacing = +4.0 mm
+      expect(label.cursorVerticalMm, closeTo(14.5, 0.01));
+
+      label.spaceMm(5.0);
+      expect(label.cursorVerticalMm, closeTo(19.5, 0.01));
+    });
+
     test('encodes BITMAP binary data according to TSPL specification (inverted polarity)', () async {
       // Create a small 16x2 monochrome bitmap (2 bytes per line, 4 bytes total)
       final rawData = Uint8List.fromList([0xAA, 0x55, 0xFF, 0x00]);
