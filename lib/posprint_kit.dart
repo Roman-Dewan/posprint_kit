@@ -15,6 +15,7 @@
 /// ```
 library;
 
+export 'src/core/commands.dart' show CashDrawerPin, Commands;
 export 'src/core/logger.dart' show LogLevel;
 export 'src/core/ops.dart'
     show

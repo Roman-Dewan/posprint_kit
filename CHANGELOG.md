@@ -1,5 +1,10 @@
 ## 2.1.0
 
+* **Universal Cash Drawer Actuation (WiFi, USB, Bluetooth, Inbuilt)**:
+  - Added dedicated `openCashDrawer({CashDrawerPin pin})` and `openDrawer()` methods to `EscposPrinter`, `PrinterManager`, and `TsplPrinter`.
+  - Added static 1-line helpers: `EscposPrinter.openCashDrawerWifi()`, `openCashDrawerBluetooth()`, `openCashDrawerUsb()`, and `openCashDrawerSunmi()`.
+  - **Paper-Out Reliability Guarantee**: Standard POS printers suspend processing normal print buffers when the paper roll is empty. `posprint_kit` transmits **ESC/POS real-time hardware pulses (`DLE DC4 1 m t`)** alongside Sunmi mainboard AIDL calls, popping the cash drawer open immediately even when there is **no paper**, cover is open, or error indicator is active.
+  - Universal RJ11/RJ12 wiring support: defaults to `CashDrawerPin.pin2And5` to pulse both Pin 2 and Pin 5, accommodating all manufacturer drawer cables.
 * **Kitchen / Order Token Sticker Printing (`TsplLabel.token`)**:
   - Added dedicated 1-line factory constructor `TsplLabel.token(...)` matching standard restaurant/retail POS order stickers: `tokenNumber`, `date`, `guest`, `sequence` (e.g. `2 of 2`), `item` / `items`, `addons`, `specialInstructions` (`si`), and `notes`.
   - Smart field omission: if optional fields (`note`, `specialInstructions`, `addons`, `guest`, `sequence`) are empty, `null`, or whitespace, neither the field nor its prefix (`Note:`, `SI :`, `Addon:`) is printed.

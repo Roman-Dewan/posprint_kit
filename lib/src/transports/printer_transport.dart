@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../core/commands.dart';
 import '../core/result.dart';
 
 /// Connection states for printer transports.
@@ -57,4 +58,22 @@ abstract class PrinterTransport {
   /// Delay between consecutive chunk writes to pace data transmission and avoid
   /// overflowing small hardware receive buffers on printers (defaults to [Duration.zero]).
   Duration get chunkDelay => Duration.zero;
+
+  /// Kicks open the connected cash drawer.
+  ///
+  /// Automatically connects if the transport is disconnected.
+  /// Default implementation transmits [Commands.openCashDrawerSequence], which sends
+  /// real-time `DLE DC4` hardware pulses that execute immediately **even when the printer
+  /// is completely out of paper**.
+  Future<Result<void>> openCashDrawer({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) async {
+    if (currentState != PosConnectionState.connected) {
+      final connRes = await connect();
+      if (connRes.isError) {
+        return connRes;
+      }
+    }
+    return write(Commands.openCashDrawerSequence(pin: pin));
+  }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 
+import '../core/commands.dart';
 import '../core/logger.dart';
 import '../core/ops.dart';
 import '../core/printer_profile.dart';
@@ -90,6 +91,24 @@ class SunmiTransport implements PrinterTransport {
 
   /// Triggers the cash drawer kick-out on this connected Sunmi terminal.
   Future<Result<void>> kickDrawer() => openDrawer();
+
+  @override
+  Future<Result<void>> openCashDrawer({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) async {
+    // 1. Kick open via Sunmi's official native AIDL and PrinterX cash drawer service.
+    // Operates on the mainboard RJ12 port directly, bypassing the printer paper sensor!
+    final sunmiRes = await openDrawer();
+
+    // 2. Also send real-time ESC/POS pulses if connected to cover any external serial/USB drawer
+    try {
+      if (_currentState == PosConnectionState.connected) {
+        await write(Commands.openCashDrawerSequence(pin: pin));
+      }
+    } catch (_) {}
+
+    return sunmiRes;
+  }
 
   @override
   Future<Result<void>> connect() async {

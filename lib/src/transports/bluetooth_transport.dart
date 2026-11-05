@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 
+import '../core/commands.dart';
 import '../core/logger.dart';
 import '../core/result.dart';
 import 'printer_transport.dart';
@@ -227,6 +228,17 @@ class BluetoothTransport implements PrinterTransport {
       await _channel.invokeMethod<void>('bt.disconnect');
     } catch (_) {}
     _updateState(PosConnectionState.disconnected);
+  }
+
+  @override
+  Future<Result<void>> openCashDrawer({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) async {
+    if (_currentState != PosConnectionState.connected) {
+      final connRes = await connect();
+      if (connRes.isError) return connRes;
+    }
+    return write(Commands.openCashDrawerSequence(pin: pin));
   }
 
   void _updateState(PosConnectionState newState) {

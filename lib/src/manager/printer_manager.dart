@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../core/commands.dart';
 import '../core/logger.dart';
 import '../core/printer_profile.dart';
 import '../core/receipt.dart';
@@ -56,6 +57,17 @@ class PrinterManager {
       maxRetries: maxRetries,
       retryDelays: retryDelays,
     );
+  }
+
+  /// Kicks open the cash drawer connected to this printer.
+  ///
+  /// Runs through the serial queue to prevent collisions with active print jobs,
+  /// automatically connects if needed, and uses real-time hardware pulses
+  /// that execute **even when the printer has no paper**.
+  Future<Result<void>> openCashDrawer({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) {
+    return queue.enqueue<void>(() => transport.openCashDrawer(pin: pin));
   }
 
   Future<Result<void>> _executePrintJob(Receipt receipt) async {

@@ -72,6 +72,20 @@ void main() {
       fake.dispose();
     });
 
+    test('openCashDrawer sends TSPL DRAWER command', () async {
+      final fake = FakeTransport();
+      final printer = TsplPrinter.custom(fake);
+
+      final res = await printer.openCashDrawer();
+      expect(res.isOk, isTrue);
+
+      final output = utf8.decode(fake.recordedBytes);
+      expect(output, contains('DRAWER 0, 32, 250\r\nDRAWER 1, 32, 250\r\n'));
+
+      await printer.close();
+      fake.dispose();
+    });
+
     test('chunks large label data according to transport maxChunkSize', () async {
       final fake = FakeTransport(maxChunkSize: 64);
       final printer = TsplPrinter.custom(fake);

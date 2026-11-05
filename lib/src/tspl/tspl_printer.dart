@@ -140,6 +140,16 @@ class TsplPrinter {
   /// Issues a hardware cut command (`CUT`).
   Future<Result<void>> cut() => _sendRawCommand('CUT\r\n');
 
+  /// Kicks open the cash drawer connected to this TSPL label printer.
+  ///
+  /// Sends TSPL hardware `DRAWER` pulses across pin 0 and pin 1.
+  /// Works even when the label roll is empty.
+  Future<Result<void>> openCashDrawer() =>
+      _sendRawCommand('DRAWER 0, 32, 250\r\nDRAWER 1, 32, 250\r\n');
+
+  /// Alias for [openCashDrawer].
+  Future<Result<void>> openDrawer() => openCashDrawer();
+
   /// Internal worker executing a single label print job with auto-connect and pacing.
   Future<Result<void>> _executePrintJob(TsplLabel label) async {
     // 1. Ensure transport is connected

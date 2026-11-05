@@ -46,6 +46,36 @@ void main() {
       expect(Commands.cashDrawerPin5, [0x1B, 0x70, 0x01, 0x19, 0xFA]);
     });
 
+    test('realtime cash drawer pulses emit DLE DC4 1 m t (works without paper)', () {
+      expect(Commands.realtimeCashDrawerPin2, [0x10, 0x14, 0x01, 0x00, 0x01]);
+      expect(Commands.realtimeCashDrawerPin5, [0x10, 0x14, 0x01, 0x01, 0x01]);
+      expect(Commands.sunmiCashDrawer, [0x10, 0x14, 0x00, 0x00, 0x00]);
+      expect(Commands.starCashDrawer, [0x07]);
+      expect(Commands.realtimeCashDrawerPulse(pin5: false, duration: 2), [0x10, 0x14, 0x01, 0x00, 0x02]);
+      expect(Commands.realtimeCashDrawerPulse(pin5: true, duration: 1), [0x10, 0x14, 0x01, 0x01, 0x01]);
+    });
+
+    test('openCashDrawerSequence includes real-time and standard pulses for paper-out reliability', () {
+      final seqPin2And5 = Commands.openCashDrawerSequence(pin: CashDrawerPin.pin2And5);
+      // Contains DLE DC4 real-time pulses for both pin 2 and pin 5
+      expect(seqPin2And5, containsAllInOrder([0x10, 0x14, 0x01, 0x00, 0x01]));
+      expect(seqPin2And5, containsAllInOrder([0x10, 0x14, 0x01, 0x01, 0x01]));
+      // Contains Sunmi real-time pulse
+      expect(seqPin2And5, containsAllInOrder([0x10, 0x14, 0x00, 0x00, 0x00]));
+      // Contains standard ESC p pulses
+      expect(seqPin2And5, containsAllInOrder([0x1B, 0x70, 0x00, 0x32, 0xFA]));
+      expect(seqPin2And5, containsAllInOrder([0x1B, 0x70, 0x01, 0x32, 0xFA]));
+      // Contains Star BEL pulse
+      expect(seqPin2And5.last, 0x07);
+
+      final seqPin2 = Commands.openCashDrawerSequence(pin: CashDrawerPin.pin2);
+      expect(seqPin2, containsAllInOrder([0x10, 0x14, 0x01, 0x00, 0x01]));
+      expect(seqPin2.contains(0x07), isTrue);
+
+      final seqPin5 = Commands.openCashDrawerSequence(pin: CashDrawerPin.pin5);
+      expect(seqPin5, containsAllInOrder([0x10, 0x14, 0x01, 0x01, 0x01]));
+    });
+
     test('selectCodePage emits ESC t n', () {
       expect(
           Commands.selectCodePage(0), Uint8List.fromList([0x1B, 0x74, 0x00]));

@@ -481,33 +481,96 @@ class SunmiHandler(private val context: Context) {
 
     /**
      * Kicks open the connected cash drawer.
-     * Executes all hardware actuation paths to guarantee the drawer opens across all Sunmi models:
+     * Executes all hardware actuation paths to guarantee the drawer opens across all Sunmi models,
+     * **even when the printer has no paper**:
      *
      * 1. SunmiPrinterService.openDrawer(null) via InnerPrinterManager (official hardware AIDL for desktop POS RJ12 port)
      * 2. PrinterSdk CashDrawerApi.open(null) via PrinterX
      * 3. Separate ESC/POS pulses (Pin 2 with 100ms width, Pin 5 with 100ms width, and Sunmi DLE DC4 pulse) sent individually.
      */
     private fun openDrawer(result: MethodChannel.Result) {
-        ensurePrinterConnected(
-            onSuccess = { _, cmd ->
-                scope.launch(Dispatchers.IO) {
-                    val triggered = openDrawerInternal(cmd)
-                    withContext(Dispatchers.Main) {
-                        if (triggered) {
-                            result.success(true)
-                        } else {
-                            result.error(
-                                "DRAWER_FAILED",
-                                "Failed to trigger Sunmi cash drawer via service or ESC/POS pulse.",
-                                null
-                            )
+        scope.launch(Dispatchers.IO) {
+            // Immediate hardware check: If AIDL service or PrinterX drawer API is already initialized,
+            // trigger it directly without waiting for any printer status / paper checks.
+            var triggered = false
+
+            val service = sunmiPrinterService
+            if (service != null) {
+                try {
+                    service.openDrawer(null)
+                    triggered = true
+                } catch (_: Exception) {}
+            }
+
+            val drawer = cashDrawerApi
+            if (drawer != null) {
+                try {
+                    drawer.open(null)
+                    triggered = true
+                } catch (_: Exception) {}
+            }
+
+            val cmd = commandApi
+            if (cmd != null) {
+                try {
+                    cmd.sendEscCommand(byteArrayOf(0x10, 0x14, 0x00, 0x00, 0x00))
+                    cmd.sendEscCommand(byteArrayOf(0x10, 0x14, 0x01, 0x00, 0x01))
+                    cmd.sendEscCommand(byteArrayOf(0x10, 0x14, 0x01, 0x01, 0x01))
+                    cmd.sendEscCommand(byteArrayOf(0x1B, 0x70, 0x00, 0x32, 0xFA.toByte()))
+                    cmd.sendEscCommand(byteArrayOf(0x1B, 0x70, 0x01, 0x32, 0xFA.toByte()))
+                    triggered = true
+                } catch (_: Exception) {}
+            }
+
+            if (triggered) {
+                withContext(Dispatchers.Main) {
+                    result.success(true)
+                }
+                return@launch
+            }
+
+            // If not yet connected, connect to Sunmi printer service
+            ensurePrinterConnected(
+                onSuccess = { _, activeCmd ->
+                    scope.launch(Dispatchers.IO) {
+                        val ok = openDrawerInternal(activeCmd)
+                        withContext(Dispatchers.Main) {
+                            if (ok) {
+                                result.success(true)
+                            } else {
+                                result.error(
+                                    "DRAWER_FAILED",
+                                    "Failed to trigger Sunmi cash drawer via service or ESC/POS pulse.",
+                                    null
+                                )
+                            }
                         }
                     }
+                },
+                onError = { _, _ ->
+                    // Fallback to binding AIDL service directly even if PrinterSdk errored (e.g. paper out)
+                    try {
+                        InnerPrinterManager.getInstance().bindService(context, object : InnerPrinterCallback() {
+                            override fun onConnected(s: SunmiPrinterService?) {
+                                sunmiPrinterService = s
+                                try {
+                                    s?.openDrawer(null)
+                                    scope.launch(Dispatchers.Main) { result.success(true) }
+                                } catch (e: Exception) {
+                                    scope.launch(Dispatchers.Main) {
+                                        result.error("DRAWER_FAILED", "AIDL openDrawer failed: ${e.message}", null)
+                                    }
+                                }
+                            }
+                            override fun onDisconnected() {
+                                sunmiPrinterService = null
+                            }
+                        })
+                    } catch (e: Exception) {
+                        result.error("DRAWER_FAILED", "Could not trigger drawer via AIDL fallback: ${e.message}", null)
+                    }
                 }
-            },
-            onError = { code, msg ->
-                result.error(code, msg, null)
-            }
-        )
+            )
+        }
     }
 }

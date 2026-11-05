@@ -62,6 +62,35 @@ void main() {
       expect(fake.recordedBytes, containsAllInOrder(Commands.cutFull));
     });
 
+    test('openCashDrawer transmits real-time pulse sequence that works without paper', () async {
+      final fake = FakeTransport();
+      final printer = EscposPrinter.custom(fake);
+
+      expect(fake.currentState, PosConnectionState.disconnected);
+
+      final result = await printer.openCashDrawer();
+      expect(result.isOk, isTrue);
+      expect(fake.currentState, PosConnectionState.connected);
+
+      // Verify that real-time DLE DC4 pulses are present in the recorded bytes
+      expect(fake.recordedBytes, containsAllInOrder(Commands.realtimeCashDrawerPin2));
+      expect(fake.recordedBytes, containsAllInOrder(Commands.realtimeCashDrawerPin5));
+      expect(fake.recordedBytes, containsAllInOrder(Commands.sunmiCashDrawer));
+
+      await printer.close();
+    });
+
+    test('openDrawer alias operates identically to openCashDrawer', () async {
+      final fake = FakeTransport();
+      final printer = EscposPrinter.custom(fake);
+
+      final result = await printer.openDrawer(pin: CashDrawerPin.pin2);
+      expect(result.isOk, isTrue);
+      expect(fake.recordedBytes, containsAllInOrder(Commands.realtimeCashDrawerPin2));
+
+      await printer.close();
+    });
+
     test('EscposLink.isSupported checks platforms', () {
       expect(EscposLink.isSupported(Transport.wifi), isTrue);
     });

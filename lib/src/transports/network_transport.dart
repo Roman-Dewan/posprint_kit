@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../core/commands.dart';
 import '../core/logger.dart';
 import '../core/result.dart';
 import '../discovery/printer_discovery.dart';
@@ -193,6 +194,17 @@ class NetworkTransport implements PrinterTransport {
     _cleanupSocket();
     _updateState(PosConnectionState.disconnected);
     PosLogger.info('Disconnected from printer at $host:$port.');
+  }
+
+  @override
+  Future<Result<void>> openCashDrawer({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) async {
+    if (_currentState != PosConnectionState.connected || _socket == null) {
+      final connRes = await connect();
+      if (connRes.isError) return connRes;
+    }
+    return write(Commands.openCashDrawerSequence(pin: pin));
   }
 
   void _cleanupSocket() {

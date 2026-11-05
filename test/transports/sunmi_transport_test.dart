@@ -95,6 +95,9 @@ void main() {
       final transport = SunmiTransport();
       final res2 = await transport.kickDrawer();
       expect(res2.isOk, isTrue);
+
+      final res3 = await transport.openCashDrawer();
+      expect(res3.isOk, isTrue);
     });
 
     test('openDrawer maps DRAWER_FAILED to PrinterError with actionable hint',

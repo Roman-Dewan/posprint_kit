@@ -337,14 +337,96 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _openSunmiDrawer() async {
+  Future<void> _openWiFiDrawer() async {
+    final host = _hostController.text.trim();
+    final port = int.tryParse(_portController.text.trim()) ?? 9100;
+    if (host.isEmpty) {
+      _setStatus('Please enter an IP address.', success: false);
+      return;
+    }
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Opening cash drawer via Sunmi API...';
+      _statusMessage =
+          'Opening cash drawer via WiFi (real-time pulse, works with or without paper)...';
       _isSuccess = true;
     });
 
-    final res = await SunmiTransport.openDrawer();
+    final res = await EscposPrinter.openCashDrawerWifi(host, port: port);
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      if (res.isOk) {
+        _isSuccess = true;
+        _statusMessage = 'Cash drawer opened successfully!';
+      } else {
+        _isSuccess = false;
+        _statusMessage = 'Cash drawer failed: ${res.errorOrNull?.message}';
+      }
+    });
+  }
+
+  Future<void> _openBluetoothDrawer() async {
+    final address = _btAddressController.text.trim();
+    if (address.isEmpty) {
+      _setStatus('Please select or enter a Bluetooth MAC address.',
+          success: false);
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _statusMessage =
+          'Opening cash drawer via Bluetooth (real-time pulse, works with or without paper)...';
+      _isSuccess = true;
+    });
+
+    final res = await EscposPrinter.openCashDrawerBluetooth(address);
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      if (res.isOk) {
+        _isSuccess = true;
+        _statusMessage = 'Cash drawer opened successfully!';
+      } else {
+        _isSuccess = false;
+        _statusMessage = 'Cash drawer failed: ${res.errorOrNull?.message}';
+      }
+    });
+  }
+
+  Future<void> _openUsbDrawer() async {
+    final vid = _parseId(_usbVidController.text, 0x04b8);
+    final pid = _parseId(_usbPidController.text, 0x0202);
+    setState(() {
+      _isLoading = true;
+      _statusMessage =
+          'Opening cash drawer via USB (real-time pulse, works with or without paper)...';
+      _isSuccess = true;
+    });
+
+    final res =
+        await EscposPrinter.openCashDrawerUsb(vendorId: vid, productId: pid);
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      if (res.isOk) {
+        _isSuccess = true;
+        _statusMessage = 'Cash drawer opened successfully!';
+      } else {
+        _isSuccess = false;
+        _statusMessage = 'Cash drawer failed: ${res.errorOrNull?.message}';
+      }
+    });
+  }
+
+  Future<void> _openSunmiDrawer() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage =
+          'Opening cash drawer via Sunmi API (works with or without paper)...';
+      _isSuccess = true;
+    });
+
+    final res = await EscposPrinter.openCashDrawerSunmi();
     if (!mounted) return;
     setState(() {
       _isLoading = false;
@@ -701,6 +783,12 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.receipt_long),
             label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
           ),
+          const SizedBox(height: 10.0),
+          OutlinedButton.icon(
+            onPressed: _isLoading ? null : _openWiFiDrawer,
+            icon: const Icon(Icons.point_of_sale),
+            label: const Text('Open Cash Drawer (Works With or Without Paper)'),
+          ),
         ],
       ),
     );
@@ -812,6 +900,12 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.receipt_long),
             label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
           ),
+          const SizedBox(height: 10.0),
+          OutlinedButton.icon(
+            onPressed: _isLoading ? null : _openBluetoothDrawer,
+            icon: const Icon(Icons.point_of_sale),
+            label: const Text('Open Cash Drawer (Works With or Without Paper)'),
+          ),
         ],
       ),
     );
@@ -876,6 +970,12 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _isLoading ? null : () => _printUsb(testPageOnly: true),
             icon: const Icon(Icons.receipt_long),
             label: const Text('Print Diagnostic Test Page (Ruler & Languages)'),
+          ),
+          const SizedBox(height: 10.0),
+          OutlinedButton.icon(
+            onPressed: _isLoading ? null : _openUsbDrawer,
+            icon: const Icon(Icons.point_of_sale),
+            label: const Text('Open Cash Drawer (Works With or Without Paper)'),
           ),
         ],
       ),

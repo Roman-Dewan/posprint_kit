@@ -209,6 +209,42 @@ print('Encoded ${fake.recordedBytes.length} ESC/POS bytes!');
 
 ---
 
+## Cash Drawer Kicking (WiFi, USB, Bluetooth, Inbuilt)
+
+`posprint_kit` provides universal cash drawer actuation across **all 4 transports**:
+
+> [!IMPORTANT]
+> **Opens Even When Out of Paper**: Standard POS printers freeze regular print commands when the paper roll is empty. `posprint_kit` uses **ESC/POS real-time hardware pulses (`DLE DC4 1 m t`)** alongside Sunmi OS-level AIDL calls that bypass print buffer blocks entirely. The cash drawer will pop open immediately even when the printer has **no paper**, cover is open, or error light is blinking.
+
+### 1. From an Active Printer Instance
+```dart
+final printer = EscposPrinter.wifi('192.168.1.100');
+
+// Opens connected RJ11/RJ12 drawer (pulses both Pin 2 & Pin 5 universally)
+await printer.openCashDrawer(); 
+
+// Or specify pin: pin2 or pin5
+await printer.openCashDrawer(pin: CashDrawerPin.pin2);
+```
+
+### 2. Standalone 1-Line Helpers (No Instance Needed)
+```dart
+// WiFi / Network printer
+await EscposPrinter.openCashDrawerWifi('192.168.1.100');
+
+// Bluetooth printer (MAC address)
+await EscposPrinter.openCashDrawerBluetooth('00:11:22:33:44:55');
+
+// USB printer (Vendor ID & Product ID)
+await EscposPrinter.openCashDrawerUsb(vendorId: 0x0416, productId: 0x5011);
+
+// Built-in POS Terminal (Sunmi D3, V2, T2)
+await EscposPrinter.openCashDrawerSunmi();
+// or: await EscposPrinter.openCashDrawerInbuilt();
+```
+
+---
+
 ## Zero-Waste Developer Tools
 
 ### Live On-Screen Preview (`ReceiptPreview`)

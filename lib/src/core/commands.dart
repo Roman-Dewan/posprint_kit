@@ -1,5 +1,17 @@
 import 'dart:typed_data';
 
+/// Target RJ11/RJ12 connector pin for cash drawer kick pulses.
+enum CashDrawerPin {
+  /// Pulses both Pin 2 and Pin 5 (recommended: works universally across all wiring variants).
+  pin2And5,
+
+  /// Pulses only Pin 2 (standard drawer 1).
+  pin2,
+
+  /// Pulses only Pin 5 (drawer 2 or alternative drawer wiring).
+  pin5,
+}
+
 /// Standard ESC/POS command sequences and byte constants.
 ///
 /// Every constant here is verified against official ESC/POS command specifications.
@@ -121,7 +133,7 @@ class Commands {
       Uint8List.fromList([0x1D, 0x56, 0x42, feedDots.clamp(0, 255)]);
 
   // ---------------------------------------------------------------------------
-  // Cash Drawer Pulse (ESC p m t1 t2)
+  // Cash Drawer Pulse (ESC p m t1 t2 & DLE DC4 real-time)
   // ---------------------------------------------------------------------------
 
   /// ESC p 0 25 250: Open cash drawer connected to pin 2.
@@ -130,8 +142,23 @@ class Commands {
   /// ESC p 1 25 250: Open cash drawer connected to pin 5.
   static const List<int> cashDrawerPin5 = [0x1B, 0x70, 0x01, 0x19, 0xFA];
 
+  /// Real-time ESC/POS cash drawer pulse for pin 2 (DLE DC4 1 0 1).
+  ///
+  /// Executed immediately by the printer controller in real-time, **even when the
+  /// printer has no paper** (paper out / roll empty) or is in an offline error state.
+  static const List<int> realtimeCashDrawerPin2 = [0x10, 0x14, 0x01, 0x00, 0x01];
+
+  /// Real-time ESC/POS cash drawer pulse for pin 5 (DLE DC4 1 1 1).
+  ///
+  /// Executed immediately by the printer controller in real-time, **even when the
+  /// printer has no paper** (paper out / roll empty) or is in an offline error state.
+  static const List<int> realtimeCashDrawerPin5 = [0x10, 0x14, 0x01, 0x01, 0x01];
+
   /// Sunmi real-time RJ12 cash drawer kick command (DLE DC4 0 0 0).
   static const List<int> sunmiCashDrawer = [0x10, 0x14, 0x00, 0x00, 0x00];
+
+  /// Star Micronics & Citizen POS cash drawer kick command (BEL).
+  static const List<int> starCashDrawer = [0x07];
 
   /// Generates custom ESC/POS cash drawer pulse `ESC p m t1 t2`.
   /// [onTime] = pulse ON duration in units of 2ms (e.g. 50 = 100ms).
@@ -148,6 +175,67 @@ class Commands {
         onTime.clamp(0, 255),
         offTime.clamp(0, 255),
       ]);
+
+  /// Generates real-time pulse command `DLE DC4 1 m t`.
+  ///
+  /// [pin5]: set to `true` for pin 5, `false` for pin 2.
+  /// [duration]: pulse duration in 100ms units (1 = 100ms, 2 = 200ms).
+  static Uint8List realtimeCashDrawerPulse({
+    bool pin5 = false,
+    int duration = 1,
+  }) =>
+      Uint8List.fromList([
+        0x10,
+        0x14,
+        0x01,
+        pin5 ? 0x01 : 0x00,
+        duration.clamp(1, 8),
+      ]);
+
+  /// Builds a comprehensive pulse sequence to reliably kick open any RJ11/RJ12 cash drawer,
+  /// **even when the printer has no paper**.
+  ///
+  /// Combines:
+  /// 1. Real-time `DLE DC4` pulses (which bypass print buffer paper-out halts).
+  /// 2. Sunmi `DLE DC4 0 0 0` real-time RJ12 pulse.
+  /// 3. Standard `ESC p` pulses (buffered fallback).
+  /// 4. Star Micronics & Citizen `BEL` pulse.
+  static Uint8List openCashDrawerSequence({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) {
+    final bytes = <int>[];
+
+    final includePin2 =
+        pin == CashDrawerPin.pin2And5 || pin == CashDrawerPin.pin2;
+    final includePin5 =
+        pin == CashDrawerPin.pin2And5 || pin == CashDrawerPin.pin5;
+
+    // 1. Real-time DLE DC4 pulses (crucial: executes immediately when out of paper!)
+    if (includePin2) {
+      bytes.addAll(realtimeCashDrawerPin2);
+      bytes.addAll(const [0x10, 0x14, 0x01, 0x00, 0x02]); // 200ms variant
+    }
+    if (includePin5) {
+      bytes.addAll(realtimeCashDrawerPin5);
+      bytes.addAll(const [0x10, 0x14, 0x01, 0x01, 0x02]); // 200ms variant
+    }
+
+    // 2. Sunmi real-time RJ12 pulse
+    bytes.addAll(sunmiCashDrawer);
+
+    // 3. Standard ESC p pulses (buffered fallback)
+    if (includePin2) {
+      bytes.addAll(const [0x1B, 0x70, 0x00, 0x32, 0xFA]);
+    }
+    if (includePin5) {
+      bytes.addAll(const [0x1B, 0x70, 0x01, 0x32, 0xFA]);
+    }
+
+    // 4. Star Micronics & Citizen BEL pulse
+    bytes.addAll(starCashDrawer);
+
+    return Uint8List.fromList(bytes);
+  }
 
   // ---------------------------------------------------------------------------
   // Code Page Selection (ESC t n)

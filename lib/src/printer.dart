@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'core/commands.dart';
 import 'core/logger.dart';
 import 'core/ops.dart';
 import 'core/printer_profile.dart';
@@ -180,6 +181,109 @@ class EscposPrinter {
 
   /// Encodes and sends [receipt] to the printer through the FIFO queue.
   Future<Result<void>> print(Receipt receipt) => manager.print(receipt);
+
+  /// Kicks open the cash drawer connected to this printer.
+  ///
+  /// Works across all printer transports (**WiFi**, **Bluetooth**, **USB**, **Sunmi / Built-in**),
+  /// and is specially designed to **open even when the printer has no paper** (paper out / roll empty).
+  ///
+  /// Uses ESC/POS real-time pulses (`DLE DC4 1 m t`) that execute immediately at the hardware
+  /// controller level without being blocked by print buffer paper-out states, alongside standard
+  /// pulse fallbacks and Sunmi OS-level AIDL hardware calls.
+  ///
+  /// [pin]: Which RJ11/RJ12 drawer pin to pulse:
+  /// - [CashDrawerPin.pin2And5] (default): Pulses both Pin 2 and Pin 5 for universal compatibility.
+  /// - [CashDrawerPin.pin2]: Pulses only Pin 2.
+  /// - [CashDrawerPin.pin5]: Pulses only Pin 5.
+  ///
+  /// ```dart
+  /// await printer.openCashDrawer();
+  /// ```
+  Future<Result<void>> openCashDrawer({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) =>
+      manager.openCashDrawer(pin: pin);
+
+  /// Convenient alias for [openCashDrawer].
+  Future<Result<void>> openDrawer({
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) =>
+      openCashDrawer(pin: pin);
+
+  // ---------------------------------------------------------------------------
+  // 1-Line Standalone Cash Drawer Helpers (No Persistent Instance Needed)
+  // ---------------------------------------------------------------------------
+
+  /// 1-line helper: Opens the cash drawer on a WiFi/LAN printer.
+  ///
+  /// Connects, fires real-time hardware pulses (**works even with no paper**), and closes.
+  ///
+  /// ```dart
+  /// await EscposPrinter.openCashDrawerWifi('192.168.1.100');
+  /// ```
+  static Future<Result<void>> openCashDrawerWifi(
+    String host, {
+    int port = 9100,
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) async {
+    final printer = EscposPrinter.wifi(host, port: port);
+    try {
+      return await printer.openCashDrawer(pin: pin);
+    } finally {
+      await printer.close();
+    }
+  }
+
+  /// 1-line helper: Opens the cash drawer on a Bluetooth printer by MAC [address].
+  ///
+  /// Connects, fires real-time hardware pulses (**works even with no paper**), and closes.
+  ///
+  /// ```dart
+  /// await EscposPrinter.openCashDrawerBluetooth('00:11:22:33:44:55');
+  /// ```
+  static Future<Result<void>> openCashDrawerBluetooth(
+    String address, {
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) async {
+    final printer = EscposPrinter.bluetooth(address);
+    try {
+      return await printer.openCashDrawer(pin: pin);
+    } finally {
+      await printer.close();
+    }
+  }
+
+  /// 1-line helper: Opens the cash drawer on a USB printer by [vendorId] and [productId].
+  ///
+  /// Connects, fires real-time hardware pulses (**works even with no paper**), and closes.
+  ///
+  /// ```dart
+  /// await EscposPrinter.openCashDrawerUsb(vendorId: 0x0416, productId: 0x5011);
+  /// ```
+  static Future<Result<void>> openCashDrawerUsb({
+    required int vendorId,
+    required int productId,
+    CashDrawerPin pin = CashDrawerPin.pin2And5,
+  }) async {
+    final printer = EscposPrinter.usb(vendorId: vendorId, productId: productId);
+    try {
+      return await printer.openCashDrawer(pin: pin);
+    } finally {
+      await printer.close();
+    }
+  }
+
+  /// 1-line helper: Opens the cash drawer on a Sunmi built-in POS terminal.
+  ///
+  /// Direct hardware trigger via Sunmi AIDL/PrinterX (**works even with no paper**).
+  ///
+  /// ```dart
+  /// await EscposPrinter.openCashDrawerSunmi();
+  /// ```
+  static Future<Result<void>> openCashDrawerSunmi() => SunmiTransport.openDrawer();
+
+  /// Alias for [openCashDrawerSunmi].
+  static Future<Result<void>> openCashDrawerInbuilt() => SunmiTransport.openDrawer();
 
   /// Prints a comprehensive test receipt containing a measurement ruler, QR code,
   /// and sample phrases in all major supported languages (Bangla, Chinese, Japanese,
