@@ -85,13 +85,16 @@ void main() {
       expect(text, contains('BAR 16, 48, 288, 2\r\n'));
     });
 
-    test('encodes TsplLabel.token factory accurately with 60x40 dimension', () async {
+    test('encodes TsplLabel.token factory accurately with 60x40 dimension and full order detail', () async {
       final label = TsplLabel.token(
-        tokenNumber: '007',
+        tokenNumber: '027',
         guest: 'Walk-in',
         date: '11/05/2026',
-        items: const ['Salcoty SMALL'],
-        notes: const ['Extra spicy'],
+        sequence: '2 of 2',
+        item: 'Salcoty SMALL',
+        addons: const ['Sugar Free', 'moglai', 'onion fry'],
+        specialInstructions: 'add more suger, suger free',
+        note: 'test dfef cvvvcdd bbbbb vvg nnnnn cccc mmmm zzz',
         size: TsplSize.size60x40,
       );
 
@@ -100,13 +103,44 @@ void main() {
 
       expect(text, contains('SIZE 60 mm, 40 mm\r\n'));
       expect(text, contains('GAP 2 mm, 0 mm\r\n'));
-      expect(text, contains('"TOKEN - 007"'));
+      expect(text, contains('"TOKEN - 027"'));
       expect(text, contains('"11/05/2026"'));
       expect(text, contains('"Guest : Walk-in"'));
+      expect(text, contains('"2 of 2"'));
       expect(text, contains('"Salcoty SMALL"'));
-      expect(text, contains('"- Extra spicy"'));
+      expect(text, contains('"Addon: Sugar Free, moglai,"'));
+      expect(text, contains('"       onion fry"')); // hanging indent for wrapped addons
+      expect(text, contains('"SI : add more suger, suger free"'));
+      expect(text, contains('"Note: test dfef cvvvcdd bbbbb vvg"'));
+      expect(text, contains('"nnnnn cccc mmmm zzz"')); // wrapped note line
       expect(text, contains('BAR 20, ')); // divider bar starting at margin 2.5mm = 20 dots
       expect(text, contains('PRINT 1, 1\r\n'));
+    });
+
+    test('TsplLabel.token dynamically scales fonts and margins for compact and large sizes', () {
+      // 1. Compact 40x30 mm
+      final compact = TsplLabel.token(
+        tokenNumber: '007',
+        item: 'Coffee',
+        size: TsplSize.size40x30,
+      );
+      expect(compact.marginMm, 1.5); // compact margin
+
+      // 2. Standard 60x40 mm
+      final standard = TsplLabel.token(
+        tokenNumber: '007',
+        item: 'Salcoty SMALL',
+        size: TsplSize.size60x40,
+      );
+      expect(standard.marginMm, 2.5); // standard margin
+
+      // 3. Large 80x50 mm
+      final large = TsplLabel.token(
+        tokenNumber: '007',
+        item: 'Platter',
+        size: TsplSize.size80x50,
+      );
+      expect(large.marginMm, 3.5); // large margin
     });
 
     test('auto-flow methods (rowMm, textLineMm, dividerMm, spaceMm) advance cursor cleanly', () {

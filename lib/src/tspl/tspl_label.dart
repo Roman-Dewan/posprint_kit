@@ -78,29 +78,57 @@ class TsplLabel {
 
   /// Creates a ready-to-print restaurant / kitchen token order sticker.
   ///
-  /// Matches standard order tags (e.g. 60×40 mm) with zero manual coordinate math.
+  /// Matches standard order tags (e.g. 60×40 mm) with zero manual coordinate math,
+  /// and automatically adjusts fonts, margins, and line gaps based on the label dimensions.
   ///
   /// Example:
   /// ```dart
   /// final label = TsplLabel.token(
-  ///   tokenNumber: '007',
-  ///   guest: 'Walk-in',
+  ///   tokenNumber: '027',
   ///   date: '11/05/2026',
-  ///   items: ['Salcoty SMALL'],
+  ///   guest: 'Walk-in',
+  ///   sequence: '2 of 2',
+  ///   item: 'Salcoty SMALL',
+  ///   addons: const ['Sugar Free', 'moglai', 'onion fry'],
+  ///   specialInstructions: 'add more suger, suger free',
+  ///   note: 'test dfef cvvvcdd bbbbb vvg nnnnn cccc mmmm zzz',
   /// );
   /// ```
   factory TsplLabel.token({
     required String tokenNumber,
     String? date,
     String? guest,
-    required List<String> items,
+    String? sequence,
+    String? item,
+    List<String>? items,
+    dynamic addons,
+    String? specialInstructions,
+    String? si,
+    String? note,
     List<String>? notes,
     TsplSize size = TsplSize.size60x40,
-    double marginMm = 2.5,
+    double? marginMm,
   }) {
     final label = TsplLabel(size: size);
-    label.marginMm = marginMm;
-    label.cursorMm(marginMm);
+
+    // Dynamically scale fonts, gaps, and margins based on label dimensions:
+    final w = size.widthMm;
+    final h = size.heightMm;
+    final isCompact = w < 48.0 || h < 35.0; // e.g. 40x30, 30x20
+    final isLarge = w >= 70.0 || h >= 50.0;   // e.g. 70x50, 80x50, 40x60
+
+    final effectiveMargin = marginMm ?? (isCompact ? 1.5 : (isLarge ? 3.5 : 2.5));
+    final headerFont = isCompact ? TsplFont.font2 : (isLarge ? TsplFont.font4 : TsplFont.font3);
+    final subHeaderFont = isCompact ? TsplFont.font1 : (isLarge ? TsplFont.font3 : TsplFont.font2);
+    final itemFont = isCompact ? TsplFont.font2 : (isLarge ? TsplFont.font4 : TsplFont.font3);
+    final detailsFont = isCompact ? TsplFont.font1 : (isLarge ? TsplFont.font3 : TsplFont.font2);
+
+    final lineGap = isCompact ? 0.8 : (isLarge ? 2.2 : 1.2);
+    final dividerGapBefore = isCompact ? 0.6 : (isLarge ? 1.5 : 1.0);
+    final dividerGapAfter = isCompact ? 1.0 : (isLarge ? 3.0 : 2.0);
+
+    label.marginMm = effectiveMargin;
+    label.cursorMm(effectiveMargin);
 
     final tokenText = tokenNumber.toUpperCase().startsWith('TOKEN')
         ? tokenNumber
@@ -108,33 +136,112 @@ class TsplLabel {
 
     final dateText = date ?? _currentDateFormatted();
 
-    // 1. Header row: TOKEN - 007 (left) | 11/05/2026 (right)
+    // 1. Header Row 1: TOKEN - 027 (left) | 11/05/2026 (right)
     label.rowMm(
       left: tokenText,
       right: dateText,
-      font: TsplFont.font3,
-      spacingAfter: 1.5,
+      font: headerFont,
+      spacingAfter: lineGap,
     );
 
-    // 2. Guest row: Guest : Walk-in
-    if (guest != null && guest.isNotEmpty) {
-      final guestText = guest.startsWith('Guest') ? guest : 'Guest : $guest';
-      label.textLineMm(guestText, font: TsplFont.font2, spacingAfter: 1.5);
+    // 2. Header Row 2: Guest : Walk-in (left) | 2 of 2 (right)
+    if ((guest != null && guest.isNotEmpty) || (sequence != null && sequence.isNotEmpty)) {
+      final guestText = guest != null && guest.isNotEmpty
+          ? (guest.startsWith('Guest') ? guest : 'Guest : $guest')
+          : '';
+      label.rowMm(
+        left: guestText,
+        right: sequence,
+        font: subHeaderFont,
+        spacingAfter: lineGap,
+      );
     }
 
-    // 3. Crisp horizontal divider line
-    label.dividerMm(thickness: 1, spacingBefore: 1.2, spacingAfter: 2.5);
+    // 3. Crisp horizontal divider line across the sticker
+    label.dividerMm(
+      thickness: 1,
+      spacingBefore: dividerGapBefore,
+      spacingAfter: dividerGapAfter,
+    );
 
-    // 4. Order items: Salcoty SMALL, etc.
-    for (final item in items) {
-      label.textLineMm(item, font: TsplFont.font3, spacingAfter: 2.0);
+    // 4. Item Name: Salcoty SMALL
+    final allItems = <String>[];
+    if (item != null && item.isNotEmpty) allItems.add(item);
+    if (items != null) allItems.addAll(items);
+    if (allItems.isEmpty) allItems.add('Item');
+
+    for (final it in allItems) {
+      label.textLineMm(it, font: itemFont, spacingAfter: lineGap + 0.5);
     }
 
-    // 5. Optional item notes / modifiers
-    if (notes != null) {
-      for (final note in notes) {
-        label.textLineMm('- $note', font: TsplFont.font2, spacingAfter: 1.5);
+    // 5. Addons: Addon: Sugar Free, moglai,\n       onion fry
+    if (addons is List) {
+      final itemsList = addons.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+      if (itemsList.isNotEmpty) {
+        const prefix = 'Addon: ';
+        final indent = ' ' * prefix.length;
+        var current = StringBuffer(prefix);
+        var isFirstLine = true;
+        final maxChars = ((w - (effectiveMargin * 2)) / (detailsFont.widthMm * 1.1)).floor().clamp(10, 200);
+
+        for (var i = 0; i < itemsList.length; i++) {
+          final itemStr = itemsList[i] + (i < itemsList.length - 1 ? ',' : '');
+          final neededLen = current.length +
+              (current.length > (isFirstLine ? prefix.length : indent.length) ? 1 : 0) +
+              itemStr.length;
+
+          if (neededLen <= maxChars) {
+            if (current.length > (isFirstLine ? prefix.length : indent.length)) current.write(' ');
+            current.write(itemStr);
+          } else {
+            label.textLineMm(current.toString(), font: detailsFont, spacingAfter: 0.8);
+            current = StringBuffer('$indent$itemStr');
+            isFirstLine = false;
+          }
+        }
+        if (current.isNotEmpty) {
+          label.textLineMm(current.toString(), font: detailsFont, spacingAfter: lineGap);
+        }
       }
+    } else if (addons is String && addons.trim().isNotEmpty) {
+      var addonText = addons.trim();
+      if (!addonText.startsWith('Addon:')) {
+        addonText = 'Addon: $addonText';
+      }
+      label.wrappedTextMm(
+        addonText,
+        font: detailsFont,
+        indentMm: 7.0 * detailsFont.widthMm,
+        spacingAfter: lineGap,
+      );
+    }
+
+    // 6. Special Instructions: SI : add more suger, suger free
+    final siText = (specialInstructions ?? si)?.trim();
+    if (siText != null && siText.isNotEmpty) {
+      final formattedSi = siText.startsWith('SI') ? siText : 'SI : $siText';
+      label.wrappedTextMm(
+        formattedSi,
+        font: detailsFont,
+        indentMm: 5.0 * detailsFont.widthMm,
+        spacingAfter: lineGap,
+      );
+    }
+
+    // 7. Order Note: Note: test dfef cvvvcdd bbbbb vvg\nnnnnn cccc mmmm zzz
+    final noteLines = <String>[];
+    if (note != null && note.trim().isNotEmpty) noteLines.add(note.trim());
+    if (notes != null) noteLines.addAll(notes.map((e) => e.trim()).where((e) => e.isNotEmpty));
+
+    for (var n in noteLines) {
+      if (!n.startsWith('Note:') && !n.startsWith('-')) {
+        n = 'Note: $n';
+      }
+      label.wrappedTextMm(
+        n,
+        font: detailsFont,
+        spacingAfter: lineGap,
+      );
     }
 
     return label;
@@ -707,6 +814,70 @@ class TsplLabel {
     );
     _cursorVerticalMm += height + (humanReadable != TsplHumanReadable.none ? 3.5 : 0.0) + spacingAfter;
     return this;
+  }
+
+  /// Adds multi-line wrapped text that automatically breaks across lines
+  /// to fit within [maxWidthMm] (defaults to remaining label width).
+  ///
+  /// Supports optional [indentMm] for hanging indents on wrapped lines.
+  TsplLabel wrappedTextMm(
+    String text, {
+    TsplFont font = TsplFont.font2,
+    double? maxWidthMm,
+    double? indentMm,
+    double spacingAfter = 1.2,
+    double lineSpacing = 0.8,
+  }) {
+    final maxW = maxWidthMm ?? (size.widthMm - (marginMm * 2));
+    final charPitchMm = font.widthMm * 1.1; // Takes inter-character pitch into account
+    final maxChars = (maxW / charPitchMm).floor().clamp(10, 200);
+    final indentChars = indentMm != null ? (indentMm / font.widthMm).floor() : 0;
+    final indentPrefix = ' ' * indentChars;
+
+    final lines = _wrapWords(text, maxChars: maxChars, indentPrefix: indentPrefix);
+    for (var i = 0; i < lines.length; i++) {
+      final isLast = i == lines.length - 1;
+      textMm(
+        lines[i],
+        horizontal: marginMm,
+        vertical: _cursorVerticalMm,
+        font: font,
+      );
+      _cursorVerticalMm += font.heightMm + (isLast ? spacingAfter : lineSpacing);
+    }
+    return this;
+  }
+
+  static List<String> _wrapWords(String text, {required int maxChars, String indentPrefix = ''}) {
+    final paragraphs = text.split('\n');
+    final allLines = <String>[];
+
+    for (final paragraph in paragraphs) {
+      final words = paragraph.split(' ');
+      var currentLine = StringBuffer();
+
+      for (final word in words) {
+        if (word.isEmpty) continue;
+        final linePrefix = allLines.isEmpty ? '' : indentPrefix;
+        final testLen = linePrefix.length + currentLine.length + (currentLine.isEmpty ? 0 : 1) + word.length;
+
+        if (testLen <= maxChars) {
+          if (currentLine.isNotEmpty) currentLine.write(' ');
+          currentLine.write(word);
+        } else {
+          if (currentLine.isNotEmpty) {
+            allLines.add((allLines.isEmpty ? '' : indentPrefix) + currentLine.toString());
+            currentLine = StringBuffer(word);
+          } else {
+            allLines.add((allLines.isEmpty ? '' : indentPrefix) + word);
+          }
+        }
+      }
+      if (currentLine.isNotEmpty) {
+        allLines.add((allLines.isEmpty ? '' : indentPrefix) + currentLine.toString());
+      }
+    }
+    return allLines.isEmpty ? [text] : allLines;
   }
 
   /// Appends a cut command at the end of this print job.

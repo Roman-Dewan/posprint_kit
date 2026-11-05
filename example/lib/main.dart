@@ -1327,22 +1327,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     spacing: 8.0,
                     children: [
                       ChoiceChip(
-                        label: const Text('Kitchen / Token (60×40)'),
+                        label: const Text('Kitchen Token (Full Detail)'),
                         selected: _selectedTsplTemplate == 0,
                         onSelected: (val) => setState(() => _selectedTsplTemplate = 0),
                       ),
                       ChoiceChip(
-                        label: const Text('Retail Price Tag'),
+                        label: const Text('Kitchen Token (Simple)'),
                         selected: _selectedTsplTemplate == 1,
                         onSelected: (val) => setState(() => _selectedTsplTemplate = 1),
                       ),
                       ChoiceChip(
-                        label: const Text('Product Barcode'),
+                        label: const Text('Retail Price Tag'),
                         selected: _selectedTsplTemplate == 2,
                         onSelected: (val) => setState(() => _selectedTsplTemplate = 2),
                       ),
                       ChoiceChip(
-                        label: const Text('Multilingual (বাং/عربي)'),
+                        label: const Text('Product Barcode'),
                         selected: _selectedTsplTemplate == 3,
                         onSelected: (val) => setState(() => _selectedTsplTemplate = 3),
                       ),
@@ -1423,238 +1423,60 @@ class _HomeScreenState extends State<HomeScreen> {
     final hMm = size.heightMm;
 
     switch (_selectedTsplTemplate) {
-      case 0: // Kitchen / Order Token (Standard 60x40 matching physical photo)
+      case 0: // Kitchen / Order Token (Full Detail matching physical photo)
         return TsplLabel.token(
-          tokenNumber: '007',
-          guest: 'Walk-in',
+          tokenNumber: '027',
           date: '11/05/2026',
-          items: const ['Salcoty SMALL'],
+          guest: 'Walk-in',
+          sequence: '2 of 2',
+          item: 'Salcoty SMALL',
+          addons: const ['Sugar Free', 'moglai', 'onion fry'],
+          specialInstructions: 'add more suger, suger free',
+          note: 'test dfef cvvvcdd bbbbb vvg nnnnn cccc mmmm zzz',
           size: size,
         )..setDirection(_selectedTsplDirection);
 
-      default:
-        break;
-    }
+      case 1: // Kitchen / Order Token (Simple)
+        return TsplLabel.token(
+          tokenNumber: '007',
+          date: '11/05/2026',
+          guest: 'Walk-in',
+          item: 'Salcoty SMALL',
+          size: size,
+        )..setDirection(_selectedTsplDirection);
 
-    final label = TsplLabel(size: size)..setDirection(_selectedTsplDirection);
-
-    switch (_selectedTsplTemplate) {
-      case 1: // Retail Price Tag (Optimized for 40x30, 50x30, 60x40)
-        // 1. Clean outer margin border
-        label.boxMm(
-          horizontal: 1.0,
-          vertical: 1.0,
-          endHorizontal: wMm - 1.0,
-          endVertical: hMm - 1.0,
-          thickness: 2,
-        );
-
-        // 2. Store Header Title
-        label.textMm(
-          'ORGANIC STORE',
-          horizontal: 2.0,
-          vertical: 2.0,
-          font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3,
-        );
-
-        // 3. Crisp horizontal divider line (spaced below header)
-        label.lineMm(
-          horizontal: 2.0,
-          vertical: 6.0,
-          width: wMm - 4.0,
-          thickness: 1,
-        );
-
-        // 4. English Product Name
-        label.textMm(
-          'Sourdough Bread',
-          horizontal: 2.0,
-          vertical: 7.5,
-          font: TsplFont.font2,
-        );
-
-        // 5. Native Multilingual Text (Bangla: টাটকা রুটি) - crisp anti-aliased bitmap
-        label.textRasterMm(
-          'টাটকা রুটি',
-          horizontal: 2.0,
-          vertical: 11.0,
-          fontSize: 13.0,
-          languageTag: 'bn',
-        );
-
-        // 6. Barcode & QR Code elements (Clean side-by-side or stacked without overlap)
+      case 2: // Retail Price Tag
+        final label = TsplLabel(size: size)..setDirection(_selectedTsplDirection);
+        label.boxMm(horizontal: 1.0, vertical: 1.0, endHorizontal: wMm - 1.0, endVertical: hMm - 1.0, thickness: 2);
+        label.textMm('ORGANIC STORE', horizontal: 2.0, vertical: 2.0, font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3);
+        label.lineMm(horizontal: 2.0, vertical: 6.0, width: wMm - 4.0, thickness: 1);
+        label.textMm('Sourdough Bread', horizontal: 2.0, vertical: 7.5, font: TsplFont.font2);
+        label.textRasterMm('টাটকা রুটি', horizontal: 2.0, vertical: 11.0, fontSize: 13.0, languageTag: 'bn');
         if (wMm >= 48.0) {
-          // Wide label (50x30, 60x40): Barcode on left, QR code on right
-          label.barcodeMm(
-            '20491024',
-            horizontal: 2.0,
-            vertical: 15.0,
-            height: (hMm * 0.25).clamp(5.0, 10.0),
-            narrow: 2,
-            wide: 2,
-          );
-          label.qrMm(
-            'https://posprint.link',
-            horizontal: wMm - 13.0,
-            vertical: 14.5,
-            size: (wMm ~/ 16).clamp(2, 4),
-          );
-          label.textMm(
-            'PRICE: \$4.50',
-            horizontal: 2.0,
-            vertical: hMm - 5.5,
-            font: TsplFont.font4,
-          );
+          label.barcodeMm('20491024', horizontal: 2.0, vertical: 15.0, height: (hMm * 0.25).clamp(5.0, 10.0), narrow: 2, wide: 2);
+          label.qrMm('https://posprint.link', horizontal: wMm - 13.0, vertical: 14.5, size: (wMm ~/ 16).clamp(2, 4));
+          label.textMm('PRICE: \$4.50', horizontal: 2.0, vertical: hMm - 5.5, font: TsplFont.font4);
         } else {
-          // Compact label (40x30, 30x40):
-          label.barcodeMm(
-            '20491024',
-            horizontal: 2.0,
-            vertical: 15.0,
-            height: 5.5,
-            narrow: 1,
-            wide: 2,
-          );
-          label.qrMm(
-            'https://posprint.link',
-            horizontal: wMm - 11.5,
-            vertical: 15.0,
-            size: 2,
-          );
-          label.textMm(
-            'PRICE: \$4.50',
-            horizontal: 2.0,
-            vertical: hMm - 5.0,
-            font: TsplFont.font3,
-          );
+          label.barcodeMm('20491024', horizontal: 2.0, vertical: 15.0, height: 5.5, narrow: 1, wide: 2);
+          label.qrMm('https://posprint.link', horizontal: wMm - 11.5, vertical: 15.0, size: 2);
+          label.textMm('PRICE: \$4.50', horizontal: 2.0, vertical: hMm - 5.0, font: TsplFont.font3);
         }
-        break;
+        return label;
 
-      case 2: // Product Barcode Tag
-        label.boxMm(
-          horizontal: 1.0,
-          vertical: 1.0,
-          endHorizontal: wMm - 1.0,
-          endVertical: hMm - 1.0,
-          thickness: 2,
-        );
-        label.textMm(
-          'SKU: ACME-8892',
-          horizontal: 2.5,
-          vertical: 2.5,
-          font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3,
-        );
-        label.lineMm(
-          horizontal: 2.5,
-          vertical: 6.5,
-          width: wMm - 5.0,
-          thickness: 1,
-        );
-
+      case 3: // Product Barcode Tag
+      default:
+        final label = TsplLabel(size: size)..setDirection(_selectedTsplDirection);
+        label.boxMm(horizontal: 1.0, vertical: 1.0, endHorizontal: wMm - 1.0, endVertical: hMm - 1.0, thickness: 2);
+        label.textMm('SKU: ACME-8892', horizontal: 2.5, vertical: 2.5, font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3);
+        label.lineMm(horizontal: 2.5, vertical: 6.5, width: wMm - 5.0, thickness: 1);
         final barHeight = (hMm * 0.35).clamp(6.0, 16.0);
-        label.barcodeMm(
-          '8892019482',
-          horizontal: 2.5,
-          vertical: 8.5,
-          height: barHeight,
-          narrow: 2,
-          wide: 2,
-        );
-
+        label.barcodeMm('8892019482', horizontal: 2.5, vertical: 8.5, height: barHeight, narrow: 2, wide: 2);
         if (wMm >= 45.0) {
-          label.qrMm(
-            'https://acme.link/8892',
-            horizontal: wMm - 13.0,
-            vertical: 8.5,
-            size: (wMm ~/ 16).clamp(2, 4),
-          );
+          label.qrMm('https://acme.link/8892', horizontal: wMm - 13.0, vertical: 8.5, size: (wMm ~/ 16).clamp(2, 4));
         }
-        label.textMm(
-          'LOT: 2026-11 | BIN: A-12',
-          horizontal: 2.5,
-          vertical: hMm - 5.0,
-          font: TsplFont.font2,
-        );
-        break;
-
-      case 3: // Multilingual Badge (Bangla & Arabic)
-        label.boxMm(
-          horizontal: 1.0,
-          vertical: 1.0,
-          endHorizontal: wMm - 1.0,
-          endVertical: hMm - 1.0,
-          thickness: 2,
-        );
-        label.textMm(
-          'NATURAL HONEY',
-          horizontal: 2.5,
-          vertical: 2.5,
-          font: wMm < 35.0 ? TsplFont.font2 : TsplFont.font3,
-        );
-        label.lineMm(
-          horizontal: 2.5,
-          vertical: 6.2,
-          width: wMm - 5.0,
-          thickness: 1,
-        );
-        label.textRasterMm(
-          'খাঁটি মধু ৫০০ গ্রাম',
-          horizontal: 2.5,
-          vertical: 7.5,
-          fontSize: 13.5,
-          languageTag: 'bn',
-        );
-        label.textRasterMm(
-          'عسل نحل طبيعي',
-          horizontal: 2.5,
-          vertical: 12.0,
-          fontSize: 13.5,
-          languageTag: 'ar',
-        );
-
-        if (hMm >= 35.0) {
-          label.barcodeMm(
-            '99281726',
-            horizontal: 2.5,
-            vertical: 17.5,
-            height: 7.0,
-            narrow: 2,
-            wide: 2,
-          );
-          if (wMm >= 45.0) {
-            label.qrMm(
-              'https://posprint.link/honey',
-              horizontal: wMm - 13.0,
-              vertical: 17.5,
-              size: 3,
-            );
-          }
-          label.textMm(
-            'NET: 500g | \$12.99',
-            horizontal: 2.5,
-            vertical: hMm - 5.5,
-            font: TsplFont.font3,
-          );
-        } else {
-          label.barcodeMm(
-            '99281726',
-            horizontal: 2.5,
-            vertical: 17.0,
-            height: 4.5,
-            narrow: 1,
-            wide: 2,
-          );
-          label.textMm(
-            'NET: 500g | \$12.99',
-            horizontal: 2.5,
-            vertical: hMm - 4.5,
-            font: TsplFont.font2,
-          );
-        }
-        break;
+        label.textMm('LOT: 2026-11 | BIN: A-12', horizontal: 2.5, vertical: hMm - 5.0, font: TsplFont.font2);
+        return label;
     }
-
-    return label;
   }
 
   TsplPrinter _createActiveTsplPrinter() {
