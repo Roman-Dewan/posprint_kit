@@ -259,30 +259,42 @@ class ReceiptEncoder {
 
         case DividerOp(:final character):
           if (profile.rasterizeAllText) {
-            // Render authentic dashed hyphens via rasterizer matching traditional thermal style
             final char = character.isEmpty ? '-' : character;
-            final count = (profile.columnsNormal / char.runes.length)
-                .floor()
-                .clamp(1, profile.columnsNormal);
-            final line = char * count;
-            try {
-              final gray = await rasterizer.renderText(
-                line,
-                widthDots: profile.dotsWidth,
-                style: const TextStyleSpec(
-                  fontSize: 22.0,
-                  fontFamily: 'monospace',
-                  lineHeight: 1.0,
-                ),
-                align: PosAlign.center,
+            if (char == '-') {
+              buffer.add(
+                Commands.rasterDashedLine(dotsWidth: profile.dotsWidth),
               );
-              final mono = gray.toMono(threshold: 128);
-              for (final band in mono.toBands(profile.maxBandRows)) {
-                buffer.add(band.toEscPosBytes());
-              }
-            } catch (_) {
-              buffer.add(Commands.rasterLine(dotsWidth: profile.dotsWidth, heightDots: 2));
               buffer.add(Commands.feedLines(1));
+            } else if (char == '=') {
+              buffer.add(
+                Commands.rasterLine(dotsWidth: profile.dotsWidth, heightDots: 2),
+              );
+              buffer.add(Commands.feedLines(1));
+            } else {
+              // Custom repeated character: clamp count so it never wraps paper width
+              final maxCount = (profile.dotsWidth / 10.0).floor();
+              final line = char * (maxCount ~/ char.runes.length);
+              try {
+                final gray = await rasterizer.renderText(
+                  line,
+                  widthDots: profile.dotsWidth,
+                  style: const TextStyleSpec(
+                    fontSize: 16.0,
+                    fontFamily: 'monospace',
+                    lineHeight: 1.0,
+                  ),
+                  align: PosAlign.center,
+                );
+                final mono = gray.toMono(threshold: 128);
+                for (final band in mono.toBands(profile.maxBandRows)) {
+                  buffer.add(band.toEscPosBytes());
+                }
+              } catch (_) {
+                buffer.add(
+                  Commands.rasterLine(dotsWidth: profile.dotsWidth, heightDots: 2),
+                );
+                buffer.add(Commands.feedLines(1));
+              }
             }
           } else {
             if (currentAlign != PosAlign.left) {

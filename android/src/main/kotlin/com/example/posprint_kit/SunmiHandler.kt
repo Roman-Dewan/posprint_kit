@@ -221,15 +221,11 @@ class SunmiHandler(private val context: Context) {
                                     }
                                     "divider" -> {
                                         val character = op["character"] as? String ?: "-"
-                                        val charToUse = if (character.isEmpty()) "-" else character.take(1)
-                                        val cols = if (is58mm) 32 else 48
-                                        val dashes = charToUse.repeat(cols) + "\n"
-                                        val style = TextStyle.getStyle().apply {
-                                            setAlign(Align.CENTER)
-                                            setTextSize(24)
+                                        if (character == "=") {
+                                            lApi.printDividingLine(DividingLine.SOLID, 2)
+                                        } else {
+                                            lApi.printDividingLine(DividingLine.DASH, 1)
                                         }
-                                        lApi.initLine(BaseStyle.getStyle().setAlign(Align.CENTER))
-                                        lApi.printText(dashes, style)
                                     }
                                     "row" -> {
                                         val left = op["left"] as? String ?: ""
@@ -254,7 +250,8 @@ class SunmiHandler(private val context: Context) {
                                         val widthsList = (op["widths"] as? List<*>)?.map { (it as? Number)?.toInt() ?: 1 } ?: emptyList()
                                         val alignsList = (op["aligns"] as? List<*>)?.map { it?.toString() } ?: emptyList()
                                         val bold = op["bold"] as? Boolean ?: false
-                                        val fontSize = (op["fontSize"] as? Number)?.toInt() ?: 24
+                                        val rawFontSize = (op["fontSize"] as? Number)?.toInt() ?: 24
+                                        val fontSize = if (textsList.size >= 4 && rawFontSize >= 24) 20 else rawFontSize
 
                                         val textsArray = textsList.toTypedArray()
                                         val widthsArray = widthsList.toIntArray()

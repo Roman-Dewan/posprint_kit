@@ -146,6 +146,18 @@ void main() {
       expect(header, [0x1D, 0x76, 0x30, 0x00, 0x48, 0x00, 0x28, 0x00]);
     });
 
+    test('rasterLine and rasterDashedLine emit full width thermal divider bands', () {
+      final solid = Commands.rasterLine(dotsWidth: 576, heightDots: 2);
+      expect(solid.length, 8 + (72 * 2));
+      expect(solid.sublist(0, 4), [0x1D, 0x76, 0x30, 0x00]);
+      expect(solid.sublist(8).every((b) => b == 0xFF), isTrue);
+
+      final dashed = Commands.rasterDashedLine(dotsWidth: 576, heightDots: 2);
+      expect(dashed.length, 8 + (72 * 2));
+      expect(dashed.sublist(0, 4), [0x1D, 0x76, 0x30, 0x00]);
+      expect(dashed.sublist(8).every((b) => b == 0xF0), isTrue);
+    });
+
     test('formatCode128Data ensures Code 128 data starts with code set B {B', () {
       final raw = [0x31, 0x30, 0x34, 0x32]; // "1042"
       final formatted = Commands.formatCode128Data(raw);

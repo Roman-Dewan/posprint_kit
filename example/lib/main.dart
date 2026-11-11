@@ -139,32 +139,32 @@ class _HomeScreenState extends State<HomeScreen> {
       ..divider()
       ..columns([
         const PosColumn(text: '#', width: 1, align: PosAlign.center),
-        const PosColumn(text: 'Item', width: 5),
+        const PosColumn(text: 'Item', width: 4),
         const PosColumn(text: 'Qty', width: 1, align: PosAlign.center),
         const PosColumn(text: 'Price', width: 2, align: PosAlign.right),
-        const PosColumn(text: 'Total', width: 2, align: PosAlign.right),
+        const PosColumn(text: 'Total', width: 3, align: PosAlign.right),
       ], bold: true)
       ..divider()
       ..columns([
         const PosColumn(text: '01', width: 1, align: PosAlign.center),
-        const PosColumn(text: 'আরাবিকা কফি বিন (Coffee)', width: 5),
+        const PosColumn(text: 'আরাবিকা কফি বিন (Coffee)', width: 4),
         const PosColumn(text: '50', width: 1, align: PosAlign.center),
         const PosColumn(text: '100.00', width: 2, align: PosAlign.right),
-        const PosColumn(text: '5000.00', width: 2, align: PosAlign.right),
+        const PosColumn(text: '5000.00', width: 3, align: PosAlign.right),
       ], languageTag: 'bn')
       ..columns([
         const PosColumn(text: '02', width: 1, align: PosAlign.center),
-        const PosColumn(text: 'チキンカレー (Chicken Curry)', width: 5),
+        const PosColumn(text: 'チキンカレー (Chicken Curry)', width: 4),
         const PosColumn(text: '81', width: 1, align: PosAlign.center),
         const PosColumn(text: '9.50', width: 2, align: PosAlign.right),
-        const PosColumn(text: '12000.00', width: 2, align: PosAlign.right),
+        const PosColumn(text: '12000.00', width: 3, align: PosAlign.right),
       ], languageTag: 'ja')
       ..columns([
         const PosColumn(text: '03', width: 1, align: PosAlign.center),
-        const PosColumn(text: 'Fresh Lemon Mint Iced Tea', width: 5),
+        const PosColumn(text: 'Fresh Lemon Mint Iced Tea', width: 4),
         const PosColumn(text: '3', width: 1, align: PosAlign.center),
         const PosColumn(text: '3.00', width: 2, align: PosAlign.right),
-        const PosColumn(text: '9.00', width: 2, align: PosAlign.right),
+        const PosColumn(text: '9.00', width: 3, align: PosAlign.right),
       ])
       ..divider()
       ..total('TOTAL', '54.50')
@@ -920,49 +920,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         label: Text('80 mm'),
                         icon: Icon(Icons.table_restaurant),
                       ),
-                      ButtonSegment(
-                        value: PrinterProfile.sunmi80,
-                        label: Text('Sunmi 80 mm'),
-                        icon: Icon(Icons.print),
-                      ),
                     ],
                     selected: {
-                      _selectedProfile == PrinterProfile.sunmi80 ||
-                              _selectedProfile == PrinterProfile.sunmi58
-                          ? PrinterProfile.sunmi80
-                          : (_selectedProfile == PrinterProfile.generic80
-                              ? PrinterProfile.generic80
-                              : PrinterProfile.generic58)
+                      _selectedProfile.dotsWidth <= 384
+                          ? PrinterProfile.generic58
+                          : PrinterProfile.generic80
                     },
                     onSelectionChanged: (set) =>
                         setState(() => _selectedProfile = set.first),
                   ),
-                  if (_selectedProfile == PrinterProfile.sunmi80 ||
-                      _isSunmiDevice ||
-                      _selectedBtDevice?.name.toLowerCase().contains('innerprinter') == true ||
-                      _selectedBtDevice?.name.toLowerCase().contains('sunmi') == true) ...[
-                    const SizedBox(height: 8.0),
-                    Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade50,
-                        borderRadius: BorderRadius.circular(6.0),
-                        border: Border.all(color: Colors.amber.shade300),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 16, color: Colors.orange),
-                          SizedBox(width: 6.0),
-                          Expanded(
-                            child: Text(
-                              'Sunmi Profile active: renders all text & barcodes as thermal raster graphics to bypass Sunmi firmware ASCII drops.',
-                              style: TextStyle(fontSize: 12, color: Colors.brown),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),

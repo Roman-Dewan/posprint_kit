@@ -413,4 +413,28 @@ class Commands {
     result.fillRange(header.length, result.length, 0xFF);
     return result;
   }
+
+  /// Generates a dashed 1-bit raster horizontal divider line across [dotsWidth] pixels
+  /// of height [heightDots] dots (default 2 dots).
+  ///
+  /// Uses a repeating pattern of 4 black dots followed by 4 white dots (0xF0) per byte,
+  /// ensuring the divider line never wraps onto a second line and always spans the exact
+  /// thermal paper roll width.
+  static Uint8List rasterDashedLine({
+    required int dotsWidth,
+    int heightDots = 2,
+    int patternByte = 0xF0,
+  }) {
+    final clampedHeight = heightDots.clamp(1, 255);
+    final bytesPerLine = (dotsWidth + 7) ~/ 8;
+    final header = rasterHeader(
+      bytesPerLine: bytesPerLine,
+      heightDots: clampedHeight,
+    );
+    final totalDataLen = bytesPerLine * clampedHeight;
+    final result = Uint8List(header.length + totalDataLen);
+    result.setRange(0, header.length, header);
+    result.fillRange(header.length, result.length, patternByte & 0xFF);
+    return result;
+  }
 }
