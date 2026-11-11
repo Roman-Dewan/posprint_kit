@@ -108,6 +108,43 @@ void main() {
       expect(row58.height, greaterThan(20));
     });
 
+    test('renderRow with Arabic left text stays anchored to left column margin', () async {
+      final row = await rasterizer.renderRow(
+        'وجبة شاورما x1',
+        '8.50',
+        widthDots: 576,
+        style: const TextStyleSpec(fontSize: 24.0),
+        languageTag: 'ar',
+      );
+
+      expect(row.width, 576);
+      expect(row.height, greaterThan(20));
+
+      // 1. Price is drawn on right edge (x >= 500)
+      var hasPixelsNearRightEdge = false;
+      for (var y = 0; y < row.height; y++) {
+        for (var x = 500; x < 576; x++) {
+          if (row.pixels[y * 576 + x] < 128) {
+            hasPixelsNearRightEdge = true;
+            break;
+          }
+        }
+      }
+      expect(hasPixelsNearRightEdge, isTrue);
+
+      // 2. Arabic item description is anchored on the left column (x < 250)
+      var hasPixelsInLeftColumn = false;
+      for (var y = 0; y < row.height; y++) {
+        for (var x = 0; x < 250; x++) {
+          if (row.pixels[y * 576 + x] < 128) {
+            hasPixelsInLeftColumn = true;
+            break;
+          }
+        }
+      }
+      expect(hasPixelsInLeftColumn, isTrue);
+    });
+
     test('long line wraps within paper width without error', () async {
       final gray = await rasterizer.renderText(
         TestLanguages.chineseSimplified.longLine,

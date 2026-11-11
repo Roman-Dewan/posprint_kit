@@ -38,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   PrinterProfile _selectedProfile = PrinterProfile.generic80;
   bool _use5ColumnReceipt = false;
+  bool _isSunmiDevice = false;
 
   // Connection inputs
   final _hostController = TextEditingController(text: '192.168.0.101');
@@ -79,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final width = await SunmiTransport.getPaperWidth();
         if (mounted) {
           setState(() {
+            _isSunmiDevice = true;
             _selectedProfile = width <= 58
                 ? PrinterProfile.sunmi58
                 : PrinterProfile.sunmi80;
@@ -292,9 +294,23 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    // Auto-detect Sunmi Bluetooth: if running on a Sunmi device or device name contains Sunmi/InnerPrinter,
+    // ensure profile is sunmi80 (or sunmi58) to avoid firmware dropping native ESC/POS ASCII text commands.
+    var profile = _selectedProfile;
+    final isSunmiDeviceName =
+        _selectedBtDevice?.name.toLowerCase().contains('innerprinter') == true ||
+        _selectedBtDevice?.name.toLowerCase().contains('sunmi') == true;
+    if (_isSunmiDevice || isSunmiDeviceName) {
+      if (profile == PrinterProfile.generic80) {
+        profile = PrinterProfile.sunmi80;
+      } else if (profile == PrinterProfile.generic58) {
+        profile = PrinterProfile.sunmi58;
+      }
+    }
+
     final printer = EscposPrinter.bluetooth(
       address,
-      profile: _selectedProfile,
+      profile: profile,
       rasterizer: FlutterTextRasterizer(),
     );
     await _executePrint(
@@ -495,8 +511,20 @@ class _HomeScreenState extends State<HomeScreen> {
         _statusMessage =
             'Found ${_pairedBtDevices.length} paired Bluetooth device(s).';
         if (_pairedBtDevices.isNotEmpty) {
-          _selectedBtDevice = _pairedBtDevices.first;
+          // Prefer selecting a paired Sunmi InnerPrinter if present
+          final sunmiMatch = _pairedBtDevices.firstWhere(
+            (d) =>
+                d.name.toLowerCase().contains('innerprinter') ||
+                d.name.toLowerCase().contains('sunmi'),
+            orElse: () => _pairedBtDevices.first,
+          );
+          _selectedBtDevice = sunmiMatch;
           _btAddressController.text = _selectedBtDevice!.address;
+          if (_isSunmiDevice ||
+              sunmiMatch.name.toLowerCase().contains('innerprinter') ||
+              sunmiMatch.name.toLowerCase().contains('sunmi')) {
+            _selectedProfile = PrinterProfile.sunmi80;
+          }
         }
       } else {
         _isSuccess = false;
@@ -650,9 +678,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         label: Text('58 mm (384 dots)'),
                       ),
                     ],
-                    selected: {_selectedProfile},
-                    onSelectionChanged: (set) =>
-                        setState(() => _selectedProfile = set.first),
+                    selected: {
+                      _selectedProfile.dotsWidth <= 384
+                          ? PrinterProfile.generic58
+                          : PrinterProfile.generic80
+                    },
+                    onSelectionChanged: (set) => setState(() {
+                      final chosen = set.first;
+                      if (_isSunmiDevice) {
+                        _selectedProfile = chosen.dotsWidth <= 384
+                            ? PrinterProfile.sunmi58
+                            : PrinterProfile.sunmi80;
+                      } else {
+                        _selectedProfile = chosen;
+                      }
+                    }),
                   ),
                   const SizedBox(height: 12.0),
                   const Text('Receipt Layout Format:'),
@@ -838,6 +878,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 setState(() {
                   _selectedBtDevice = d;
                   _btAddressController.text = d.address;
+                  if (d.name.toLowerCase().contains('innerprinter') ||
+                      d.name.toLowerCase().contains('sunmi') ||
+                      _isSunmiDevice) {
+                    _selectedProfile = PrinterProfile.sunmi80;
+                  }
                 });
               }
             },
@@ -867,19 +912,57 @@ class _HomeScreenState extends State<HomeScreen> {
                     segments: const [
                       ButtonSegment(
                         value: PrinterProfile.generic58,
-                        label: Text('58 mm (Mobile Standard)'),
+                        label: Text('58 mm'),
                         icon: Icon(Icons.receipt),
                       ),
                       ButtonSegment(
                         value: PrinterProfile.generic80,
-                        label: Text('80 mm (Desktop POS)'),
+                        label: Text('80 mm'),
                         icon: Icon(Icons.table_restaurant),
                       ),
+                      ButtonSegment(
+                        value: PrinterProfile.sunmi80,
+                        label: Text('Sunmi 80 mm'),
+                        icon: Icon(Icons.print),
+                      ),
                     ],
-                    selected: {_selectedProfile},
+                    selected: {
+                      _selectedProfile == PrinterProfile.sunmi80 ||
+                              _selectedProfile == PrinterProfile.sunmi58
+                          ? PrinterProfile.sunmi80
+                          : (_selectedProfile == PrinterProfile.generic80
+                              ? PrinterProfile.generic80
+                              : PrinterProfile.generic58)
+                    },
                     onSelectionChanged: (set) =>
                         setState(() => _selectedProfile = set.first),
                   ),
+                  if (_selectedProfile == PrinterProfile.sunmi80 ||
+                      _isSunmiDevice ||
+                      _selectedBtDevice?.name.toLowerCase().contains('innerprinter') == true ||
+                      _selectedBtDevice?.name.toLowerCase().contains('sunmi') == true) ...[
+                    const SizedBox(height: 8.0),
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(6.0),
+                        border: Border.all(color: Colors.amber.shade300),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.orange),
+                          SizedBox(width: 6.0),
+                          Expanded(
+                            child: Text(
+                              'Sunmi Profile active: renders all text & barcodes as thermal raster graphics to bypass Sunmi firmware ASCII drops.',
+                              style: TextStyle(fontSize: 12, color: Colors.brown),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

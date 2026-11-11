@@ -166,7 +166,7 @@ void main() {
       expect(bytes[6], 0x00);
     });
 
-    test('barcode(code128) emits height, width, hri, and barcode command',
+    test('barcode(code128) emits height, width, hri, and barcode command with code set B',
         () async {
       final receipt = Receipt()..barcode('1042', type: BarcodeType.code128);
       final bytes = await encodeForTest(receipt);
@@ -177,8 +177,24 @@ void main() {
         0x1D, 0x68, 0x40, // height 64 dots (0x40)
         0x1D, 0x77, 0x02, // width 2
         0x1D, 0x48, 0x02, // HRI below
-        0x1D, 0x6B, 0x49, 0x04, 0x31, 0x30, 0x34, 0x32, // CODE128 '1042'
+        0x1D, 0x6B, 0x49, 0x06, 0x7B, 0x42, 0x31, 0x30, 0x34, 0x32, // CODE128 '{B1042'
         0x1B, 0x61, 0x00, // align left reset
+      ]);
+    });
+
+    test('barcode(code128) preserves existing code set prefix without double-prefixing',
+        () async {
+      final receipt = Receipt()..barcode('{B1042', type: BarcodeType.code128);
+      final bytes = await encodeForTest(receipt);
+
+      expect(bytes, [
+        0x1B, 0x74, 0x00,
+        0x1B, 0x61, 0x01,
+        0x1D, 0x68, 0x40,
+        0x1D, 0x77, 0x02,
+        0x1D, 0x48, 0x02,
+        0x1D, 0x6B, 0x49, 0x06, 0x7B, 0x42, 0x31, 0x30, 0x34, 0x32,
+        0x1B, 0x61, 0x00,
       ]);
     });
 

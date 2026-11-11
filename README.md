@@ -153,14 +153,19 @@ await printer.print(receipt);
 ```
 
 ### 2. Bluetooth Classic (SPP / Android)
-Connect to portable mobile thermal printers:
+Connect to portable mobile thermal printers or Sunmi desktop POS terminals over Bluetooth:
 
 ```dart
 // List paired Bluetooth devices
 final result = await BluetoothTransport.listPairedDevices();
 final device = result.valueOrNull!.first;
 
+// Standard 58mm / 80mm Bluetooth printer:
 final printer = EscposPrinter.bluetooth(device.address);
+
+// Or for Sunmi built-in Bluetooth (e.g. 'InnerPrinter' on Sunmi D3/V2):
+// Uses PrinterProfile.sunmi80 to bypass Sunmi firmware ASCII drops.
+final printer = EscposPrinter.sunmiBluetooth(device.address);
 await printer.print(receipt);
 ```
 
@@ -438,3 +443,4 @@ Most thermal printers have limited built-in Latin code pages and cannot render c
 Contributions are welcome! Please ensure all tests pass (`flutter test`) and `flutter analyze` is clean.
 
 Licensed under the [MIT License](LICENSE).
+

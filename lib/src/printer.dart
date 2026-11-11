@@ -99,6 +99,10 @@ class EscposPrinter {
   /// Uses safe 256-byte chunking and inter-chunk pacing delay to prevent microcontrollers
   /// on portable thermal printers from overflowing their UART receive buffers.
   ///
+  /// For Sunmi built-in printers connected via Bluetooth (e.g. `InnerPrinter`), use
+  /// [EscposPrinter.sunmiBluetooth] or set `profile: PrinterProfile.sunmi80` so all text
+  /// is rendered as thermal raster graphics, avoiding Sunmi firmware dropping native ASCII text.
+  ///
   /// ```dart
   /// final printer = EscposPrinter.bluetooth('00:11:22:33:44:55');
   /// ```
@@ -118,6 +122,30 @@ class EscposPrinter {
           chunkDelay: chunkDelay,
         ),
         rasterizer = rasterizer ?? const FakeRasterizer();
+
+  /// Connects to a Sunmi thermal printer paired over Bluetooth Classic (e.g. Sunmi D3, V2 `InnerPrinter`).
+  ///
+  /// Defaults to [PrinterProfile.sunmi80], which enables full-width 80 mm (576 dots) printing
+  /// and full rasterization (`rasterizeAllText: true`) so titles, rows, and dividers render as 1-bit
+  /// thermal raster graphics, completely bypassing Sunmi's Bluetooth firmware ASCII text drop.
+  ///
+  /// ```dart
+  /// final printer = EscposPrinter.sunmiBluetooth('00:11:22:33:44:55');
+  /// await printer.print(receipt);
+  /// ```
+  EscposPrinter.sunmiBluetooth(
+    String address, {
+    PrinterProfile profile = PrinterProfile.sunmi80,
+    TextRasterizer? rasterizer,
+    int maxChunkSize = 256,
+    Duration chunkDelay = const Duration(milliseconds: 25),
+  }) : this.bluetooth(
+          address,
+          profile: profile,
+          rasterizer: rasterizer,
+          maxChunkSize: maxChunkSize,
+          chunkDelay: chunkDelay,
+        );
 
   /// Connects to a thermal printer plugged in via USB OTG on Android.
   EscposPrinter.usb({

@@ -1,3 +1,15 @@
+## 2.1.1
+
+* **Sunmi Built-in Bluetooth Printing Fix (`PrinterProfile.sunmi80` & `EscposPrinter.sunmiBluetooth`)**:
+  - Fixed dropped ASCII text lines (`title`, `divider`, ASCII `row`, `total`) when connecting to Sunmi D3 built-in thermal printers via internal Bluetooth SPP (`InnerPrinter`).
+  - Added dedicated `EscposPrinter.sunmiBluetooth(address)` facade defaulting to `PrinterProfile.sunmi80` with `rasterizeAllText: true`, which prints all receipt lines cleanly as 1-bit thermal raster graphics to bypass Sunmi's firmware ASCII buffer drop.
+  - Automatic detection in Example app: automatically detects Sunmi / `InnerPrinter` Bluetooth devices and auto-promotes to `PrinterProfile.sunmi80` (or `sunmi58`).
+* **Code 128 Barcode Encoding Fix (ESC/POS `{B` Code Set Selection)**:
+  - Added `Commands.formatCode128Data()` ensuring Code 128 payloads automatically prepend `{B` (`0x7B, 0x42`) as required by the ESC/POS specification (`GS k 73`).
+  - Fixed Sunmi and ESC/POS printers printing raw decimal ASCII byte sequences (e.g. `4948525057564950`) beneath the barcode instead of the actual data (`10429812`).
+* **Arabic / RTL Two-Column Receipt Alignment Fix**:
+  - In `FlutterTextRasterizer.renderRow`, anchored Arabic/Hebrew item descriptions to the left margin ($x = 0$) while preserving bidirectional cursive glyph shaping. Prevents RTL text from cramming against the right price column.
+
 ## 2.1.0
 
 * **Universal Cash Drawer Actuation (WiFi, USB, Bluetooth, Inbuilt)**:

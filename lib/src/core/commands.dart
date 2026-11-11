@@ -334,6 +334,22 @@ class Commands {
   static Uint8List barcodeHri(int position) =>
       Uint8List.fromList([0x1D, 0x48, position.clamp(0, 3)]);
 
+  /// Formats Code 128 data bytes by ensuring the mandatory ESC/POS code set prefix
+  /// (`{B` = `[0x7B, 0x42]` for standard ASCII text) is present.
+  ///
+  /// According to the official ESC/POS specification for Code 128 (`GS k 73`), the data MUST begin
+  /// with a code set selection character (`{A`, `{B`, or `{C`). Without `{B`, printers
+  /// (including Sunmi) interpret characters as raw decimal byte values (e.g. printing `4948525057564950`
+  /// instead of `10429812`).
+  static List<int> formatCode128Data(List<int> rawBytes) {
+    if (rawBytes.length >= 2 &&
+        rawBytes[0] == 0x7B &&
+        (rawBytes[1] == 0x41 || rawBytes[1] == 0x42 || rawBytes[1] == 0x43)) {
+      return rawBytes;
+    }
+    return [0x7B, 0x42, ...rawBytes];
+  }
+
   /// GS k m n [data]: Print barcode using Function B format.
   /// [barcodeTypeByte]: e.g. 73 for CODE128, 67 for EAN13.
   static Uint8List barcode(int barcodeTypeByte, List<int> dataBytes) {
@@ -345,6 +361,10 @@ class Commands {
     buffer.setRange(4, 4 + dataBytes.length, dataBytes);
     return buffer;
   }
+
+  /// GS k 73 n [data]: Print CODE128 barcode with automatic `{B` code set selection.
+  static Uint8List code128(List<int> dataBytes) =>
+      barcode(73, formatCode128Data(dataBytes));
 
   // ---------------------------------------------------------------------------
   // Raster Bit Image (GS v 0)

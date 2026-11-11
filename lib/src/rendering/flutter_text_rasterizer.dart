@@ -159,10 +159,13 @@ class FlutterTextRasterizer implements TextRasterizer {
     final leftWidthAvailable =
         (widthDots - rightWidth - gap).clamp(20.0, widthDots.toDouble());
 
-    // 2. Measure and wrap left text inside remaining box
+    // 2. Measure and wrap left text inside remaining box.
+    // In a two-column receipt (item on left, price on right), the item description column
+    // is left-anchored (at x = 0) so all items across languages align consistently at the margin.
+    // textDirection handles RTL glyph shaping and punctuation, while textAlign stays left-anchored.
     final isLeftRtl = _isRtl(languageTag);
     final leftStyle = ui.ParagraphStyle(
-      textAlign: isLeftRtl ? ui.TextAlign.right : ui.TextAlign.left,
+      textAlign: ui.TextAlign.left,
       textDirection: isLeftRtl ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       fontSize: style.fontSize,
       fontWeight: style.bold ? ui.FontWeight.bold : ui.FontWeight.normal,

@@ -145,5 +145,29 @@ void main() {
       final header = Commands.rasterHeader(bytesPerLine: 72, heightDots: 40);
       expect(header, [0x1D, 0x76, 0x30, 0x00, 0x48, 0x00, 0x28, 0x00]);
     });
+
+    test('formatCode128Data ensures Code 128 data starts with code set B {B', () {
+      final raw = [0x31, 0x30, 0x34, 0x32]; // "1042"
+      final formatted = Commands.formatCode128Data(raw);
+      expect(formatted, [0x7B, 0x42, 0x31, 0x30, 0x34, 0x32]);
+
+      // If already prefixed with {B, does not double-prefix
+      final alreadyB = [0x7B, 0x42, 0x31, 0x32];
+      expect(Commands.formatCode128Data(alreadyB), [0x7B, 0x42, 0x31, 0x32]);
+
+      // If already prefixed with {A or {C, preserves it
+      final alreadyA = [0x7B, 0x41, 0x31, 0x32];
+      expect(Commands.formatCode128Data(alreadyA), [0x7B, 0x41, 0x31, 0x32]);
+      final alreadyC = [0x7B, 0x43, 0x12, 0x34];
+      expect(Commands.formatCode128Data(alreadyC), [0x7B, 0x43, 0x12, 0x34]);
+    });
+
+    test('code128 emits GS k 73 with {B prefixed payload', () {
+      final cmd = Commands.code128([0x31, 0x30, 0x34, 0x32]); // "1042" -> length 6
+      expect(cmd, [
+        0x1D, 0x6B, 73, 6,
+        0x7B, 0x42, 0x31, 0x30, 0x34, 0x32,
+      ]);
+    });
   });
 }
