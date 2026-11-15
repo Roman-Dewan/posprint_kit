@@ -224,7 +224,7 @@ class SunmiHandler(private val context: Context) {
                                         if (character == "=") {
                                             lApi.printDividingLine(DividingLine.SOLID, 2)
                                         } else {
-                                            lApi.printDividingLine(DividingLine.DASH, 1)
+                                            lApi.printDividingLine(DividingLine.DOTTED, 2)
                                         }
                                     }
                                     "row" -> {
