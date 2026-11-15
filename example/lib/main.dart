@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..total('TOTAL', '54.50')
       ..feed(1)
       ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
-      ..barcode('123412', height: 40)
+      ..barcode('123412', width: 40)
       ..feed(2)
       ..cut();
   }
@@ -300,8 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isSunmiDeviceName =
         _selectedBtDevice?.name.toLowerCase().contains('innerprinter') == true ||
         _selectedBtDevice?.name.toLowerCase().contains('sunmi') == true;
-    final isSunmi = _isSunmiDevice || isSunmiDeviceName;
-    if (isSunmi) {
+    if (_isSunmiDevice || isSunmiDeviceName) {
       if (profile == PrinterProfile.generic80) {
         profile = PrinterProfile.sunmi80;
       } else if (profile == PrinterProfile.generic58) {
@@ -313,8 +312,6 @@ class _HomeScreenState extends State<HomeScreen> {
       address,
       profile: profile,
       rasterizer: FlutterTextRasterizer(),
-      maxChunkSize: isSunmi ? 2048 : 1024,
-      chunkDelay: isSunmi ? Duration.zero : const Duration(milliseconds: 2),
     );
     await _executePrint(
       'Bluetooth ($address)',

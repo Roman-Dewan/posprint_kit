@@ -212,9 +212,6 @@ class Receipt {
   /// Prints a 1D barcode with [data].
   ///
   /// Supported types: [BarcodeType.code128] and [BarcodeType.ean13].
-  /// [height]: Barcode height in printer dots (default 64, ~8 mm).
-  /// [width]: Module bar dot thickness (default 2 dots). Clamped to safe range 2..4 to prevent paper overflow.
-  /// [hri]: Human-readable text position (0: none, 1: above, 2: below, 3: both).
   Receipt barcode(
     String data, {
     BarcodeType type = BarcodeType.code128,
@@ -226,9 +223,9 @@ class Receipt {
         BarcodeOp(
           data,
           type: type,
-          height: height.clamp(1, 255),
-          width: width.clamp(2, 4),
-          hri: hri.clamp(0, 3),
+          height: height,
+          width: width,
+          hri: hri,
         ),
       );
 

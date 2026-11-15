@@ -334,8 +334,13 @@ class Commands {
   static Uint8List barcodeHri(int position) =>
       Uint8List.fromList([0x1D, 0x48, position.clamp(0, 3)]);
 
-  /// Formats Code 128 data bytes by ensuring a code set prefix (`{B` = `[0x7B, 0x42]`)
-  /// is present for printers that specifically require code set selection characters.
+  /// Formats Code 128 data bytes by ensuring the mandatory ESC/POS code set prefix
+  /// (`{B` = `[0x7B, 0x42]` for standard ASCII text) is present.
+  ///
+  /// According to the official ESC/POS specification for Code 128 (`GS k 73`), the data MUST begin
+  /// with a code set selection character (`{A`, `{B`, or `{C`). Without `{B`, printers
+  /// (including Sunmi) interpret characters as raw decimal byte values (e.g. printing `4948525057564950`
+  /// instead of `10429812`).
   static List<int> formatCode128Data(List<int> rawBytes) {
     if (rawBytes.length >= 2 &&
         rawBytes[0] == 0x7B &&

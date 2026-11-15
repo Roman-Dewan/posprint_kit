@@ -174,8 +174,8 @@ void main() {
       expect(Commands.formatCode128Data(alreadyC), [0x7B, 0x43, 0x12, 0x34]);
     });
 
-    test('code128 emits GS k 73 with automatic {B code set selection', () {
-      final cmd = Commands.code128([0x31, 0x30, 0x34, 0x32]); // "1042" -> automatically prefixed with {B (length 6)
+    test('code128 emits GS k 73 with {B prefixed payload', () {
+      final cmd = Commands.code128([0x31, 0x30, 0x34, 0x32]); // "1042" -> length 6
       expect(cmd, [
         0x1D, 0x6B, 73, 6,
         0x7B, 0x42, 0x31, 0x30, 0x34, 0x32,

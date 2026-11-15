@@ -60,8 +60,8 @@ class TsplPrinter {
   TsplPrinter.bluetooth(
     String address, {
     TextRasterizer? rasterizer,
-    int maxChunkSize = 1024,
-    Duration chunkDelay = const Duration(milliseconds: 2),
+    int maxChunkSize = 256,
+    Duration chunkDelay = const Duration(milliseconds: 25),
     PrintQueue? queue,
   })  : assert(
           address.trim().isNotEmpty,

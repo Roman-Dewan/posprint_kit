@@ -178,7 +178,6 @@ void main() {
         0x1D, 0x77, 0x02, // width 2
         0x1D, 0x48, 0x02, // HRI below
         0x1D, 0x6B, 0x49, 0x06, 0x7B, 0x42, 0x31, 0x30, 0x34, 0x32, // CODE128 '{B1042'
-        0x0A,             // line feed to commit barcode before reset
         0x1B, 0x61, 0x00, // align left reset
       ]);
     });
@@ -195,20 +194,8 @@ void main() {
         0x1D, 0x77, 0x02,
         0x1D, 0x48, 0x02,
         0x1D, 0x6B, 0x49, 0x06, 0x7B, 0x42, 0x31, 0x30, 0x34, 0x32,
-        0x0A,
         0x1B, 0x61, 0x00,
       ]);
-    });
-
-    test('barcode clamps module width to 2 on 58mm profiles to prevent paper overflow',
-        () async {
-      final receipt = Receipt()..barcode('1234', width: 4);
-      final bytes = await encodeForTest(receipt, profile: PrinterProfile.generic58);
-
-      // Width command is at index 9 (0x1D), 10 (0x77), 11 (width byte)
-      expect(bytes[9], 0x1D);
-      expect(bytes[10], 0x77);
-      expect(bytes[11], 0x02); // Clamped to 2 on 58 mm
     });
 
     test('cash drawer pulses emit ESC p', () async {

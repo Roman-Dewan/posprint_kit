@@ -96,9 +96,8 @@ class EscposPrinter {
 
   /// Connects to a paired Bluetooth Classic printer on Android using its MAC [address].
   ///
-  /// Uses high-throughput 1024-byte chunking and low inter-chunk pacing delay (2ms) for
-  /// rapid printing while preventing microcontrollers on portable thermal printers from
-  /// overflowing their UART receive buffers.
+  /// Uses safe 256-byte chunking and inter-chunk pacing delay to prevent microcontrollers
+  /// on portable thermal printers from overflowing their UART receive buffers.
   ///
   /// For Sunmi built-in printers connected via Bluetooth (e.g. `InnerPrinter`), use
   /// [EscposPrinter.sunmiBluetooth] or set `profile: PrinterProfile.sunmi80` so all text
@@ -111,8 +110,8 @@ class EscposPrinter {
     String address, {
     this.profile = PrinterProfile.generic58,
     TextRasterizer? rasterizer,
-    int maxChunkSize = 1024,
-    Duration chunkDelay = const Duration(milliseconds: 2),
+    int maxChunkSize = 256,
+    Duration chunkDelay = const Duration(milliseconds: 25),
   })  : assert(
           address.trim().isNotEmpty,
           'Bluetooth device address/MAC cannot be empty.',
@@ -129,7 +128,6 @@ class EscposPrinter {
   /// Defaults to [PrinterProfile.sunmi80], which enables full-width 80 mm (576 dots) printing
   /// and full rasterization (`rasterizeAllText: true`) so titles, rows, and dividers render as 1-bit
   /// thermal raster graphics, completely bypassing Sunmi's Bluetooth firmware ASCII text drop.
-  /// Uses 2048-byte chunks with zero pacing delay (`Duration.zero`) for instantaneous local transmission.
   ///
   /// ```dart
   /// final printer = EscposPrinter.sunmiBluetooth('00:11:22:33:44:55');
@@ -139,8 +137,8 @@ class EscposPrinter {
     String address, {
     PrinterProfile profile = PrinterProfile.sunmi80,
     TextRasterizer? rasterizer,
-    int maxChunkSize = 2048,
-    Duration chunkDelay = Duration.zero,
+    int maxChunkSize = 256,
+    Duration chunkDelay = const Duration(milliseconds: 25),
   }) : this.bluetooth(
           address,
           profile: profile,
