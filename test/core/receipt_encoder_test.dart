@@ -166,7 +166,7 @@ void main() {
       expect(bytes[6], 0x00);
     });
 
-    test('barcode(code128) emits height, width, hri, and barcode command with code set B',
+    test('barcode(code128) emits height, width, hri, and barcode command',
         () async {
       final receipt = Receipt()..barcode('1042', type: BarcodeType.code128);
       final bytes = await encodeForTest(receipt);
@@ -177,39 +177,9 @@ void main() {
         0x1D, 0x68, 0x40, // height 64 dots (0x40)
         0x1D, 0x77, 0x02, // width 2
         0x1D, 0x48, 0x02, // HRI below
-        0x1D, 0x6B, 0x49, 0x06, 0x7B, 0x42, 0x31, 0x30, 0x34, 0x32, // CODE128 '{B1042'
-        0x0A,             // line feed to commit barcode before reset
+        0x1D, 0x6B, 0x49, 0x04, 0x31, 0x30, 0x34, 0x32, // CODE128 '1042'
         0x1B, 0x61, 0x00, // align left reset
       ]);
-    });
-
-    test('barcode(code128) preserves existing code set prefix without double-prefixing',
-        () async {
-      final receipt = Receipt()..barcode('{B1042', type: BarcodeType.code128);
-      final bytes = await encodeForTest(receipt);
-
-      expect(bytes, [
-        0x1B, 0x74, 0x00,
-        0x1B, 0x61, 0x01,
-        0x1D, 0x68, 0x40,
-        0x1D, 0x77, 0x02,
-        0x1D, 0x48, 0x02,
-        0x1D, 0x6B, 0x49, 0x06, 0x7B, 0x42, 0x31, 0x30, 0x34, 0x32,
-        0x0A,
-        0x1B, 0x61, 0x00,
-      ]);
-    });
-
-    test('barcode clamps module width to 2 on 58mm profiles to prevent paper overflow',
-        () async {
-      final receipt = Receipt()..barcode('1234', width: 4);
-      final bytes = await encodeForTest(receipt, profile: PrinterProfile.generic58);
-
-      // Width command is at index 9 (0x1D), 10 (0x77), 11 (width byte)
-      // 0x1B 0x74 0x00 (init), 0x1B 0x61 0x01 (center), 0x1D 0x68 0x40 (h:64), 0x1D 0x77 0x02 (w:2 clamped)
-      expect(bytes[9], 0x1D);
-      expect(bytes[10], 0x77);
-      expect(bytes[11], 0x02); // Clamped to 2 on 58 mm
     });
 
     test('cash drawer pulses emit ESC p', () async {
