@@ -1,4 +1,4 @@
-## 2.1.2
+## 2.1.1
 
 * **High-Speed Bluetooth SPP Optimization & Latency Drop**:
   - Decreased cold connect/print latency from 3–5 seconds down to under 1 second, and near 0 ms on warm connections.
@@ -11,9 +11,6 @@
   - Provides continuous streaming to the printer's receive buffer, keeping the thermal print head burning smoothly in one continuous motion without halting the feed motor.
 * **Sunmi Native LineAPI Divider Fix**:
   - Fixed Kotlin compilation error on Sunmi PrinterX (`DividingLine.DASH` -> `DividingLine.DOTTED`).
-
-## 2.1.1
-
 * **Sunmi Built-in Bluetooth Printing Fix (`PrinterProfile.sunmi80` & `EscposPrinter.sunmiBluetooth`)**:
   - Fixed dropped ASCII text lines (`title`, `divider`, ASCII `row`, `total`) when connecting to Sunmi D3 built-in thermal printers via internal Bluetooth SPP (`InnerPrinter`).
   - Added dedicated `EscposPrinter.sunmiBluetooth(address)` facade defaulting to `PrinterProfile.sunmi80` with `rasterizeAllText: true`, which prints all receipt lines cleanly as 1-bit thermal raster graphics to bypass Sunmi's firmware ASCII buffer drop.
