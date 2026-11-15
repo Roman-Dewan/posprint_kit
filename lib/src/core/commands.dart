@@ -325,9 +325,9 @@ class Commands {
   static Uint8List barcodeHeight(int heightDots) =>
       Uint8List.fromList([0x1D, 0x68, heightDots.clamp(1, 255)]);
 
-  /// GS w n: Set barcode module width (2 <= n <= 6).
+  /// GS w n: Set barcode module width (2 <= n <= 6). Clamped to safe range 2..4 to prevent paper roll overflow.
   static Uint8List barcodeWidth(int moduleWidth) =>
-      Uint8List.fromList([0x1D, 0x77, moduleWidth.clamp(2, 6)]);
+      Uint8List.fromList([0x1D, 0x77, moduleWidth.clamp(2, 4)]);
 
   /// GS H n: Set HRI (human readable interpretation) characters position:
   /// 0 = None, 1 = Above, 2 = Below, 3 = Both.

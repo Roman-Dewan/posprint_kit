@@ -377,12 +377,16 @@ class ReceiptEncoder {
             :final width,
             :final hri
           ):
+          if (data.trim().isEmpty) break;
+
           if (currentAlign != PosAlign.center) {
             buffer.add(Commands.alignCenter);
             currentAlign = PosAlign.center;
           }
           buffer.add(Commands.barcodeHeight(height));
-          buffer.add(Commands.barcodeWidth(width));
+          // Safe module width: 58 mm rolls (<=384 dots) cannot fit module width > 2 without overflowing
+          final effectiveWidth = profile.dotsWidth <= 384 ? 2 : width.clamp(2, 3);
+          buffer.add(Commands.barcodeWidth(effectiveWidth));
           buffer.add(Commands.barcodeHri(hri));
 
           final rawBytes = ascii.encode(data);
@@ -391,6 +395,7 @@ class ReceiptEncoder {
             BarcodeType.ean13 => (67, rawBytes),
           };
           buffer.add(Commands.barcode(typeByte, payloadBytes));
+          buffer.addByte(Commands.lf);
 
           buffer.add(Commands.alignLeft);
           currentAlign = PosAlign.left;

@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..total('TOTAL', '54.50')
       ..feed(1)
       ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
-      ..barcode('123412', width: 40)
+      ..barcode('123412', height: 40)
       ..feed(2)
       ..cut();
   }
