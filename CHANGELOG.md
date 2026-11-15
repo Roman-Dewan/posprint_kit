@@ -1,3 +1,17 @@
+## 2.1.2
+
+* **High-Speed Bluetooth SPP Optimization & Latency Drop**:
+  - Decreased cold connect/print latency from 3–5 seconds down to under 1 second, and near 0 ms on warm connections.
+  - Native Android RFCOMM connection now attempts insecure SPP first (`createInsecureRfcommSocketToServiceRecord`), eliminating SDP auth negotiation delays common on Rongta, Xprinter, and portable Bluetooth thermal printers.
+  - Sockets already connected to the target MAC address are now re-used without redundant disconnect/reconnect cycles.
+  - Disconnect drain delays reduced from 800 ms (400 ms Dart + 400 ms Kotlin) to a crisp 50 ms after flushing output streams.
+* **Rongta / Thermal Printer Motor Stutter Fix ("Print Buffering" Elimination)**:
+  - Fixed stepper motor buffer starvation / laggy stuttering caused by overly conservative 256-byte chunking and 25 ms inter-chunk delays.
+  - Updated default Bluetooth `maxChunkSize` to **1024 bytes** (and **2048 bytes** for Sunmi Bluetooth) and `chunkDelay` to **2 ms**.
+  - Provides continuous streaming to the printer's receive buffer, keeping the thermal print head burning smoothly in one continuous motion without halting the feed motor.
+* **Sunmi Native LineAPI Divider Fix**:
+  - Fixed Kotlin compilation error on Sunmi PrinterX (`DividingLine.DASH` -> `DividingLine.DOTTED`).
+
 ## 2.1.1
 
 * **Sunmi Built-in Bluetooth Printing Fix (`PrinterProfile.sunmi80` & `EscposPrinter.sunmiBluetooth`)**:

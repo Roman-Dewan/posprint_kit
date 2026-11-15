@@ -178,16 +178,37 @@ class BluetoothHandler(private val context: Context) {
             return
         }
 
+        // Return immediately if already connected to this target device
+        synchronized(this) {
+            val current = activeSocket
+            if (current != null && current.isConnected && current.remoteDevice.address.equals(address, ignoreCase = true)) {
+                result.success(true)
+                return
+            }
+        }
+
         scope.launch(Dispatchers.IO) {
             try {
                 // Cancel ongoing discovery before connecting to avoid link degradation
                 try {
-                    adapter.cancelDiscovery()
+                    if (adapter.isDiscovering) {
+                        adapter.cancelDiscovery()
+                    }
                 } catch (_: Exception) {}
 
                 val device: BluetoothDevice = adapter.getRemoteDevice(address)
-                val socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
-                socket.connect()
+
+                // Connect via RFCOMM SPP. Attempt insecure socket first (faster handshake, avoids
+                // PIN/SDP auth stalls common on Rongta and budget POS thermal printers), falling back to secure.
+                var socket: BluetoothSocket? = null
+                try {
+                    socket = device.createInsecureRfcommSocketToServiceRecord(SPP_UUID)
+                    socket.connect()
+                } catch (_: Exception) {
+                    try { socket?.close() } catch (_: Exception) {}
+                    socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
+                    socket.connect()
+                }
 
                 synchronized(this@BluetoothHandler) {
                     try { activeSocket?.close() } catch (_: Exception) {}
@@ -255,8 +276,6 @@ class BluetoothHandler(private val context: Context) {
             synchronized(this@BluetoothHandler) {
                 try {
                     activeSocket?.outputStream?.flush()
-                    // Allow hardware buffers and in-flight RFCOMM packets to drain
-                    Thread.sleep(400)
                     activeSocket?.close()
                 } catch (_: Exception) {}
                 activeSocket = null
