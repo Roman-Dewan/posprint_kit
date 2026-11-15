@@ -39,8 +39,8 @@ class BluetoothDevice {
 class BluetoothTransport implements PrinterTransport {
   BluetoothTransport(
     this.address, {
-    this.maxChunkSize = 256,
-    this.chunkDelay = const Duration(milliseconds: 25),
+    this.maxChunkSize = 1024,
+    this.chunkDelay = const Duration(milliseconds: 2),
   }) : assert(address.trim().isNotEmpty,
             'Bluetooth MAC address cannot be empty.');
 
@@ -214,7 +214,7 @@ class BluetoothTransport implements PrinterTransport {
 
   @override
   Future<void> disconnect({
-    Duration drainDelay = const Duration(milliseconds: 400),
+    Duration drainDelay = const Duration(milliseconds: 50),
   }) async {
     if (_currentState == PosConnectionState.disconnected) {
       return;

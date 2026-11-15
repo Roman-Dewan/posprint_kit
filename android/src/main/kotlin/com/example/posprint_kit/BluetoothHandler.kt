@@ -32,6 +32,7 @@ class BluetoothHandler(private val context: Context) {
 
     private val scope = CoroutineScope(Dispatchers.Main)
     private var activeSocket: BluetoothSocket? = null
+    private var activeAddress: String? = null
     private var activity: Activity? = null
     private var pendingPermissionResult: MethodChannel.Result? = null
 
@@ -163,6 +164,14 @@ class BluetoothHandler(private val context: Context) {
             return
         }
 
+        // Reuse active socket if already connected to target address (eliminates 1.5-2.5s SDP handshake)
+        synchronized(this@BluetoothHandler) {
+            if (activeSocket?.isConnected == true && activeAddress == address) {
+                result.success(true)
+                return
+            }
+        }
+
         val adapter = bluetoothAdapter
         if (adapter == null || !adapter.isEnabled) {
             result.error("BLUETOOTH_DISABLED", "Bluetooth is disabled or unavailable.", null)
@@ -192,20 +201,30 @@ class BluetoothHandler(private val context: Context) {
                 synchronized(this@BluetoothHandler) {
                     try { activeSocket?.close() } catch (_: Exception) {}
                     activeSocket = socket
+                    activeAddress = address
                 }
 
                 withContext(Dispatchers.Main) {
                     result.success(true)
                 }
             } catch (e: SecurityException) {
+                synchronized(this@BluetoothHandler) {
+                    activeAddress = null
+                }
                 withContext(Dispatchers.Main) {
                     result.error("PERMISSION_DENIED", "Missing Bluetooth connect permission: ${e.message}", null)
                 }
             } catch (e: IOException) {
+                synchronized(this@BluetoothHandler) {
+                    activeAddress = null
+                }
                 withContext(Dispatchers.Main) {
                     result.error("CONNECTION_FAILED", "Failed to connect to Bluetooth device $address: ${e.message}", null)
                 }
             } catch (e: Exception) {
+                synchronized(this@BluetoothHandler) {
+                    activeAddress = null
+                }
                 withContext(Dispatchers.Main) {
                     result.error("UNKNOWN", e.message, null)
                 }
@@ -238,6 +257,7 @@ class BluetoothHandler(private val context: Context) {
                 synchronized(this@BluetoothHandler) {
                     try { socket.close() } catch (_: Exception) {}
                     activeSocket = null
+                    activeAddress = null
                 }
                 withContext(Dispatchers.Main) {
                     result.error("CONNECTION_LOST", "Lost connection to Bluetooth printer: ${e.message}", null)
@@ -256,10 +276,11 @@ class BluetoothHandler(private val context: Context) {
                 try {
                     activeSocket?.outputStream?.flush()
                     // Allow hardware buffers and in-flight RFCOMM packets to drain
-                    Thread.sleep(400)
+                    Thread.sleep(50)
                     activeSocket?.close()
                 } catch (_: Exception) {}
                 activeSocket = null
+                activeAddress = null
             }
             withContext(Dispatchers.Main) {
                 result.success(null)
