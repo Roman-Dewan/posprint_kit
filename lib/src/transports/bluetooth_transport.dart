@@ -214,7 +214,7 @@ class BluetoothTransport implements PrinterTransport {
 
   @override
   Future<void> disconnect({
-    Duration drainDelay = const Duration(milliseconds: 50),
+    Duration drainDelay = const Duration(milliseconds: 250),
   }) async {
     if (_currentState == PosConnectionState.disconnected) {
       return;

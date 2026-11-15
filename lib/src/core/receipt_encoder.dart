@@ -383,15 +383,20 @@ class ReceiptEncoder {
             buffer.add(Commands.alignCenter);
             currentAlign = PosAlign.center;
           }
+          final clampedWidth = profile.dotsWidth <= 384
+              ? width.clamp(1, 2)
+              : width.clamp(1, 6);
           buffer.add(Commands.barcodeHeight(height));
-          buffer.add(Commands.barcodeWidth(width));
+          buffer.add(Commands.barcodeWidth(clampedWidth));
           buffer.add(Commands.barcodeHri(hri));
 
-          final typeByte = switch (type) {
-            BarcodeType.code128 => 73, // 0x49
-            BarcodeType.ean13 => 67, // 0x43
+          final rawBytes = ascii.encode(data);
+          final (typeByte, payloadBytes) = switch (type) {
+            BarcodeType.code128 => (73, Commands.formatCode128Data(rawBytes)),
+            BarcodeType.ean13 => (67, rawBytes),
           };
-          buffer.add(Commands.barcode(typeByte, ascii.encode(data)));
+          buffer.add(Commands.barcode(typeByte, payloadBytes));
+          buffer.addByte(Commands.lf);
 
           buffer.add(Commands.alignLeft);
           currentAlign = PosAlign.left;

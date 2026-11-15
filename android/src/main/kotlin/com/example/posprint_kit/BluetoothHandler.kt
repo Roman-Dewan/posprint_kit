@@ -276,7 +276,7 @@ class BluetoothHandler(private val context: Context) {
                 try {
                     activeSocket?.outputStream?.flush()
                     // Allow hardware buffers and in-flight RFCOMM packets to drain
-                    Thread.sleep(50)
+                    Thread.sleep(200)
                     activeSocket?.close()
                 } catch (_: Exception) {}
                 activeSocket = null

@@ -357,8 +357,9 @@ class Commands {
     return buffer;
   }
 
-  /// GS k 73 n [data]: Print CODE128 barcode directly with raw payload bytes.
-  static Uint8List code128(List<int> dataBytes) => barcode(73, dataBytes);
+  /// GS k 73 n [data]: Print CODE128 barcode with automatic `{B` code set selection.
+  static Uint8List code128(List<int> dataBytes) =>
+      barcode(73, formatCode128Data(dataBytes));
 
   // ---------------------------------------------------------------------------
   // Raster Bit Image (GS v 0)
