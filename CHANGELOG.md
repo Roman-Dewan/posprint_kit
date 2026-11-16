@@ -1,3 +1,11 @@
+## 2.2.1
+
+* **Dependency Compatibility (`qr: ^3.0.1`)**:
+  - Reverted `qr` dependency to `^3.0.1` for broad environment and legacy Flutter compatibility.
+  - Updated `QrRasterizer.renderQr` to support `qr: ^3.0.1` API (`QrErrorCorrectLevel.L/M/Q/H` and `QrCode.fromData`).
+* **Documentation & Readme Assets**:
+  - Configured absolute raw GitHub image URLs in `README.md` to guarantee crisp rendering on pub.dev.
+
 ## 2.2.0
 
 * **Real Physical Sample Documentation & Showcase**:
