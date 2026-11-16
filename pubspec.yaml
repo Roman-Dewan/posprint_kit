@@ -18,7 +18,7 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.1.8
-  qr: ^4.0.1
+  qr: ^3.0.1
 
 dev_dependencies:
   flutter_test:

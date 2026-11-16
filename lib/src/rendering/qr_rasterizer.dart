@@ -27,14 +27,14 @@ class QrRasterizer {
     QrErrorCorrectionLevel errorCorrection = QrErrorCorrectionLevel.m,
   }) {
     final qrLevel = switch (errorCorrection) {
-      QrErrorCorrectionLevel.l => QrErrorCorrectLevel.low,
-      QrErrorCorrectionLevel.m => QrErrorCorrectLevel.medium,
-      QrErrorCorrectionLevel.q => QrErrorCorrectLevel.quartile,
-      QrErrorCorrectionLevel.h => QrErrorCorrectLevel.high,
+      QrErrorCorrectionLevel.l => QrErrorCorrectLevel.L,
+      QrErrorCorrectionLevel.m => QrErrorCorrectLevel.M,
+      QrErrorCorrectionLevel.q => QrErrorCorrectLevel.Q,
+      QrErrorCorrectionLevel.h => QrErrorCorrectLevel.H,
     };
 
-    final qrCode = QrCode(
-      payload: QrPayload.fromString(data),
+    final qrCode = QrCode.fromData(
+      data: data,
       errorCorrectLevel: qrLevel,
     );
     final qrImage = QrImage(qrCode);
