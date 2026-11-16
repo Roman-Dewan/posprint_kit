@@ -276,6 +276,9 @@ class BluetoothHandler(private val context: Context) {
             synchronized(this@BluetoothHandler) {
                 try {
                     activeSocket?.outputStream?.flush()
+                    // Allow hardware buffers, RFCOMM packet queues, and cutter actuation to complete
+                    // before tearing down the RFCOMM connection (prevents truncating trailing barcode & cut).
+                    Thread.sleep(400)
                     activeSocket?.close()
                 } catch (_: Exception) {}
                 activeSocket = null

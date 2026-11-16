@@ -1,20 +1,17 @@
-## 2.1.1
+## 2.2.0
 
-* **High-Speed Bluetooth SPP Optimization & Latency Drop**:
-  - Decreased cold connect/print latency from 3–5 seconds down to under 1 second, and near 0 ms on warm connections.
-  - Native Android RFCOMM connection now attempts insecure SPP first (`createInsecureRfcommSocketToServiceRecord`), eliminating SDP auth negotiation delays common on Rongta, Xprinter, and portable Bluetooth thermal printers.
-  - Sockets already connected to the target MAC address are now re-used without redundant disconnect/reconnect cycles.
-  - Disconnect drain delays reduced from 800 ms (400 ms Dart + 400 ms Kotlin) to a crisp 50 ms after flushing output streams.
-* **Rongta / Thermal Printer Motor Stutter Fix ("Print Buffering" Elimination)**:
-  - Fixed stepper motor buffer starvation / laggy stuttering caused by overly conservative 256-byte chunking and 25 ms inter-chunk delays.
-  - Updated default Bluetooth `maxChunkSize` to **1024 bytes** (and **2048 bytes** for Sunmi Bluetooth) and `chunkDelay` to **2 ms**.
-  - Provides continuous streaming to the printer's receive buffer, keeping the thermal print head burning smoothly in one continuous motion without halting the feed motor.
-* **Sunmi Native LineAPI Divider Fix**:
-  - Fixed Kotlin compilation error on Sunmi PrinterX (`DividingLine.DASH` -> `DividingLine.DOTTED`).
-* **Sunmi Built-in Bluetooth Printing Fix (`PrinterProfile.sunmi80` & `EscposPrinter.sunmiBluetooth`)**:
+* **Real Physical Sample Documentation & Showcase**:
+  - Added physical print showcase in README and docs demonstrating 80 mm 5-column multilingual ESC/POS receipt printing (Bangla, Japanese, Code 128 barcode, QR code) and 60×40 mm TSPL restaurant order token stickers.
+* **High-Speed Bluetooth SPP & Rongta Motor Buffering Fix**:
+  - Balanced chunk pacing to 512-byte chunks with 12 ms delay (and 1024 bytes @ 4 ms for Sunmi Bluetooth) to prevent stepper motor starvation ("print buffering" / laggy stutter) while protecting printer MCU UART buffers from overflow during QR rasterization.
+  - Decreased cold connect/print start latency to <1 second via fast insecure RFCOMM SPP and zero-latency (0 ms) warm connection re-use.
+  - Fixed tail truncation (missing barcode, paper feed, and cut) by providing a graceful 600 ms Dart + 400 ms Kotlin drain window on disconnect before terminating RFCOMM sockets.
+* **Sunmi Built-in Bluetooth Printing (`PrinterProfile.sunmi80` & `EscposPrinter.sunmiBluetooth`)**:
   - Fixed dropped ASCII text lines (`title`, `divider`, ASCII `row`, `total`) when connecting to Sunmi D3 built-in thermal printers via internal Bluetooth SPP (`InnerPrinter`).
   - Added dedicated `EscposPrinter.sunmiBluetooth(address)` facade defaulting to `PrinterProfile.sunmi80` with `rasterizeAllText: true`, which prints all receipt lines cleanly as 1-bit thermal raster graphics to bypass Sunmi's firmware ASCII buffer drop.
   - Automatic detection in Example app: automatically detects Sunmi / `InnerPrinter` Bluetooth devices and auto-promotes to `PrinterProfile.sunmi80` (or `sunmi58`).
+* **Sunmi Native LineAPI Divider Fix**:
+  - Fixed Kotlin compilation error on Sunmi PrinterX (`DividingLine.DASH` -> `DividingLine.DOTTED`).
 * **Code 128 Barcode Encoding Fix (ESC/POS `{B` Code Set Selection)**:
   - Added `Commands.formatCode128Data()` ensuring Code 128 payloads automatically prepend `{B` (`0x7B, 0x42`) as required by the ESC/POS specification (`GS k 73`).
   - Fixed Sunmi and ESC/POS printers printing raw decimal ASCII byte sequences (e.g. `4948525057564950`) beneath the barcode instead of the actual data (`10429812`).

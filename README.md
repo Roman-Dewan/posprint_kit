@@ -6,6 +6,12 @@
 
 A beginner-friendly, multi-language Flutter plugin for printing thermal receipts (**ESC/POS**) and sticker labels (**TSPL**) over **WiFi, Bluetooth, and USB**, supporting any language (English, Bangla, Arabic, Chinese, Japanese, Korean, Hindi, Tamil, Telugu, and more).
 
+<p align="center">
+  <img src="assets/images/sample_print.png" alt="Real Thermal Receipt and Label Print Sample" width="380" />
+  <br>
+  <em><b>Real physical prints produced with posprint_kit:</b> 80 mm 5-column multilingual ESC/POS receipt with QR & barcode (top) and 60×40 mm TSPL restaurant order token sticker (bottom).</em>
+</p>
+
 ---
 
 ## The 3-Line Quick Start
@@ -90,36 +96,50 @@ Add the following permissions depending on the transports you use:
 Print realistic multi-column POS order slips with flexible width ratios (`flex`), per-column alignment (`left`, `center`, `right`), clean whitespace, and automatic cell wrapping:
 
 ```dart
+// 5-Column Bistro Order format (as seen in the sample photo)
 final receipt = Receipt()
-  ..title('BISTRO ORDER')
+  ..title('5-COLUMN BISTRO ORDER')
+  ..text('Order #1042  •  5-Column POS Format', align: PosAlign.center)
   ..divider()
-  // Table Header (1:5:1:2:2 ratio)
+  // Table Header (1:4:1:2:3 flex ratio)
   ..columns([
     const PosColumn(text: '#', width: 1, align: PosAlign.center),
-    const PosColumn(text: 'Item', width: 5),
+    const PosColumn(text: 'Item', width: 4),
     const PosColumn(text: 'Qty', width: 1, align: PosAlign.center),
     const PosColumn(text: 'Price', width: 2, align: PosAlign.right),
-    const PosColumn(text: 'Total', width: 2, align: PosAlign.right),
+    const PosColumn(text: 'Total', width: 3, align: PosAlign.right),
   ], bold: true)
   ..divider()
   // Multilingual row with Bangla item description
   ..columns([
     const PosColumn(text: '01', width: 1, align: PosAlign.center),
-    const PosColumn(text: 'আরাবিকা কফি বিন (Coffee)', width: 5),
-    const PosColumn(text: '2', width: 1, align: PosAlign.center),
-    const PosColumn(text: '5.00', width: 2, align: PosAlign.right),
-    const PosColumn(text: '10.00', width: 2, align: PosAlign.right),
+    const PosColumn(text: 'আরাবিকা কফি বিন (Coffee)', width: 4),
+    const PosColumn(text: '50', width: 1, align: PosAlign.center),
+    const PosColumn(text: '100.00', width: 2, align: PosAlign.right),
+    const PosColumn(text: '5000.00', width: 3, align: PosAlign.right),
   ], languageTag: 'bn')
   // Japanese item description
   ..columns([
     const PosColumn(text: '02', width: 1, align: PosAlign.center),
-    const PosColumn(text: 'チキンカレー (Curry)', width: 5),
-    const PosColumn(text: '1', width: 1, align: PosAlign.center),
+    const PosColumn(text: 'チキンカレー\n(Chicken Curry)', width: 4),
+    const PosColumn(text: '81', width: 1, align: PosAlign.center),
     const PosColumn(text: '9.50', width: 2, align: PosAlign.right),
-    const PosColumn(text: '9.50', width: 2, align: PosAlign.right),
+    const PosColumn(text: '12000.00', width: 3, align: PosAlign.right),
   ], languageTag: 'ja')
+  // English item description
+  ..columns([
+    const PosColumn(text: '03', width: 1, align: PosAlign.center),
+    const PosColumn(text: 'Fresh Lemon Mint Iced Tea', width: 4),
+    const PosColumn(text: '3', width: 1, align: PosAlign.center),
+    const PosColumn(text: '3.00', width: 2, align: PosAlign.right),
+    const PosColumn(text: '9.00', width: 3, align: PosAlign.right),
+  ])
   ..divider()
-  ..total('TOTAL', '19.50')
+  ..total('TOTAL', '54.50')
+  ..feed(1)
+  ..qr('https://github.com/roman-dewan/posprint_kit', size: 6)
+  ..barcode('123412', width: 40)
+  ..feed(2)
   ..cut();
 ```
 
@@ -269,18 +289,18 @@ ReceiptPreview(
 `posprint_kit` provides full support for **TSPL / TSPL2 (TSC Printer Language)** for desktop and portable label printers (TSC, Xprinter, Gprinter, Rongta, etc.) over **USB, WiFi, and Bluetooth**:
 
 ### 1-Line Kitchen / Order Token Sticker (`TsplLabel.token`)
-Generate standard order/token stickers with zero coordinate math:
+Generate standard order/token stickers with zero coordinate math (as seen in the sample photo):
 
 ```dart
 final label = TsplLabel.token(
   tokenNumber: '027',                                    // TOKEN - 027
-  date: '11/05/2026',                                    // 11/05/2026
-  guest: 'Walk-in',                                      // Guest : Walk-in
-  sequence: '2 of 2',                                    // 2 of 2
-  item: 'Salcoty SMALL',                                 // Salcoty SMALL
-  addons: const ['Sugar Free', 'moglai', 'onion fry'],  // Auto-wrapped with indent
-  specialInstructions: 'add more suger, suger free',      // SI : add more suger, suger free
-  note: 'test dfef cvvvcdd bbbbb vvg nnnnn cccc mmmm zzz', // Auto-wrapped order notes
+  date: '16/11/2026',                                    // 16/11/2026
+  guest: 'Unknown',                                      // Guest : Unknown
+  sequence: '1 of 2',                                    // 1 of 2
+  item: 'Burger',                                        // Burger
+  addons: const ['Coca Cola 500mL', 'French Fries'],     // Auto-wrapped with indent
+  specialInstructions: 'Extra Cheese, Extra Onion',      // SI : Extra Cheese, Extra Onion
+  note: 'aaaa bbbb cccc ddddd eeee ffff gggg hhhh',      // Auto-wrapped order notes
   size: TsplSize.size60x40,                              // Dynamic scaling applied!
 );
 

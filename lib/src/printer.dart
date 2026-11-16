@@ -110,8 +110,8 @@ class EscposPrinter {
     String address, {
     this.profile = PrinterProfile.generic58,
     TextRasterizer? rasterizer,
-    int maxChunkSize = 1024,
-    Duration chunkDelay = const Duration(milliseconds: 2),
+    int maxChunkSize = 512,
+    Duration chunkDelay = const Duration(milliseconds: 12),
   })  : assert(
           address.trim().isNotEmpty,
           'Bluetooth device address/MAC cannot be empty.',
@@ -137,8 +137,8 @@ class EscposPrinter {
     String address, {
     PrinterProfile profile = PrinterProfile.sunmi80,
     TextRasterizer? rasterizer,
-    int maxChunkSize = 2048,
-    Duration chunkDelay = const Duration(milliseconds: 2),
+    int maxChunkSize = 1024,
+    Duration chunkDelay = const Duration(milliseconds: 4),
   }) : this.bluetooth(
           address,
           profile: profile,
