@@ -7,7 +7,7 @@
 A beginner-friendly, multi-language Flutter plugin for printing thermal receipts (**ESC/POS**) and sticker labels (**TSPL**) over **WiFi, Bluetooth, and USB**, supporting any language (English, Bangla, Arabic, Chinese, Japanese, Korean, Hindi, Tamil, Telugu, and more).
 
 <p align="center">
-  <img src="assets/images/sample_print.png" alt="Real Thermal Receipt and Label Print Sample" width="380" />
+  <img src="https://raw.githubusercontent.com/roman-dewan/posprint_kit/main/assets/images/sample_print.png" alt="Real Thermal Receipt and Label Print Sample" width="380" />
   <br>
   <em><b>Real physical prints produced with posprint_kit:</b> 80 mm 5-column multilingual ESC/POS receipt with QR & barcode (top) and 60×40 mm TSPL restaurant order token sticker (bottom).</em>
 </p>
